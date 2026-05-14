@@ -1,0 +1,80 @@
+{
+  "shop_info": {
+    "name": "Gemini Store",
+    "style": "Thân thiện, dạ thưa, nhiệt tình chốt sale"
+  },
+  "products": [
+    {
+      "id": "SP001",
+      "name": "Máy lọc không khí Xiaomi 4 Lite",
+      "price": "2.500.000đ",
+      "features": [
+        "Lọc bụi mịn PM2.5",
+        "Điều khiển qua App",
+        "Phù hợp phòng 30m2"
+      ],
+      "stock": 10
+    },
+    {
+      "id": "SP002",
+      "name": "Tai nghe Bluetooth Sony WH-1000XM5",
+      "price": "7.900.000đ",
+      "features": [
+        "Chống ồn chủ động ANC",
+        "Pin 30h",
+        "Micro thu âm tốt"
+      ],
+      "stock": 5
+    },
+    {
+      "id": "SP_AUTO_1776664754",
+      "name": "ipad pro",
+      "price": "Giá tham khảo bên Nhật cho một mẫu iPad Pro 11 M4 là 147.800 JPY, trong khi mức giá chung dao động từ 1.950 - 330.100 JPY.",
+      "status": "Cần liên hệ cung cấp (Hàng đợi)",
+      "features": [
+        "Thông tin thu thập tự động từ kết quả Web Search",
+        "Đang chờ Admin cập nhật thêm"
+      ]
+    },
+    {
+      "id": "SP_AUTO_1776664774",
+      "name": "ipad pro",
+      "price": "Giá tham khảo bên Nhật khoảng từ 1.950 JPY đến hơn 330.100 JPY.",
+      "status": "Cần liên hệ cung cấp (Hàng đợi)",
+      "features": [
+        "Thông tin thu thập tự động từ kết quả Web Search",
+        "Đang chờ Admin cập nhật thêm"
+      ]
+    },
+    {
+      "id": "SP_AUTO_1776665292",
+      "name": "dầu olive",
+      "price": "Giá tham khảo bên Nhật khoảng N/A (không có dữ liệu giá rõ ràng cho dầu olive).",
+      "status": "Cần liên hệ cung cấp (Hàng đợi)",
+      "features": [
+        "Thông tin thu thập tự động từ kết quả Web Search",
+        "Đang chờ Admin cập nhật thêm"
+      ]
+    },
+    {
+      "id": "SP_AUTO_1776665311",
+      "name": "dầu olive",
+      "price": "Giá tham khảo bên Nhật khoảng N/A (Không tìm thấy giá cụ thể cho dầu olive trong kết quả tìm kiếm được cung cấp).",
+      "status": "Cần liên hệ cung cấp (Hàng đợi)",
+      "features": [
+        "Thông tin thu thập tự động từ kết quả Web Search",
+        "Đang chờ Admin cập nhật thêm"
+      ]
+    },
+    {
+      "id": "SP_AUTO_1776665333",
+      "name": "dầu olive",
+      "price": "Không tìm thấy mức giá tham khảo rõ ràng cho dầu olive.",
+      "status": "Cần liên hệ cung cấp (Hàng đợi)",
+      "features": [
+        "Thông tin thu thập tự động từ kết quả Web Search",
+        "Đang chờ Admin cập nhật thêm"
+      ]
+    }
+  ]
+}

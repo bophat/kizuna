@@ -1,0 +1,42 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Manrope:wght@200;300;400;500;600;700;800&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
+  --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
+  
+  --color-brand-red: #99051d;
+  --color-brand-ink: #1c1b1b;
+  --color-brand-paper: #fcf9f8;
+  --color-brand-clay: #f5f2ed;
+  
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 24px;
+}
+
+@layer base {
+  body {
+    @apply bg-brand-paper text-brand-ink font-sans antialiased;
+  }
+  
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-serif;
+  }
+}
+
+@layer utilities {
+  .ma-spacing {
+    @apply p-8 md:p-12 lg:p-16;
+  }
+  
+  .glass-light {
+    @apply bg-white/40 backdrop-blur-md border border-white/20;
+  }
+  
+  .japanese-grid {
+    @apply grid gap-6 md:gap-8;
+  }
+}

@@ -1,0 +1,26 @@
+search_trend_task:
+  description: |
+    Thực hiện tìm kiếm trên Internet về các xu hướng (trend) nổi bật nhất ngày hôm nay 
+    và các sản phẩm hot đang được nhắc tới nhiều trên mạng xã hội, Shopee, Tiktok.
+    Mục tiêu: Đưa ra 3-5 ý tưởng, từ khóa xu hướng đi kèm thông tin chi tiết.
+  agent: trend_hunter
+  expected_output: |
+    Một danh sách gồm 3-5 xu hướng cực nổi bật hoặc sản phẩm đang "hot", bao gồm:
+    - Tên / Từ khóa xu hướng
+    - Tóm tắt vì sao nó hot
+    - Nguồn / Nơi đang nổi (Tiktok, Facebook,...)
+
+planning_task:
+  description: |
+    Sử dụng kết quả tìm kiếm xu hướng từ Trend Hunter, hãy lên kế hoạch nội dung cho ngày mai.
+    Lên lịch 4-6 bài viết rải đều trong ngày (ví dụ: sáng, trưa, chiều, tối).
+    Mỗi bài viết cần chỉ rõ góc độ tiếp cận (Angle) là Sale (Bán hàng) hay Viral (Tương tác).
+  agent: content_planner
+  expected_output: |
+    Một kế hoạch xuất bản chi tiết với 4-6 mục. Mỗi mục gồm:
+    - [Giờ đăng dự kiến]
+    - [Chủ đề / Trend sử dụng]
+    - [Góc tiếp cận: Sale / Viral]
+    - [Gợi ý ngắn gọn cho ý tưởng nội dung]
+  context:
+    - search_trend_task

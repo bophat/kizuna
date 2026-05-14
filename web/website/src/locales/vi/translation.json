@@ -1,0 +1,69 @@
+{
+  "nav": {
+    "products": "Sản phẩm",
+    "cart": "Giỏ hàng",
+    "wishlist": "Yêu thích",
+    "account": "Tài khoản"
+  },
+  "hero": {
+    "title": "Nghệ thuật của sự tĩnh lặng",
+    "subtitle": "Khám phá những vật dụng được tuyển chọn kỹ lưỡng, kết hợp giữa công năng và vẻ đẹp, được chế tác thủ công bởi các nghệ nhân bậc thầy trên khắp Nhật Bản.",
+    "cta": "Khám phá bộ sưu tập"
+  },
+  "home": {
+    "categories": "Danh mục tuyển chọn",
+    "arrivals": "Sản phẩm mới",
+    "featured": "Tác phẩm tiêu biểu",
+    "view_all": "Xem tất cả"
+  },
+  "auth": {
+    "login": "Đăng nhập",
+    "register": "Đăng ký",
+    "create_account": "Tạo tài khoản",
+    "email": "Địa chỉ Email",
+    "password": "Mật khẩu",
+    "confirm_password": "Xác nhận mật khẩu",
+    "username": "Tên đăng nhập",
+    "sign_in": "Đăng nhập",
+    "signing_in": "Đang đăng nhập...",
+    "remember_me": "Ghi nhớ tôi",
+    "forgot_password": "Quên mật khẩu?",
+    "new_to_kogei": "Bạn mới đến KIZUNA?",
+    "access_collection": "Truy cập bộ sưu tập tuyển chọn của bạn.",
+    "invalid_credentials": "Email hoặc mật khẩu không hợp lệ",
+    "enter_email": "Nhập email của bạn",
+    "enter_password": "Nhập mật khẩu của bạn",
+    "community_join": "Tham gia cộng đồng các nhà sưu tập của chúng tôi.",
+    "choose_username": "Chọn tên đăng nhập",
+    "create_password": "Tạo mật khẩu",
+    "confirm_password_placeholder": "Xác nhận mật khẩu của bạn",
+    "already_have_account": "Bạn đã có tài khoản?",
+    "creating_account": "Đang tạo tài khoản...",
+    "passwords_not_match": "Mật khẩu không khớp",
+    "registration_failed": "Đăng ký thất bại. Vui lòng thử lại."
+  },
+  "common": {
+    "loading": "Đang tải...",
+    "error": "Đã có lỗi xảy ra",
+    "search": "Tìm kiếm",
+    "error_connection": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra xem backend có đang chạy không."
+  },
+  "filter": {
+    "title": "Lọc & Sắp xếp",
+    "categories": "Danh mục",
+    "brands": "Thương hiệu",
+    "price_range": "Khoảng giá",
+    "sort_by": "Sắp xếp theo",
+    "popularity": "Phổ biến",
+    "newest": "Mới nhất",
+    "price_low_high": "Giá: Thấp đến Cao",
+    "price_high_low": "Giá: Cao đến Thấp",
+    "featured": "Tiêu biểu",
+    "best_sellers": "Bán chạy nhất",
+    "top_rated": "Yêu thích nhất",
+    "likes": "Yêu thích nhất",
+    "clear_all": "Xóa tất cả",
+    "apply": "Áp dụng",
+    "results": "Đang hiển thị {{count}} sản phẩm"
+  }
+}

@@ -1,0 +1,95 @@
+Đây là bản **Document Kỹ thuật Hoàn chỉnh (Final Version)** cho hệ thống AI Social Empire của bạn. Tài liệu này đã bao gồm Agent Tư vấn và cấu trúc dữ liệu để bạn có thể bắt đầu lập trình ngay.
+
+---
+
+# TÀI LIỆU CẤU TRÚC HỆ THỐNG: AI SOCIAL AUTOMATION SYSTEM (LOCAL)
+
+## 1. MÔ HÌNH NHÂN SỰ AI (AGENT ROLES)
+
+Hệ thống được chia làm 5 Agent làm việc theo dây chuyền:
+
+| STT | Agent | Vai trò | Nhiệm vụ chính |
+| :--- | :--- | :--- | :--- |
+| 1 | **Trend Hunter** | Nhà nghiên cứu | Quét Google/Shopee/Tiktok tìm trend & sản phẩm hot. |
+| 2 | **Content Planner** | Quản lý chiến lược | Lên lịch 4-6 bài/ngày, chọn góc độ tiếp cận (Sale/Viral). |
+| 3 | **Copywriter** | Người viết nội dung | Soạn Caption, Hashtag, gợi ý hình ảnh theo văn phong shop. |
+| 4 | **Publisher** | Người thực thi | Đăng bài trực tiếp lên Fanpage qua Facebook Graph API. |
+| 5 | **Sales Assistant** | Trực chat & Comment | Trả lời tin nhắn, tư vấn sản phẩm, chốt đơn 24/7. |
+
+---
+
+## 2. CẤU TRÚC DỮ LIỆU CƠ SỞ (LOCAL DATABASE)
+
+Bạn cần 2 file chính lưu trữ tại máy (Local) để AI không "nói bậy" và luôn bám sát thực tế:
+
+### A. File `knowledge_base.json` (Trái tim của Chatbot)
+Lưu thông tin sản phẩm để Agent 5 dùng để tư vấn.
+```json
+{
+  "shop_info": { "name": "Gemini Store", "style": "Thân thiện, dạ thưa, nhiệt tình chốt sale" },
+  "products": [
+    {
+      "id": "SP001",
+      "name": "Máy lọc không khí Xiaomi 4 Lite",
+      "price": "2.500.000đ",
+      "features": ["Lọc bụi mịn PM2.5", "Điều khiển qua App", "Phù hợp phòng 30m2"],
+      "stock": 10
+    }
+  ]
+}
+```
+
+### B. File `post_history.sqlite` (Nhật ký vận hành)
+* **Bảng Posts:** Lưu các bài đã đăng (để tránh đăng trùng trend).
+* **Bảng Leads:** Lưu thông tin khách hàng đã nhắn tin/comment để chăm sóc lại.
+
+---
+
+## 3. QUY TRÌNH KẾT NỐI (WORKFLOW CHI TIẾT)
+
+### Giai đoạn 1: Sáng tạo Nội dung (Batch Processing)
+* **Sáng 08:00:** Agent 1 tìm kiếm từ khóa $\rightarrow$ Agent 2 chọn 6 chủ đề $\rightarrow$ Agent 3 viết nội dung.
+* **Lưu kết quả:** Lưu 6 bài viết vào một "hàng đợi" (Queue) dưới dạng file JSON hoặc Database.
+
+### Giai đoạn 2: Đăng bài tự động
+* Sử dụng thư viện `schedule` của Python để đăng bài theo khung giờ vàng (Ví dụ: 09:00, 11:30, 15:00, 20:00).
+* **Công cụ:** Gọi API của Facebook: `POST /v20.0/{page-id}/feed`.
+
+### Giai đoạn 3: Trực Chat & Comment (Real-time/Polling)
+Vì chạy Local, bạn dùng cơ chế **Polling (Quét định kỳ)**:
+1. Mỗi **3 phút**, Agent 5 gọi API lấy danh sách Comment/Inbox mới nhất.
+2. Kiểm tra xem ID người dùng đã được trả lời chưa.
+3. Nếu chưa: Gửi nội dung khách hỏi + `knowledge_base.json` vào Gemini Pro $\rightarrow$ Lấy câu trả lời $\rightarrow$ Gửi lại cho khách.
+
+---
+
+## 4. CÀI ĐẶT CÔNG NGHỆ (TECH STACK)
+
+### Thư viện Python cần thiết:
+```bash
+pip install crewai langchain-google-genai python-dotenv requests schedule
+```
+
+### Các API Keys bắt buộc:
+1. **Google AI Studio Key:** Để chạy Gemini Pro.
+2. **Serper API Key:** Để Agent đi tìm kiếm Trend (Miễn phí 2500 lượt).
+3. **Facebook Page Access Token:** Loại **Permanent (Vĩnh viễn)** để hệ thống không bị ngắt quãng.
+
+---
+
+## 5. LỘ TRÌNH CODE (STEP-BY-STEP)
+
+* **Bước 1 (Nền tảng):** Code file `main.py` kết nối Gemini Pro và định nghĩa các Agent bằng CrewAI.
+* **Bước 2 (Tìm kiếm):** Viết Tool cho Agent 1 gọi API của Serper để lấy dữ liệu web.
+* **Bước 3 (Đăng bài):** Viết hàm Python gọi Facebook API (Dùng thư viện `requests`).
+* **Bước 4 (Tư vấn):** Viết vòng lặp `while True` để quét tin nhắn mới mỗi 3 phút.
+* **Bước 5 (Tự động):** Đóng gói thành file `.bat` hoặc thiết lập `Task Scheduler` trên Windows để máy tự chạy khi mở nguồn.
+
+---
+
+## 6. LƯU Ý VỀ GÓI GEMINI PRO TRẢ PHÍ
+* **Hạn mức (Rate Limit):** Với 4-6 bài viết và vài chục tin nhắn mỗi ngày, bạn sẽ không bao giờ dùng hết giới hạn của gói trả phí.
+* **Bảo mật:** Tuyệt đối không đẩy file `.env` lên Github hoặc chia sẻ API Key cho người khác.
+* **Hình ảnh:** Bạn có thể tích hợp thêm một bước gọi `Gemini 3 Flash Image` để tự động tạo ảnh sản phẩm theo trend cho chuyên nghiệp hơn.
+
+> **Tài liệu này là "bản vẽ" hoàn chỉnh.** Bạn đã sẵn sàng để tôi cung cấp đoạn code Python đầu tiên cho **Agent 1 (Tìm Trend)** và **Agent 2 (Lên kế hoạch)** chưa?

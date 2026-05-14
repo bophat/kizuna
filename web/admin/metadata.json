@@ -1,0 +1,6 @@
+{
+  "name": "KIZUNA Admin Portal",
+  "description": "An administration portal for a Japanese artisan craft gallery, featuring inventory, order, and staff management.",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}
