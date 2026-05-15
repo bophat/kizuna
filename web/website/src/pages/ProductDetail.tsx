@@ -8,6 +8,7 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { cn } from '@/lib/utils';
+import { apiFetch, getMediaUrl } from '@/lib/api';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
@@ -23,14 +24,19 @@ export function ProductDetail() {
   const [quantity, setQuantity] = useState(1);
   
   const { addToCart } = useCart();
-  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { isInWishlist, addToWishlist, removeFromWishlist, isLoading: wishlistLoading, likesMap } = useWishlist();
+
+  const inWishlist = isInWishlist(id || '');
+
+  // Use the likes count from the global map (polled every 5s) or fall back to product data
+  const displayLikes = product ? (likesMap[product.id] ?? product.likes ?? 0) : 0;
 
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
         setIsLoading(true);
         // Fetch specific product
-        const response = await fetch(`/api/shop/products/${id}/`);
+        const response = await apiFetch(`/shop/products/${id}/`);
         if (!response.ok) throw new Error('Product not found');
         const p = await response.json();
         
@@ -47,7 +53,7 @@ export function ProductDetail() {
         setSelectedImage(mappedProduct.image);
         
         // Fetch all products for "Related Products" section
-        const relatedRes = await fetch('/api/shop/products/');
+        const relatedRes = await apiFetch('/shop/products/');
         if (relatedRes.ok) {
           const allProds = await relatedRes.json();
           const mappedAll = allProds.map((ap: any) => ({
@@ -105,8 +111,6 @@ export function ProductDetail() {
     );
   }
 
-  const inWishlist = isInWishlist(product.id);
-  
   // Combine main image with gallery images if any
   const galleryImages = [product.image];
   if (product.gallery && product.gallery.length > 0) {
@@ -187,7 +191,7 @@ export function ProductDetail() {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.3 }}
-                src={selectedImage} 
+                src={getMediaUrl(selectedImage)} 
                 alt={product.name}
                 className="w-full h-full object-cover"
               />
@@ -237,7 +241,7 @@ export function ProductDetail() {
                       selectedImage === img ? "border-primary" : "border-transparent hover:border-surface-variant"
                     )}
                   >
-                    <img src={img} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <img src={getMediaUrl(img)} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
                   </button>
                 ))}
               </div>
@@ -246,9 +250,26 @@ export function ProductDetail() {
 
           {/* Column 2: Product Info */}
           <div className="flex flex-col">
-            <p className="text-sm uppercase tracking-[0.2em] text-secondary font-medium mb-2">
-              {product.brand || product.category}
-            </p>
+            <div className="flex items-center justify-between mb-2">
+              <p className="text-sm uppercase tracking-[0.2em] text-secondary font-medium">
+                {product.brand || product.category}
+              </p>
+              <div className="flex items-center gap-2 px-3 py-1 bg-surface-variant/30 rounded-full">
+                <Heart 
+                  size={16} 
+                  className={cn(
+                    "transition-all duration-300",
+                    inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
+                  )} 
+                />
+                <span className={cn(
+                  "text-sm font-bold transition-colors duration-300",
+                  inWishlist ? "text-primary" : "text-secondary"
+                )}>
+                  {displayLikes} favorites
+                </span>
+              </div>
+            </div>
             <h1 className="headline-lg mb-4">{product.name}</h1>
             
             <div className="flex items-center gap-4 mb-8">

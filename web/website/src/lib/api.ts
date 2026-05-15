@@ -1,4 +1,11 @@
-const API_BASE_URL = 'http://127.0.0.1:8000/api';
+export const API_BASE_URL = 'http://127.0.0.1:8000/api';
+const MEDIA_BASE_URL = 'http://127.0.0.1:8000';
+
+export function getMediaUrl(path: string | null | undefined) {
+  if (!path) return '';
+  if (path.startsWith('http')) return path;
+  return `${MEDIA_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+}
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;

@@ -5,6 +5,8 @@ import { Product } from '@/types';
 import { Heart, ShoppingBag as Cart } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { cn } from '@/lib/utils';
+import { getMediaUrl } from '@/lib/api';
 
 interface ProductCardProps {
   product: Product;
@@ -15,10 +17,13 @@ interface ProductCardProps {
 export function ProductCard({ product, variant = 'standard' }: ProductCardProps) {
   const isLarge = variant === 'large';
   const { addToCart } = useCart();
-  const { isInWishlist, addToWishlist, removeFromWishlist } = useWishlist();
+  const { isInWishlist, addToWishlist, removeFromWishlist, isLoading: wishlistLoading, likesMap } = useWishlist();
   const navigate = useNavigate();
 
   const inWishlist = isInWishlist(product.id);
+
+  // Use the likes count from the global map (polled every 5s) or fall back to product data
+  const displayLikes = likesMap[product.id] ?? product.likes ?? 0;
 
   const handleAddToCart = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -48,7 +53,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
       {/* Image Container */}
       <div className={`relative overflow-hidden ${isLarge ? 'flex-grow' : 'aspect-square'}`}>
         <img 
-          src={product.image} 
+          src={getMediaUrl(product.image)} 
           alt={product.name}
           className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
@@ -95,9 +100,20 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
               {product.name}
             </h3>
           </div>
-          <div className="flex items-center gap-1 text-secondary">
-            <Heart size={14} className={product.likes ? 'text-red-400 fill-red-400' : ''} />
-            <span className="text-xs font-medium">{product.likes || 0}</span>
+          <div className="flex items-center gap-1.5 px-2 py-1 bg-surface-variant/30 rounded-full">
+            <Heart 
+              size={14} 
+              className={cn(
+                "transition-all duration-300",
+                inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
+              )} 
+            />
+            <span className={cn(
+              "text-xs font-bold transition-colors duration-300",
+              inWishlist ? "text-primary" : "text-secondary"
+            )}>
+              {displayLikes}
+            </span>
           </div>
         </div>
         
