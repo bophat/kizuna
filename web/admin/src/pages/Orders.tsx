@@ -19,10 +19,13 @@ import {
   CreditCard,
   X,
   ShieldCheck,
-  FileText
+  FileText,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import React from 'react';
 import { cn } from '../lib/utils';
 import { apiFetch } from '../lib/api';
 
@@ -35,12 +38,14 @@ const STATUS_CONFIG: Record<string, { color: string, icon: any, key: string }> =
 };
 
 export default function Orders() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   
   // Modal State
   const [selectedOrder, setSelectedOrder] = useState<any>(null);
@@ -101,15 +106,23 @@ export default function Orders() {
 
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
-      order.id.toString().includes(searchQuery) || 
-      order.user_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.user_details?.email?.toLowerCase().includes(searchQuery.toLowerCase());
-    
+      order.id.toString().includes(searchQuery) ||
+      order.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      order.email?.toLowerCase().includes(searchQuery.toLowerCase());
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
-    
     return matchesSearch && matchesStatus;
   });
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, itemsPerPage]);
 
   if (loading) {
     return (
@@ -189,7 +202,7 @@ export default function Orders() {
               </thead>
               <tbody className="divide-y divide-brand-clay">
                 <AnimatePresence>
-                  {filteredOrders.map((order) => {
+                  {paginatedOrders.map((order) => {
                     const statusInfo = STATUS_CONFIG[order.status] || STATUS_CONFIG.pending;
                     return (
                       <motion.tr 
@@ -210,7 +223,7 @@ export default function Orders() {
                           <p className="text-xs text-brand-ink/40">{order.user_details?.first_name} {order.user_details?.last_name}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-xs text-brand-ink/60">{new Date(order.created_at).toLocaleDateString()}</p>
+                          <p className="text-xs text-brand-ink/60">{new Date(order.created_at).toLocaleDateString(i18n.language)}</p>
                           <p className="text-[10px] text-brand-ink/40">{new Date(order.created_at).toLocaleTimeString()}</p>
                         </td>
                         <td className="px-6 py-4">
@@ -252,6 +265,87 @@ export default function Orders() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredOrders.length > 0 && (
+          <div className="p-4 border-t border-brand-clay flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-paper/10">
+            <div className="flex items-center gap-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40">
+                {t('filter.show_per_page', { defaultValue: 'Show' })}:
+              </p>
+              <div className="flex gap-1">
+                {[10, 20, 50].map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setItemsPerPage(size)}
+                    className={cn(
+                      "px-3 py-1 rounded text-[10px] font-bold transition-all border",
+                      itemsPerPage === size 
+                        ? "bg-brand-ink border-brand-ink text-white" 
+                        : "bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="p-2 hover:bg-brand-clay rounded-md transition-all text-brand-ink/40 hover:text-brand-red disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => {
+                    if (totalPages <= 5) return true;
+                    return p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1;
+                  })
+                  .map((p, i, arr) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && (
+                        <span className="px-1 text-brand-ink/20">...</span>
+                      )}
+                      <button
+                        onClick={() => setCurrentPage(p)}
+                        className={cn(
+                          "w-8 h-8 rounded text-[10px] font-bold transition-all",
+                          currentPage === p 
+                            ? "bg-brand-red text-white" 
+                            : "text-brand-ink/60 hover:bg-brand-clay"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    </React.Fragment>
+                  ))
+                }
+              </div>
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="p-2 hover:bg-brand-clay rounded-md transition-all text-brand-ink/40 hover:text-brand-red disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40 italic">
+              {t('filter.showing_range', { 
+                defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
+                start: Math.min(filteredOrders.length, (currentPage - 1) * itemsPerPage + 1),
+                end: Math.min(filteredOrders.length, currentPage * itemsPerPage),
+                total: filteredOrders.length
+              })}
+            </p>
           </div>
         )}
       </div>

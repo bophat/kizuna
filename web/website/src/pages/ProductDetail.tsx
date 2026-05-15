@@ -170,7 +170,7 @@ export function ProductDetail() {
 
   return (
     <div className="min-h-screen bg-surface pb-20">
-      <div className="max-w-[1440px] mx-auto px-4 md:px-6 pt-8">
+      <div className="max-w-[85%] mx-auto px-4 md:px-6 pt-8">
         
         {/* Breadcrumb / Back */}
         <button 
@@ -216,13 +216,13 @@ export function ProductDetail() {
               
               {/* Badges */}
               <div className="absolute top-4 left-4 flex flex-col gap-2">
-                {product.isNew && (
+                {!!product.isNew && (
                   <span className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-sm">
                     {t('product.new')}
                   </span>
                 )}
-                {product.isCheap && (
-                  <span className="bg-green-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-sm">
+                {!!product.isCheap && (
+                  <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
                     {t('product.best_price')}
                   </span>
                 )}
@@ -254,21 +254,23 @@ export function ProductDetail() {
               <p className="text-sm uppercase tracking-[0.2em] text-secondary font-medium">
                 {product.brand || product.category}
               </p>
-              <div className="flex items-center gap-2 px-3 py-1 bg-surface-variant/30 rounded-full">
-                <Heart 
-                  size={16} 
-                  className={cn(
-                    "transition-all duration-300",
-                    inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
-                  )} 
-                />
-                <span className={cn(
-                  "text-sm font-bold transition-colors duration-300",
-                  inWishlist ? "text-primary" : "text-secondary"
-                )}>
-                  {displayLikes} {t('product.favorites')}
-                </span>
-              </div>
+              {displayLikes > 0 && (
+                <div className="flex items-center gap-2 px-3 py-1 bg-surface-variant/30 rounded-full">
+                  <Heart 
+                    size={16} 
+                    className={cn(
+                      "transition-all duration-300",
+                      inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
+                    )} 
+                  />
+                  <span className={cn(
+                    "text-sm font-bold transition-colors duration-300",
+                    inWishlist ? "text-primary" : "text-secondary"
+                  )}>
+                    {displayLikes} {t('product.favorites')}
+                  </span>
+                </div>
+              )}
             </div>
             <h1 className="headline-lg mb-4">{product.name}</h1>
             

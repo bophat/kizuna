@@ -42,7 +42,7 @@ interface UserData {
 
 
 export function ProfilePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items'>('info');
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -291,7 +291,7 @@ export function ProfilePage() {
                       <div className="flex gap-8">
                         <div>
                           <p className="label-xs text-secondary lowercase mb-1">{t('profile.order_date')}</p>
-                          <p className="body-sm font-medium">{new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
+                          <p className="body-sm font-medium">{new Date(order.created_at).toLocaleDateString(i18n.language, { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                         </div>
                         <div>
                           <p className="label-xs text-secondary lowercase mb-1">{t('cart.total')}</p>

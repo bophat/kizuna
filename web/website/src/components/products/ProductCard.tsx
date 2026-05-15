@@ -62,12 +62,12 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
         
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
-          {product.isCheap && (
+          {!!product.isCheap && (
             <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
               Best Price
             </span>
           )}
-          {product.sales && product.sales > 50 && (
+          {product.sales > 50 && (
             <span className="bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
               Best Seller
             </span>
@@ -102,26 +102,28 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
               {product.name}
             </h3>
           </div>
-          <div className="flex items-center gap-1.5 px-2 py-1 bg-surface-variant/30 rounded-full">
-            <Heart 
-              size={14} 
-              className={cn(
-                "transition-all duration-300",
-                inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
-              )} 
-            />
-            <span className={cn(
-              "text-xs font-bold transition-colors duration-300",
-              inWishlist ? "text-primary" : "text-secondary"
-            )}>
-              {displayLikes}
-            </span>
-          </div>
+          {displayLikes > 0 && (
+            <div className="flex items-center gap-1.5 px-2 py-1 bg-surface-variant/30 rounded-full">
+              <Heart 
+                size={14} 
+                className={cn(
+                  "transition-all duration-300",
+                  inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
+                )} 
+              />
+              <span className={cn(
+                "text-xs font-bold transition-colors duration-300",
+                inWishlist ? "text-primary" : "text-secondary"
+              )}>
+                {displayLikes}
+              </span>
+            </div>
+          )}
         </div>
         
         <div className="flex items-center justify-between mt-2">
           <p className="label-lg font-bold">${product.price.toLocaleString()}</p>
-          {product.sales && (
+          {product.sales > 0 && (
             <p className="text-[10px] text-secondary italic">
               {t('product.sold', { count: product.sales })}
             </p>

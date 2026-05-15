@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { 
@@ -22,7 +22,8 @@ import {
   Zap,
   Tag,
   Star,
-  Activity
+  Activity,
+  X
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -101,14 +102,21 @@ function QuickAction({ title, icon: Icon, link, delay = 0 }: any) {
 const COLORS = ['#99051D', '#1C1B1B', '#F5F2ED', '#D9D9D9', '#8C8C8C'];
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [startDate, setStartDate] = useState(new Date(new Date().setDate(new Date().getDate() - 30)).toISOString().split('T')[0]);
+  const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
+  const [isRangeModalOpen, setIsRangeModalOpen] = useState(false);
+  const [tempStartDate, setTempStartDate] = useState(startDate);
+  const [tempEndDate, setTempEndDate] = useState(endDate);
 
   useEffect(() => {
     async function fetchStats() {
+      setLoading(true);
       try {
-        const response = await apiFetch('/stats/');
+        const url = `/stats/?start_date=${startDate}&end_date=${endDate}`;
+        const response = await apiFetch(url);
         if (response.ok) {
           const data = await response.json();
           setStats(data);
@@ -120,7 +128,7 @@ export default function Dashboard() {
       }
     }
     fetchStats();
-  }, []);
+  }, [startDate, endDate]);
 
   if (loading) {
     return (
@@ -151,13 +159,126 @@ export default function Dashboard() {
             {t('dashboard.description')}
           </p>
         </div>
-        <div className="flex items-center gap-4 bg-white border border-brand-clay p-4 rounded-sm shadow-sm">
-          <Calendar size={18} className="text-brand-ink/30" />
-          <div className="text-right">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('dashboard.current_period')}</p>
-            <p className="text-xs font-bold text-brand-ink">{new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
-          </div>
+        <div className="flex flex-col items-end gap-4">
+          <button 
+            onClick={() => {
+              setTempStartDate(startDate);
+              setTempEndDate(endDate);
+              setIsRangeModalOpen(true);
+            }}
+            className="flex items-center gap-4 bg-white border border-brand-clay p-4 rounded-sm shadow-sm w-full md:w-auto hover:border-brand-red/30 hover:shadow-md transition-all group"
+          >
+            <Calendar size={18} className="text-brand-ink/30 group-hover:text-brand-red transition-colors" />
+            <div className="text-right">
+              <p className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 mb-1">{t('dashboard.current_period')}</p>
+              <p className="text-xs font-bold text-brand-ink">
+                {new Date(startDate).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short' })}
+                <span className="mx-2 text-brand-ink/30">—</span>
+                {new Date(endDate).toLocaleDateString(i18n.language, { day: 'numeric', month: 'short', year: 'numeric' })}
+              </p>
+            </div>
+          </button>
         </div>
+
+        {/* Date Range Modal */}
+        <AnimatePresence>
+          {isRangeModalOpen && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+              <motion.div 
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsRangeModalOpen(false)}
+                className="absolute inset-0 bg-brand-ink/40 backdrop-blur-sm"
+              />
+              <motion.div 
+                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                animate={{ opacity: 1, scale: 1, y: 0 }}
+                exit={{ opacity: 0, scale: 0.95, y: 20 }}
+                className="relative bg-white border border-brand-clay w-full max-w-md shadow-2xl rounded-sm overflow-hidden"
+              >
+                <div className="p-6 border-b border-brand-clay flex items-center justify-between bg-brand-paper">
+                  <h3 className="text-xs font-bold uppercase tracking-widest text-brand-ink">{t('dashboard.current_period')}</h3>
+                  <button onClick={() => setIsRangeModalOpen(false)} className="text-brand-ink/40 hover:text-brand-ink transition-colors">
+                    <X size={20} />
+                  </button>
+                </div>
+                
+                <div className="p-8 space-y-8">
+                  <div className="grid grid-cols-2 gap-8">
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 block">Từ ngày</label>
+                      <input 
+                        type="date"
+                        value={tempStartDate}
+                        onChange={(e) => setTempStartDate(e.target.value)}
+                        className="w-full bg-brand-paper border border-brand-clay px-4 py-3 text-sm font-bold text-brand-ink rounded-sm outline-none focus:border-brand-red transition-all"
+                      />
+                    </div>
+                    <div className="space-y-3">
+                      <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 block">Đến ngày</label>
+                      <input 
+                        type="date"
+                        value={tempEndDate}
+                        onChange={(e) => setTempEndDate(e.target.value)}
+                        className="w-full bg-brand-paper border border-brand-clay px-4 py-3 text-sm font-bold text-brand-ink rounded-sm outline-none focus:border-brand-red transition-all"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 pt-4">
+                    {[
+                      { label: 'Hôm nay', days: 0 },
+                      { label: '7 ngày qua', days: 7 },
+                      { label: '30 ngày qua', days: 30 },
+                      { label: 'Tháng này', type: 'thisMonth' },
+                      { label: 'Năm nay', type: 'thisYear' }
+                    ].map((preset: any) => (
+                      <button
+                        key={preset.label}
+                        onClick={() => {
+                          const end = new Date();
+                          let start = new Date();
+                          if (preset.type === 'thisMonth') {
+                            start = new Date(end.getFullYear(), end.getMonth(), 1);
+                          } else if (preset.type === 'thisYear') {
+                            start = new Date(end.getFullYear(), 0, 1);
+                          } else {
+                            start.setDate(end.getDate() - preset.days);
+                          }
+                          setTempStartDate(start.toISOString().split('T')[0]);
+                          setTempEndDate(end.toISOString().split('T')[0]);
+                        }}
+                        className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-brand-ink/60 border border-brand-clay hover:border-brand-red hover:text-brand-red rounded-sm transition-all"
+                      >
+                        {preset.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="p-6 bg-brand-paper border-t border-brand-clay flex gap-3">
+                  <button 
+                    onClick={() => setIsRangeModalOpen(false)}
+                    className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest text-brand-ink/40 hover:text-brand-ink transition-colors"
+                  >
+                    Hủy
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setStartDate(tempStartDate);
+                      setEndDate(tempEndDate);
+                      setIsRangeModalOpen(false);
+                    }}
+                    className="flex-1 bg-brand-red text-white px-6 py-3 text-xs font-bold uppercase tracking-widest rounded-sm hover:bg-brand-red/90 shadow-lg shadow-brand-red/20 transition-all"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* StatCards Grid */}
@@ -506,7 +627,7 @@ export default function Dashboard() {
                     </td>
                     <td className="px-12 py-8 text-right">
                       <span className="text-xs text-brand-ink/40 font-medium font-serif italic">
-                        {new Date(order.created_at).toLocaleDateString(undefined, { year: 'numeric', month: 'short', day: 'numeric' })}
+                        {new Date(order.created_at).toLocaleDateString(i18n.language, { year: 'numeric', month: 'short', day: 'numeric' })}
                       </span>
                     </td>
                   </motion.tr>

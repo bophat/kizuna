@@ -11,10 +11,13 @@ import {
   AlertCircle,
   X,
   Upload,
-  Image as ImageIcon
+  Image as ImageIcon,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
+import React from 'react';
 import { cn } from '../lib/utils';
 import { apiFetch } from '../lib/api';
 
@@ -25,6 +28,8 @@ export default function InventoryPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   
   // Modal state
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -197,6 +202,17 @@ export default function InventoryPage() {
     p.id.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = filteredProducts.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, itemsPerPage]);
+
   if (loading && products.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -288,7 +304,7 @@ export default function InventoryPage() {
               </thead>
               <tbody className="divide-y divide-brand-clay/50">
                 <AnimatePresence mode="popLayout">
-                  {filteredProducts.map((product) => (
+                  {paginatedProducts.map((product) => (
                     <motion.tr 
                       layout
                       initial={{ opacity: 0 }}
@@ -395,6 +411,87 @@ export default function InventoryPage() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredProducts.length > 0 && (
+          <div className="p-6 border-t border-brand-clay flex flex-col sm:flex-row justify-between items-center gap-6 bg-brand-paper/10">
+            <div className="flex items-center gap-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40">
+                {t('filter.show_per_page', { defaultValue: 'Show' })}:
+              </p>
+              <div className="flex gap-2">
+                {[10, 20, 50].map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setItemsPerPage(size)}
+                    className={cn(
+                      "px-4 py-2 rounded-sm text-[10px] font-bold transition-all border",
+                      itemsPerPage === size 
+                        ? "bg-brand-ink border-brand-ink text-white shadow-lg shadow-brand-ink/10" 
+                        : "bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="p-3 bg-white border border-brand-clay rounded-sm transition-all text-brand-ink/40 hover:text-brand-red disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-md"
+              >
+                <ChevronLeft size={18} />
+              </button>
+              
+              <div className="flex items-center gap-2">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => {
+                    if (totalPages <= 5) return true;
+                    return p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1;
+                  })
+                  .map((p, i, arr) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && (
+                        <span className="px-1 text-brand-ink/20">...</span>
+                      )}
+                      <button
+                        onClick={() => setCurrentPage(p)}
+                        className={cn(
+                          "w-10 h-10 rounded-sm text-xs font-bold transition-all border",
+                          currentPage === p 
+                            ? "bg-brand-red border-brand-red text-white shadow-lg shadow-brand-red/20" 
+                            : "bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    </React.Fragment>
+                  ))
+                }
+              </div>
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="p-3 bg-white border border-brand-clay rounded-sm transition-all text-brand-ink/40 hover:text-brand-red disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-md"
+              >
+                <ChevronRight size={18} />
+              </button>
+            </div>
+
+            <p className="text-xs font-serif italic text-brand-ink/40">
+              {t('filter.showing_range', { 
+                defaultValue: 'Showing {{start}}-{{end}} of {{total}} artifacts',
+                start: Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1),
+                end: Math.min(filteredProducts.length, currentPage * itemsPerPage),
+                total: filteredProducts.length
+              })}
+            </p>
           </div>
         )}
       </div>

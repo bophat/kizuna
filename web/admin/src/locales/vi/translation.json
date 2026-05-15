@@ -12,7 +12,13 @@
     "title": "Phân tích Đăng ký",
     "overview": "Tổng quan vận hành",
     "description": "Chào mừng bạn đến với lõi quản trị KIZUNA. Theo dõi luồng hiện vật, sự tham gia của nhà sưu tập và các chỉ số mua lại trong thời gian thực.",
+    "mode_relative": "Khoảng thời gian",
+    "mode_specific": "Chọn cụ thể",
     "current_period": "Giai đoạn hiện tại",
+    "period_day": "Ngày",
+    "period_week": "Tuần",
+    "period_month": "Tháng",
+    "period_year": "Năm",
     "stats": {
       "total_acquisitions": "Tổng giá trị mua lại",
       "active_collectors": "Nhà sưu tập hoạt động",

@@ -34,7 +34,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 
 export function OrderHistoryPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -90,8 +90,10 @@ export function OrderHistoryPage() {
             const progressPercent = stepIndex >= 0
               ? `${(stepIndex / (STATUS_STEPS.length - 1)) * 100}%`
               : '0%';
-            const orderDate = new Date(order.created_at).toLocaleDateString('en-US', {
-              year: 'numeric', month: 'short', day: 'numeric'
+            const orderDate = new Date(order.created_at).toLocaleDateString(i18n.language, {
+              year: 'numeric',
+              month: 'long',
+              day: 'numeric'
             });
 
             return (

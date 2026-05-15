@@ -12,7 +12,13 @@
     "title": "Registry Insight",
     "overview": "Operational Overview",
     "description": "Welcome to the KIZUNA administrative core. Monitoring artifact flows, collector engagement, and acquisition metrics in real-time.",
+    "mode_relative": "Relative Period",
+    "mode_specific": "Specific Selection",
     "current_period": "Current Period",
+    "period_day": "Day",
+    "period_week": "Week",
+    "period_month": "Month",
+    "period_year": "Year",
     "stats": {
       "total_acquisitions": "Total Acquisitions",
       "active_collectors": "Active Collectors",

@@ -17,6 +17,8 @@ export function CollectionPage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -123,6 +125,17 @@ export function CollectionPage() {
 
     return result;
   }, [products, categoryFilters, brandFilters, priceRangeFilter, statusFilters, searchQuery, sortBy]);
+
+  // Reset to first page when any filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [categoryFilters, brandFilters, priceRangeFilter, statusFilters, searchQuery, sortBy, itemsPerPage]);
+
+  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
+  const paginatedProducts = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
+  }, [filteredProducts, currentPage, itemsPerPage]);
 
   const updateFilter = (key: string, value: string, multi = false) => {
     const newParams = new URLSearchParams(searchParams);
@@ -265,7 +278,92 @@ export function CollectionPage() {
               </button>
             </div>
           ) : filteredProducts.length > 0 ? (
-            <ProductGrid products={filteredProducts} layout="grid-6" />
+            <>
+              <ProductGrid products={paginatedProducts} layout="grid-6" />
+              
+              {/* Pagination Controls */}
+              <div className="mt-20 flex flex-col md:flex-row items-center justify-between gap-8 py-8 border-t border-surface-variant">
+                {/* Items Per Page */}
+                <div className="flex items-center gap-4">
+                  <span className="text-xs font-bold uppercase tracking-widest text-secondary">
+                    {t('filter.show_per_page', { defaultValue: 'Show' })}:
+                  </span>
+                  <div className="flex gap-2">
+                    {[10, 20, 50].map(size => (
+                      <button
+                        key={size}
+                        onClick={() => setItemsPerPage(size)}
+                        className={cn(
+                          "w-10 h-10 rounded-full text-xs font-bold transition-all duration-300 border",
+                          itemsPerPage === size 
+                            ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
+                            : "bg-white border-zinc-200 text-secondary hover:border-primary hover:text-primary"
+                        )}
+                      >
+                        {size}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Page Navigation */}
+                <div className="flex items-center gap-2">
+                  <button
+                    disabled={currentPage === 1}
+                    onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                    className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center text-secondary hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  
+                  <div className="flex items-center gap-1">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1)
+                      .filter(p => {
+                        // Show first, last, and pages around current
+                        if (totalPages <= 7) return true;
+                        return p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1;
+                      })
+                      .map((p, i, arr) => (
+                        <React.Fragment key={p}>
+                          {i > 0 && arr[i-1] !== p - 1 && (
+                            <span className="px-2 text-zinc-400">...</span>
+                          )}
+                          <button
+                            onClick={() => setCurrentPage(p)}
+                            className={cn(
+                              "w-10 h-10 rounded-full text-xs font-bold transition-all duration-300",
+                              currentPage === p 
+                                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xl" 
+                                : "text-secondary hover:bg-surface-variant"
+                            )}
+                          >
+                            {p}
+                          </button>
+                        </React.Fragment>
+                      ))
+                    }
+                  </div>
+
+                  <button
+                    disabled={currentPage === totalPages}
+                    onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                    className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center text-secondary hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+
+                {/* Summary */}
+                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary italic">
+                  {t('filter.showing_range', { 
+                    defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
+                    start: Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1),
+                    end: Math.min(filteredProducts.length, currentPage * itemsPerPage),
+                    total: filteredProducts.length
+                  })}
+                </p>
+              </div>
+            </>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <p className="body-lg text-secondary mb-4">{t('product.not_found')}</p>

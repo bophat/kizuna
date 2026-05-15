@@ -10,18 +10,25 @@ import {
   Calendar,
   MoreHorizontal,
   X,
-  Trash2
+  Trash2,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../lib/api';
 import { useTranslation } from 'react-i18next';
+import React from 'react';
+
+import { cn } from '../lib/utils';
 
 export default function Staff() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [staff, setStaff] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [itemsPerPage, setItemsPerPage] = useState(20);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingStaff, setEditingStaff] = useState<any>(null);
   const [formData, setFormData] = useState({
@@ -137,6 +144,17 @@ export default function Staff() {
     (s.first_name + ' ' + s.last_name).toLowerCase().includes(searchQuery.toLowerCase())
   );
 
+  const totalPages = Math.ceil(filteredStaff.length / itemsPerPage);
+  const paginatedStaff = filteredStaff.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  // Reset page when filter changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, itemsPerPage]);
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
@@ -198,7 +216,7 @@ export default function Staff() {
               </thead>
               <tbody className="divide-y divide-brand-clay">
                 <AnimatePresence mode="popLayout">
-                  {filteredStaff.map((user) => (
+                  {paginatedStaff.map((user) => (
                     <motion.tr 
                       layout
                       initial={{ opacity: 0 }}
@@ -237,7 +255,7 @@ export default function Staff() {
                       <td className="px-6 py-4">
                         <div className="flex items-center gap-2 text-xs text-brand-ink/40">
                           <Calendar size={12} />
-                          <span>{new Date(user.date_joined).toLocaleDateString()}</span>
+                          <span>{new Date(user.date_joined).toLocaleDateString(i18n.language)}</span>
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -270,6 +288,87 @@ export default function Staff() {
                 )}
               </tbody>
             </table>
+          </div>
+        )}
+
+        {/* Pagination */}
+        {filteredStaff.length > 0 && (
+          <div className="p-4 border-t border-brand-clay flex flex-col sm:flex-row justify-between items-center gap-4 bg-brand-paper/10">
+            <div className="flex items-center gap-4">
+              <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40">
+                {t('filter.show_per_page', { defaultValue: 'Show' })}:
+              </p>
+              <div className="flex gap-1">
+                {[10, 20, 50].map(size => (
+                  <button
+                    key={size}
+                    onClick={() => setItemsPerPage(size)}
+                    className={cn(
+                      "px-3 py-1 rounded text-[10px] font-bold transition-all border",
+                      itemsPerPage === size 
+                        ? "bg-brand-ink border-brand-ink text-white" 
+                        : "bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                className="p-2 hover:bg-brand-clay rounded-md transition-all text-brand-ink/40 hover:text-brand-red disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft size={16} />
+              </button>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter(p => {
+                    if (totalPages <= 5) return true;
+                    return p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1;
+                  })
+                  .map((p, i, arr) => (
+                    <React.Fragment key={p}>
+                      {i > 0 && arr[i-1] !== p - 1 && (
+                        <span className="px-1 text-brand-ink/20">...</span>
+                      )}
+                      <button
+                        onClick={() => setCurrentPage(p)}
+                        className={cn(
+                          "w-8 h-8 rounded text-[10px] font-bold transition-all",
+                          currentPage === p 
+                            ? "bg-brand-red text-white" 
+                            : "text-brand-ink/60 hover:bg-brand-clay"
+                        )}
+                      >
+                        {p}
+                      </button>
+                    </React.Fragment>
+                  ))
+                }
+              </div>
+
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                className="p-2 hover:bg-brand-clay rounded-md transition-all text-brand-ink/40 hover:text-brand-red disabled:opacity-30 disabled:cursor-not-allowed"
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+
+            <p className="text-[10px] font-bold uppercase tracking-widest text-brand-ink/40 italic">
+              {t('filter.showing_range', { 
+                defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
+                start: Math.min(filteredStaff.length, (currentPage - 1) * itemsPerPage + 1),
+                end: Math.min(filteredStaff.length, currentPage * itemsPerPage),
+                total: filteredStaff.length
+              })}
+            </p>
           </div>
         )}
       </div>

@@ -96,9 +96,11 @@ export function Header() {
 
               <Link to="/cart" className="text-secondary hover:text-primary transition-colors relative" title={t('nav.cart')}>
                 <Icons.ShoppingBag size={22} />
-                <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">
-                  {cart?.items?.length || 0}
-                </span>
+                {cart?.items?.length > 0 && (
+                  <span className="absolute -top-1 -right-1 w-4 h-4 rounded-full bg-primary text-white text-[10px] flex items-center justify-center font-bold">
+                    {cart.items.length}
+                  </span>
+                )}
               </Link>
 
               <Link to={localStorage.getItem('access_token') ? "/profile" : "/login"} className="text-secondary hover:text-primary transition-colors" title={t('auth.sign_in')}>

@@ -12,7 +12,13 @@
     "title": "レジストリ分析",
     "overview": "運用概要",
     "description": "KIZUNA管理コアへようこそ。アーティファクトのフロー、コレクターの関与、取得指標をリアルタイムで監視しています。",
+    "mode_relative": "期間指定",
+    "mode_specific": "個別選択",
     "current_period": "現在の期間",
+    "period_day": "日次",
+    "period_week": "週次",
+    "period_month": "月次",
+    "period_year": "年次",
     "stats": {
       "total_acquisitions": "総取得額",
       "active_collectors": "アクティブコレクター",
