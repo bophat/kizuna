@@ -5,6 +5,7 @@ import { Icons } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
+import { apiFetch } from '@/lib/api';
 
 export function CartPage() {
   const { cart, removeFromCart, updateQuantity } = useCart();
@@ -32,7 +33,7 @@ export function CartPage() {
     const productIds = cart.items.map(i => i.product_id);
     Promise.all(
       productIds.map(id =>
-        fetch(`http://127.0.0.1:8000/api/shop/products/${id}/`)
+        apiFetch(`/shop/products/${id}/`)
           .then(r => r.ok ? r.json() : null)
           .catch(() => null)
       )

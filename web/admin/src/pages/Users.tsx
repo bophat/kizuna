@@ -13,8 +13,10 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../lib/api';
+import { useTranslation } from 'react-i18next';
 
 export default function Users() {
+  const { t } = useTranslation();
   const [customers, setCustomers] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -38,10 +40,10 @@ export default function Users() {
         setCustomers(data);
         setError(null);
       } else {
-        setError('Failed to load customer profiles.');
+        setError(t('users.error_load'));
       }
     } catch (err) {
-      setError('An error occurred while fetching data.');
+      setError(t('common.error_occurred'));
     } finally {
       setLoading(false);
     }
@@ -84,7 +86,7 @@ export default function Users() {
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('Are you sure you want to remove this collector profile? This action cannot be undone.')) return;
+    if (!confirm(t('users.confirm_delete'))) return;
     
     try {
       const response = await apiFetch(`/users/${id}/`, {
@@ -94,7 +96,7 @@ export default function Users() {
       if (response.ok) {
         fetchCustomers();
       } else {
-        alert('Failed to delete collector profile.');
+        alert(t('users.error_delete'));
       }
     } catch (err) {
       console.error('Delete error:', err);
@@ -111,7 +113,7 @@ export default function Users() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-brand-red" />
-        <p className="text-sm font-serif italic text-brand-ink/40">Consulting collector registry...</p>
+        <p className="text-sm font-serif italic text-brand-ink/40">{t('users.loading')}</p>
       </div>
     );
   }
@@ -120,8 +122,8 @@ export default function Users() {
     <div className="ma-spacing space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">Customer Relations</p>
-          <h1 className="text-4xl font-serif font-bold">Collector Registry</h1>
+          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">{t('users.subtitle')}</p>
+          <h1 className="text-4xl font-serif font-bold">{t('users.title')}</h1>
         </div>
       </div>
 
@@ -131,7 +133,7 @@ export default function Users() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-ink/30" size={18} />
             <input 
               type="text" 
-              placeholder="Search by name, email or username..." 
+              placeholder={t('users.search_placeholder')} 
               className="w-full pl-10 pr-4 py-2 bg-white border border-brand-clay rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -152,11 +154,11 @@ export default function Users() {
             <table className="w-full text-left">
               <thead className="bg-brand-paper">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Collector</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Contact Info</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Location</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Member Since</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('users.table.collector')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('users.table.contact')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('users.table.location')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('users.table.member_since')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50 text-right">{t('users.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-clay">
@@ -202,7 +204,7 @@ export default function Users() {
                             <span className="line-clamp-2">{user.address}</span>
                           </div>
                         ) : (
-                          <span className="text-[10px] text-brand-ink/30 italic">Not provided</span>
+                          <span className="text-[10px] text-brand-ink/30 italic">{t('users.table.not_provided')}</span>
                         )}
                       </td>
                       <td className="px-6 py-4">
@@ -216,14 +218,14 @@ export default function Users() {
                           <button 
                             onClick={() => handleOpenModal(user)}
                             className="p-2 hover:bg-brand-ink hover:text-white rounded-md transition-colors"
-                            title="Edit"
+                            title={t('common.edit')}
                           >
                             <MoreVertical size={16} />
                           </button>
                           <button 
                             onClick={() => handleDelete(user.id)}
                             className="p-2 hover:bg-brand-red hover:text-white rounded-md transition-colors text-brand-red"
-                            title="Delete"
+                            title={t('common.delete')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -235,7 +237,7 @@ export default function Users() {
                 {filteredCustomers.length === 0 && (
                   <tr>
                     <td colSpan={5} className="px-6 py-20 text-center">
-                      <p className="font-serif italic text-brand-ink/30 text-lg">No collectors found matching your search.</p>
+                      <p className="font-serif italic text-brand-ink/30 text-lg">{t('users.table.empty')}</p>
                     </td>
                   </tr>
                 )}
@@ -263,7 +265,7 @@ export default function Users() {
               className="relative w-full max-w-md bg-white rounded-lg shadow-2xl overflow-hidden"
             >
               <div className="p-6 border-b border-brand-clay flex justify-between items-center bg-brand-paper/50">
-                <h2 className="text-xl font-serif font-bold">Update Collector Profile</h2>
+                <h2 className="text-xl font-serif font-bold">{t('users.modal.edit_title')}</h2>
                 <button onClick={() => setIsModalOpen(false)} className="text-brand-ink/40 hover:text-brand-red">
                   <X size={20} />
                 </button>
@@ -271,7 +273,7 @@ export default function Users() {
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">First Name</label>
+                    <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.first_name')}</label>
                     <input 
                       className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
                       value={formData.first_name}
@@ -279,7 +281,7 @@ export default function Users() {
                     />
                   </div>
                   <div className="space-y-1">
-                    <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">Last Name</label>
+                    <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.last_name')}</label>
                     <input 
                       className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
                       value={formData.last_name}
@@ -288,7 +290,7 @@ export default function Users() {
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">Email</label>
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.email')}</label>
                   <input 
                     type="email"
                     className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
@@ -297,7 +299,7 @@ export default function Users() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">Phone</label>
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.phone')}</label>
                   <input 
                     className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
                     value={formData.phone}
@@ -305,7 +307,7 @@ export default function Users() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">Address</label>
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.address')}</label>
                   <textarea 
                     className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
                     rows={3}
@@ -319,13 +321,13 @@ export default function Users() {
                     onClick={() => setIsModalOpen(false)}
                     className="flex-1 px-4 py-2 border border-brand-clay rounded-md text-sm"
                   >
-                    Cancel
+                    {t('users.modal.cancel')}
                   </button>
                   <button 
                     type="submit"
                     className="flex-1 px-4 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-colors"
                   >
-                    Update Registry
+                    {t('users.modal.update_button')}
                   </button>
                 </div>
               </form>

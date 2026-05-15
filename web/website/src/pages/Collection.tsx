@@ -7,6 +7,7 @@ import { ProductGrid } from '@/components/products/ProductGrid';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Icons } from '@/components/Icons';
+import { apiFetch } from '@/lib/api';
 
 export function CollectionPage() {
   const { t } = useTranslation();
@@ -21,7 +22,7 @@ export function CollectionPage() {
     const fetchProducts = async () => {
       try {
         setIsLoading(true);
-        const response = await fetch('/api/shop/products/');
+        const response = await apiFetch('/shop/products/');
         if (!response.ok) throw new Error('Failed to fetch products');
         const data = await response.json();
         

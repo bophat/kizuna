@@ -13,16 +13,19 @@ import {
 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../lib/utils';
-
-const SECTIONS = [
-  { id: 'general', label: 'General Info', icon: Globe },
-  { id: 'gallery', label: 'Gallery Config', icon: Palette },
-  { id: 'security', label: 'Security', icon: Shield },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
-  { id: 'database', label: 'System & Data', icon: Database },
-];
+import { useTranslation } from 'react-i18next';
 
 export default function Settings() {
+  const { t } = useTranslation();
+  
+  const SECTIONS = [
+    { id: 'general', label: t('settings.sections.general'), icon: Globe },
+    { id: 'gallery', label: t('settings.sections.gallery'), icon: Palette },
+    { id: 'security', label: t('settings.sections.security'), icon: Shield },
+    { id: 'notifications', label: t('settings.sections.notifications'), icon: Bell },
+    { id: 'database', label: t('settings.sections.database'), icon: Database },
+  ];
+
   const [activeSection, setActiveSection] = useState('general');
   const [isSaving, setIsSaving] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
@@ -40,8 +43,8 @@ export default function Settings() {
     <div className="ma-spacing space-y-8">
       <div className="flex justify-between items-end">
         <div>
-          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">Platform Administration</p>
-          <h1 className="text-4xl font-serif font-bold text-brand-ink">Global Configuration</h1>
+          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">{t('settings.subtitle')}</p>
+          <h1 className="text-4xl font-serif font-bold text-brand-ink">{t('settings.title')}</h1>
         </div>
         <button 
           onClick={handleSave}
@@ -55,7 +58,7 @@ export default function Settings() {
           ) : (
             <Save size={16} />
           )}
-          <span>{showSuccess ? 'Saved' : 'Save Changes'}</span>
+          <span>{showSuccess ? t('settings.saved') : t('settings.save_button')}</span>
         </button>
       </div>
 
@@ -86,7 +89,7 @@ export default function Settings() {
               {SECTIONS.find(s => s.id === activeSection)?.label}
             </h2>
             <p className="text-sm text-brand-ink/40 mt-1 italic font-serif">
-              Adjust your platform preferences and operational parameters.
+              {t('settings.description')}
             </p>
           </div>
 
@@ -95,7 +98,7 @@ export default function Settings() {
               <div className="space-y-6 max-w-2xl">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Gallery Name</label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('settings.general.gallery_name')}</label>
                     <input 
                       type="text" 
                       defaultValue="KIZUNA Curations"
@@ -103,29 +106,29 @@ export default function Settings() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Primary Contact</label>
+                    <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('settings.general.primary_contact')}</label>
                     <input 
                       type="email" 
-                      defaultValue="concierge@kogei.jp"
+                      defaultValue="concierge@kizuna-gallery.jp"
                       className="w-full bg-white border border-brand-clay rounded-md px-4 py-3 text-sm focus:outline-none focus:border-brand-red"
                     />
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Operational Status</label>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('settings.general.status')}</label>
                   <div className="flex gap-4">
                     <label className="flex-1 cursor-pointer group">
                       <input type="radio" name="status" className="hidden peer" defaultChecked />
                       <div className="p-4 border border-brand-clay rounded-lg peer-checked:border-brand-red peer-checked:bg-brand-red/5 transition-all">
-                        <p className="text-xs font-bold uppercase tracking-widest text-brand-ink group-hover:text-brand-red">Active</p>
-                        <p className="text-[10px] text-brand-ink/40 mt-1">Accepting orders and visitors</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-brand-ink group-hover:text-brand-red">{t('settings.general.active')}</p>
+                        <p className="text-[10px] text-brand-ink/40 mt-1">{t('settings.general.active_desc')}</p>
                       </div>
                     </label>
                     <label className="flex-1 cursor-pointer group">
                       <input type="radio" name="status" className="hidden peer" />
                       <div className="p-4 border border-brand-clay rounded-lg peer-checked:border-brand-red peer-checked:bg-brand-red/5 transition-all">
-                        <p className="text-xs font-bold uppercase tracking-widest text-brand-ink group-hover:text-brand-red">Maintenance</p>
-                        <p className="text-[10px] text-brand-ink/40 mt-1">Exhibition mode only</p>
+                        <p className="text-xs font-bold uppercase tracking-widest text-brand-ink group-hover:text-brand-red">{t('settings.general.maintenance')}</p>
+                        <p className="text-[10px] text-brand-ink/40 mt-1">{t('settings.general.maintenance_desc')}</p>
                       </div>
                     </label>
                   </div>
@@ -136,22 +139,26 @@ export default function Settings() {
             {activeSection === 'gallery' && (
               <div className="space-y-6 max-w-2xl">
                 <div className="space-y-4">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Visual Theme</label>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('settings.gallery.theme')}</label>
                   <div className="grid grid-cols-3 gap-4">
-                    {['Classic Paper', 'Modern Ink', 'Minimalist'].map((t) => (
-                      <div key={t} className="aspect-video bg-brand-paper border border-brand-clay rounded-md flex flex-col items-center justify-center gap-2 group cursor-pointer hover:border-brand-red transition-all">
+                    {[
+                      { key: 'classic', label: t('settings.gallery.themes.classic') },
+                      { key: 'modern', label: t('settings.gallery.themes.modern') },
+                      { key: 'minimalist', label: t('settings.gallery.themes.minimalist') }
+                    ].map((theme) => (
+                      <div key={theme.key} className="aspect-video bg-brand-paper border border-brand-clay rounded-md flex flex-col items-center justify-center gap-2 group cursor-pointer hover:border-brand-red transition-all">
                         <Palette size={20} className="text-brand-ink/20 group-hover:text-brand-red transition-all" />
-                        <span className="text-[10px] font-bold uppercase tracking-tighter">{t}</span>
+                        <span className="text-[10px] font-bold uppercase tracking-tighter">{theme.label}</span>
                       </div>
                     ))}
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Catalog Grid Columns</label>
+                  <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('settings.gallery.grid')}</label>
                   <select className="w-full bg-white border border-brand-clay rounded-md px-4 py-3 text-sm focus:outline-none focus:border-brand-red">
-                    <option>2 Columns (Spacious)</option>
-                    <option selected>3 Columns (Balanced)</option>
-                    <option>4 Columns (Dense)</option>
+                    <option>{t('settings.gallery.grid_options.spacious')}</option>
+                    <option selected>{t('settings.gallery.grid_options.balanced')}</option>
+                    <option>{t('settings.gallery.grid_options.dense')}</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-4 p-4 bg-brand-paper/50 rounded-lg border border-dashed border-brand-clay">
@@ -159,10 +166,10 @@ export default function Settings() {
                     <ImageIcon size={20} className="text-brand-ink/20" />
                   </div>
                   <div className="flex-1">
-                    <p className="text-xs font-bold uppercase tracking-widest">Favicon & Logo</p>
-                    <p className="text-[10px] text-brand-ink/40">Standardized across all collection pages</p>
+                    <p className="text-xs font-bold uppercase tracking-widest">{t('settings.gallery.logo_favicon')}</p>
+                    <p className="text-[10px] text-brand-ink/40">{t('settings.gallery.logo_desc')}</p>
                   </div>
-                  <button className="text-[10px] font-bold uppercase text-brand-red hover:underline">Replace</button>
+                  <button className="text-[10px] font-bold uppercase text-brand-red hover:underline">{t('settings.gallery.replace')}</button>
                 </div>
               </div>
             )}
@@ -172,25 +179,25 @@ export default function Settings() {
                 <div className="p-4 bg-red-50 border border-brand-red/20 rounded-lg flex gap-4">
                   <Shield className="text-brand-red flex-shrink-0" />
                   <div>
-                    <p className="text-xs font-bold text-brand-red uppercase tracking-widest">Two-Factor Authentication</p>
-                    <p className="text-xs text-brand-ink/60 mt-1">Enhance your staff account security by requiring an authentication token at sign-in.</p>
-                    <button className="mt-3 bg-brand-red text-white px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest">Configure 2FA</button>
+                    <p className="text-xs font-bold text-brand-red uppercase tracking-widest">{t('settings.security.two_factor')}</p>
+                    <p className="text-xs text-brand-ink/60 mt-1">{t('settings.security.two_factor_desc')}</p>
+                    <button className="mt-3 bg-brand-red text-white px-4 py-2 rounded text-[10px] font-bold uppercase tracking-widest">{t('settings.security.configure_2fa')}</button>
                   </div>
                 </div>
                 <div className="space-y-4 pt-4">
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest">Audit Logs</p>
-                      <p className="text-[10px] text-brand-ink/40">Track all administrative changes and system access</p>
+                      <p className="text-xs font-bold uppercase tracking-widest">{t('settings.security.audit_logs')}</p>
+                      <p className="text-[10px] text-brand-ink/40">{t('settings.security.audit_logs_desc')}</p>
                     </div>
-                    <button className="text-[10px] font-bold uppercase text-brand-red hover:underline">View History</button>
+                    <button className="text-[10px] font-bold uppercase text-brand-red hover:underline">{t('settings.security.view_history')}</button>
                   </div>
                   <div className="flex items-center justify-between">
                     <div>
-                      <p className="text-xs font-bold uppercase tracking-widest">IP Whitelisting</p>
-                      <p className="text-[10px] text-brand-ink/40">Restrict dashboard access to specific office addresses</p>
+                      <p className="text-xs font-bold uppercase tracking-widest">{t('settings.security.ip_whitelisting')}</p>
+                      <p className="text-[10px] text-brand-ink/40">{t('settings.security.ip_whitelisting_desc')}</p>
                     </div>
-                    <button className="text-[10px] font-bold uppercase text-brand-red hover:underline">Manage IPs</button>
+                    <button className="text-[10px] font-bold uppercase text-brand-red hover:underline">{t('settings.security.manage_ips')}</button>
                   </div>
                 </div>
               </div>
@@ -201,7 +208,7 @@ export default function Settings() {
                 <div className="inline-flex p-4 bg-brand-paper rounded-full text-brand-ink/20">
                   <SettingsIcon size={32} />
                 </div>
-                <p className="text-sm font-serif italic text-brand-ink/40">Advanced {activeSection} controls are currently being provisioned...</p>
+                <p className="text-sm font-serif italic text-brand-ink/40">{t('settings.coming_soon', { section: activeSection })}</p>
               </div>
             )}
           </div>

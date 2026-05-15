@@ -5,6 +5,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Product } from '../types';
 import { ProductGrid } from '../components/products/ProductGrid';
+import { apiFetch } from '@/lib/api';
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -14,7 +15,7 @@ export function HomePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const response = await fetch('/api/shop/products/');
+        const response = await apiFetch('/shop/products/');
         if (!response.ok) throw new Error('Failed to fetch');
         const data = await response.json();
         const mapped: Product[] = data.map((p: any) => ({

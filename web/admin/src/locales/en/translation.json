@@ -1,0 +1,364 @@
+{
+  "nav": {
+    "dashboard": "Dashboard",
+    "inventory": "Inventory",
+    "categories": "Categories",
+    "orders": "Orders",
+    "users": "Users",
+    "staff": "Staff & Roles",
+    "settings": "Settings"
+  },
+  "dashboard": {
+    "title": "Registry Insight",
+    "overview": "Operational Overview",
+    "description": "Welcome to the KIZUNA administrative core. Monitoring artifact flows, collector engagement, and acquisition metrics in real-time.",
+    "current_period": "Current Period",
+    "stats": {
+      "total_acquisitions": "Total Acquisitions",
+      "active_collectors": "Active Collectors",
+      "total_trades": "Total Trades",
+      "archive_size": "Archive Size"
+    },
+    "charts": {
+      "trade_performance": "Trade Performance",
+      "collection_shares": "Collection Shares",
+      "trade_description": "Weekly acquisition and sales metrics analysis.",
+      "collection_description": "Revenue distribution by category."
+    },
+    "artifacts": {
+      "top_artifacts": "Top Artifacts",
+      "top_description": "Most coveted pieces in the current collection.",
+      "sales": "Sales"
+    },
+    "system": {
+      "core": "System Core",
+      "monitor": "Mamoru Monitor",
+      "description": "The internal engine is operating at peak efficiency. All artifact registries are synchronized.",
+      "guardian": "Guardian",
+      "registry_verified": "Registry verified",
+      "repository": "Repository",
+      "sqlite_connected": "SQLite Connected",
+      "secure_session": "Secure Session"
+    },
+    "logistics": {
+      "quick": "Quick Logistics",
+      "catalog": "Catalog New Artifact",
+      "review": "Review Trades",
+      "management": "Collector Management",
+      "recent": "Recent Consignments",
+      "recent_description": "Reviewing the latest high-value acquisitions and trades.",
+      "access_archive": "Access Logistics Archive"
+    },
+    "table": {
+      "id": "Registry ID",
+      "collector": "Collector Identity",
+      "valuation": "Valuation",
+      "status": "Status Registry",
+      "date": "Logged Date",
+      "empty": "The consignment archive is currently empty."
+    }
+  },
+  "inventory": {
+    "title": "Artifact Archive",
+    "subtitle": "Inventory Management",
+    "description": "Maintain and manage the digital registry of Japanese craft artifacts.",
+    "add_button": "New Acquisition",
+    "search_placeholder": "Search collection by name, ID, or artisan...",
+    "loading": "Cataloging collection...",
+    "confirm_delete": "Are you sure you want to decommission this artifact?",
+    "errors": {
+      "load_failed": "Failed to load artifacts.",
+      "fetch_error": "An error occurred while fetching data."
+    },
+    "table": {
+      "artifact": "Artifact Details",
+      "reference": "Reference",
+      "classification": "Classification",
+      "valuation": "Valuation",
+      "logistics": "Logistics",
+      "actions": "Actions",
+      "unknown_artisan": "Unknown Artisan",
+      "in_storage": "in storage",
+      "depleted": "DEPLETED",
+      "empty": "No artifacts match your search...",
+      "refine": "Refine Registry",
+      "decommission": "Decommission"
+    },
+    "modal": {
+      "new_title": "New Taxonomy Entry",
+      "update_title": "Refine Registry",
+      "id_label": "Registry Reference ID",
+      "category_label": "Classification",
+      "category_placeholder": "Select Classification",
+      "name_label": "Artifact Nomenclature",
+      "attributes_label": "Collection Attributes",
+      "attributes": {
+        "featured": "Curated",
+        "new": "Recent",
+        "limited": "Limited",
+        "cheap": "Accessible"
+      },
+      "price_label": "Evaluation (USD)",
+      "stock_label": "Current Stock Level",
+      "brand_label": "Artisan / Brand",
+      "location_label": "Workshop Location",
+      "image_label": "Visual Registry Documentation",
+      "description_label": "Narrative Description",
+      "steps": {
+        "identity": "Identity",
+        "logistics": "Logistics",
+        "imagery": "Imagery",
+        "narrative": "Narrative"
+      },
+      "next": "Next",
+      "back": "Back",
+      "submit": "Complete Registry",
+      "cancel": "Cancel",
+      "finalize": "Finalize Registry",
+      "confirm": "Confirm Acquisition",
+      "prev": "Previous",
+      "image_update": "Update Registry Image",
+      "drop_asset": "Drop Visual Asset Here",
+      "click_browse": "or click to browse local archive",
+      "description_title": "Historical & Technical Narrative",
+      "description_help": "This narrative provides essential context for the AI Sales Concierge.",
+      "description_placeholder": "Detail the craftsmanship, material choices, historical lineage, and cultural significance of this piece..."
+    }
+  },
+  "orders": {
+    "title": "Consignment Tracking",
+    "subtitle": "Order Fulfillment",
+    "total_active": "Total Active",
+    "search_placeholder": "Search by ID or email...",
+    "all_statuses": "All Statuses",
+    "transactions_found": "transactions found",
+    "status": {
+      "pending": "Pending",
+      "processing": "Processing",
+      "shipped": "Shipped",
+      "delivered": "Delivered",
+      "cancelled": "Cancelled"
+    },
+    "errors": {
+      "load_failed": "Failed to load logistics data.",
+      "fetch_error": "An error occurred while fetching orders.",
+      "update_failed": "Failed to update order"
+    },
+    "table": {
+      "id": "Order ID",
+      "customer": "Customer",
+      "date": "Date",
+      "status": "Status",
+      "amount": "Amount",
+      "actions": "Actions",
+      "guest": "Guest",
+      "empty": "No orders found matching your criteria..."
+    },
+    "modal": {
+      "title": "Order Details",
+      "placed_on": "Placed on",
+      "customer_info": "Customer Information",
+      "shipping_logistics": "Shipping Logistics",
+      "payment_method": "Payment Method",
+      "items": "Artifacts in Consignment",
+      "verification": "Payment Verification",
+      "fulfillment": "Order Fulfillment Status",
+      "email": "Email Address",
+      "phone": "Contact Number",
+      "address": "Delivery Address",
+      "transaction_channel": "Transaction Channel",
+      "total_value": "Total Consignment Value",
+      "verify_help": "Please examine the uploaded receipt carefully. Verify that the amount matches the total value of the consignment before proceeding with fulfillment.",
+      "admin_notes": "Administrative Notes",
+      "admin_notes_placeholder": "Record verification details, transaction IDs, or issues...",
+      "verify_button": "Verify & Process",
+      "save_notes": "Save Notes",
+      "view_artifact": "View Full Artifact",
+      "no_receipt": "No payment receipt has been uploaded for this transaction yet.",
+      "updating": "Updating...",
+      "table": {
+        "product": "Product",
+        "qty": "Qty",
+        "price": "Price",
+        "total": "Total"
+      }
+    }
+  },
+  "users": {
+    "title": "Collector Registry",
+    "subtitle": "Customer Relations",
+    "search_placeholder": "Search by name, email or username...",
+    "loading": "Consulting collector registry...",
+    "confirm_delete": "Are you sure you want to remove this collector profile? This action cannot be undone.",
+    "error_load": "Failed to load customer profiles.",
+    "error_delete": "Failed to delete collector profile.",
+    "table": {
+      "collector": "Collector",
+      "contact": "Contact Info",
+      "location": "Location",
+      "member_since": "Member Since",
+      "actions": "Actions",
+      "not_provided": "Not provided",
+      "empty": "No collectors found matching your search."
+    },
+    "modal": {
+      "edit_title": "Update Collector Profile",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "email": "Email",
+      "phone": "Phone",
+      "address": "Address",
+      "cancel": "Cancel",
+      "update_button": "Update Registry"
+    }
+  },
+  "staff": {
+    "title": "Staff & Curators",
+    "subtitle": "Internal Team",
+    "add_button": "Add New Staff",
+    "search_placeholder": "Search team members...",
+    "loading": "Gathering the curator team...",
+    "confirm_delete": "Are you sure you want to remove this staff member? This action cannot be undone.",
+    "error_load": "Failed to load internal team directory.",
+    "error_delete": "Failed to delete staff member.",
+    "table": {
+      "curator": "Curator",
+      "permission": "Permission Level",
+      "contact": "Contact",
+      "joined": "Joined",
+      "actions": "Actions",
+      "empty": "No staff members found."
+    },
+    "roles": {
+      "head": "Head Curator",
+      "staff": "Staff Curator"
+    },
+    "modal": {
+      "update_title": "Update Staff Permissions",
+      "new_title": "Register New Staff Member",
+      "username": "Username",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "email": "Email",
+      "password_new": "New Password (optional)",
+      "password_temp": "Temporary Password",
+      "password_placeholder": "Leave blank to keep current",
+      "head_permission": "Head Curator Permissions",
+      "head_description": "Full system administrative access",
+      "cancel": "Cancel",
+      "update_button": "Update Staff Registry",
+      "confirm_button": "Confirm New Curator"
+    }
+  },
+  "categories": {
+    "title": "Taxonomy",
+    "subtitle": "Structure",
+    "add_button": "New Category",
+    "search_placeholder": "Search categories...",
+    "loading": "Organizing categories...",
+    "confirm_delete": "Are you sure you want to remove this category? This might affect products using it.",
+    "error_load": "Failed to load categories.",
+    "error_delete": "Failed to delete category. It might be in use.",
+    "table": {
+      "name": "Category Name",
+      "slug": "Slug",
+      "products": "Products",
+      "actions": "Actions",
+      "empty": "No categories defined yet."
+    },
+    "items_count": "{{count}} items",
+    "modal": {
+      "update_title": "Update Category",
+      "new_title": "New Taxonomy Entry",
+      "name_label": "Category Name",
+      "slug_label": "Slug (URL path)",
+      "cancel": "Cancel",
+      "update_button": "Update Registry",
+      "confirm_button": "Confirm Entry"
+    }
+  },
+  "settings": {
+    "title": "Global Configuration",
+    "subtitle": "Platform Administration",
+    "save_button": "Save Changes",
+    "saved": "Saved",
+    "description": "Adjust your platform preferences and operational parameters.",
+    "sections": {
+      "general": "General Info",
+      "gallery": "Gallery Config",
+      "security": "Security",
+      "notifications": "Notifications",
+      "database": "System & Data"
+    },
+    "general": {
+      "gallery_name": "Gallery Name",
+      "primary_contact": "Primary Contact",
+      "status": "Operational Status",
+      "active": "Active",
+      "active_desc": "Accepting orders and visitors",
+      "maintenance": "Maintenance",
+      "maintenance_desc": "Exhibition mode only"
+    },
+    "gallery": {
+      "theme": "Visual Theme",
+      "grid": "Catalog Grid Columns",
+      "logo_favicon": "Favicon & Logo",
+      "logo_desc": "Standardized across all collection pages",
+      "replace": "Replace",
+      "themes": {
+        "classic": "Classic Paper",
+        "modern": "Modern Ink",
+        "minimalist": "Minimalist"
+      },
+      "grid_options": {
+        "spacious": "2 Columns (Spacious)",
+        "balanced": "3 Columns (Balanced)",
+        "dense": "4 Columns (Dense)"
+      }
+    },
+    "security": {
+      "two_factor": "Two-Factor Authentication",
+      "two_factor_desc": "Enhance your staff account security by requiring an authentication token at sign-in.",
+      "configure_2fa": "Configure 2FA",
+      "audit_logs": "Audit Logs",
+      "audit_logs_desc": "Track all administrative changes and system access",
+      "view_history": "View History",
+      "ip_whitelisting": "IP Whitelisting",
+      "ip_whitelisting_desc": "Restrict dashboard access to specific office addresses",
+      "manage_ips": "Manage IPs"
+    },
+    "coming_soon": "Advanced {{section}} controls are currently being provisioned..."
+  },
+  "login": {
+    "hero_text": "Curating the finest traditions of Japanese craftsmanship for a modern world.",
+    "locations": "Tokyo • Kyoto • Osaka",
+    "title": "Welcome Back",
+    "subtitle": "Please sign in to access the administration portal.",
+    "email_label": "Email Address",
+    "email_placeholder": "name@kizuna-gallery.jp",
+    "password_label": "Password",
+    "password_placeholder": "••••••••",
+    "forgot_password": "Forgot?",
+    "authenticate_button": "Authenticate",
+    "footer_text_line1": "If you have issues accessing your account,",
+    "footer_text_line2": "contact the <0>Systems Department</0>.",
+    "errors": {
+      "access_denied": "Access denied. Admin privileges required.",
+      "verify_failed": "Failed to verify account permissions.",
+      "connection_error": "A connection error occurred. Please check your network.",
+      "invalid_credentials": "Invalid credentials. Please try again."
+    }
+  },
+  "common": {
+    "search": "Search artifacts, orders, or staff...",
+    "view_public": "View Public Site",
+    "loading": "Synchronizing Registry...",
+    "admin_core": "KIZUNA Administrative Core",
+    "error": "Error",
+    "success": "Success",
+    "authenticating": "Authenticating with KIZUNA systems...",
+    "edit": "Edit",
+    "delete": "Delete",
+    "loading_logistics": "Synchronizing logistics..."
+  }
+}

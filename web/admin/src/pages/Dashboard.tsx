@@ -38,6 +38,7 @@ import {
 } from 'recharts';
 import { apiFetch } from '../lib/api';
 import { cn } from '../lib/utils';
+import { useTranslation } from 'react-i18next';
 
 function StatCard({ title, value, icon: Icon, trend, isCurrency, delay = 0 }: any) {
   return (
@@ -100,6 +101,7 @@ function QuickAction({ title, icon: Icon, link, delay = 0 }: any) {
 const COLORS = ['#99051D', '#1C1B1B', '#F5F2ED', '#D9D9D9', '#8C8C8C'];
 
 export default function Dashboard() {
+  const { t } = useTranslation();
   const [stats, setStats] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
@@ -128,8 +130,8 @@ export default function Dashboard() {
           <div className="absolute inset-0 blur-xl bg-brand-red/20 animate-pulse rounded-full"></div>
         </div>
         <div className="flex flex-col items-center">
-          <p className="text-lg font-serif italic text-brand-ink">Synchronizing Registry...</p>
-          <p className="text-[10px] uppercase tracking-[0.3em] text-brand-ink/30 mt-2 font-bold">KIZUNA Administrative Core</p>
+          <p className="text-lg font-serif italic text-brand-ink">{t('common.loading')}</p>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-brand-ink/30 mt-2 font-bold">{t('common.admin_core')}</p>
         </div>
       </div>
     );
@@ -142,17 +144,17 @@ export default function Dashboard() {
         <div>
           <div className="flex items-center gap-3 mb-4">
             <Activity size={16} className="text-brand-red" />
-            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-red">Operational Overview</span>
+            <span className="text-[10px] font-bold uppercase tracking-[0.4em] text-brand-red">{t('dashboard.overview')}</span>
           </div>
-          <h1 className="text-5xl font-serif font-bold text-brand-ink mb-4">Registry Insight</h1>
+          <h1 className="text-5xl font-serif font-bold text-brand-ink mb-4">{t('dashboard.title')}</h1>
           <p className="text-brand-ink/40 font-serif italic max-w-lg">
-            Welcome to the KIZUNA administrative core. Monitoring artifact flows, collector engagement, and acquisition metrics in real-time.
+            {t('dashboard.description')}
           </p>
         </div>
         <div className="flex items-center gap-4 bg-white border border-brand-clay p-4 rounded-sm shadow-sm">
           <Calendar size={18} className="text-brand-ink/30" />
           <div className="text-right">
-            <p className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Current Period</p>
+            <p className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('dashboard.current_period')}</p>
             <p className="text-xs font-bold text-brand-ink">{new Date().toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</p>
           </div>
         </div>
@@ -161,7 +163,7 @@ export default function Dashboard() {
       {/* StatCards Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard 
-          title="Total Acquisitions" 
+          title={t('dashboard.stats.total_acquisitions')} 
           value={stats?.total_revenue || 0} 
           icon={TrendingUp} 
           trend="+12.5%" 
@@ -169,21 +171,21 @@ export default function Dashboard() {
           delay={0.1}
         />
         <StatCard 
-          title="Active Collectors" 
+          title={t('dashboard.stats.active_collectors')} 
           value={stats?.total_users || 0} 
           icon={Users} 
           trend="+5.2%" 
           delay={0.2}
         />
         <StatCard 
-          title="Total Trades" 
+          title={t('dashboard.stats.total_trades')} 
           value={stats?.total_orders || 0} 
           icon={ShoppingBag} 
           trend="+8.1%" 
           delay={0.3}
         />
         <StatCard 
-          title="Archive Size" 
+          title={t('dashboard.stats.archive_size')} 
           value={stats?.total_products || 0} 
           icon={Package} 
           delay={0.4}
@@ -202,9 +204,9 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <Layers size={14} className="text-brand-red" />
-                <h2 className="text-3xl font-serif font-bold text-brand-ink">Trade Performance</h2>
+                <h2 className="text-3xl font-serif font-bold text-brand-ink">{t('dashboard.charts.trade_performance')}</h2>
               </div>
-              <p className="text-sm text-brand-ink/40 font-serif italic">Weekly acquisition and sales metrics analysis.</p>
+              <p className="text-sm text-brand-ink/40 font-serif italic">{t('dashboard.charts.trade_description')}</p>
             </div>
           </div>
           
@@ -270,9 +272,9 @@ export default function Dashboard() {
           <div className="mb-10">
             <div className="flex items-center gap-3 mb-2">
               <Tag size={14} className="text-brand-red" />
-              <h2 className="text-2xl font-serif font-bold text-brand-ink">Collection Shares</h2>
+              <h2 className="text-2xl font-serif font-bold text-brand-ink">{t('dashboard.charts.collection_shares')}</h2>
             </div>
-            <p className="text-xs text-brand-ink/40 font-serif italic">Revenue distribution by category.</p>
+            <p className="text-xs text-brand-ink/40 font-serif italic">{t('dashboard.charts.collection_description')}</p>
           </div>
 
           <div className="h-[250px] w-full">
@@ -330,9 +332,9 @@ export default function Dashboard() {
             <div>
               <div className="flex items-center gap-3 mb-2">
                 <Star size={14} className="text-brand-red" />
-                <h2 className="text-3xl font-serif font-bold text-brand-ink">Top Artifacts</h2>
+                <h2 className="text-3xl font-serif font-bold text-brand-ink">{t('dashboard.artifacts.top_artifacts')}</h2>
               </div>
-              <p className="text-sm text-brand-ink/40 font-serif italic">Most coveted pieces in the current collection.</p>
+              <p className="text-sm text-brand-ink/40 font-serif italic">{t('dashboard.artifacts.top_description')}</p>
             </div>
           </div>
 
@@ -359,7 +361,7 @@ export default function Dashboard() {
                   <p className="text-[10px] text-brand-ink/40 font-serif italic mb-2">{product.category_name}</p>
                   <div className="flex items-center gap-4">
                     <span className="text-xs font-bold text-brand-ink">${parseFloat(product.price).toLocaleString()}</span>
-                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-sm">{product.sales} Sales</span>
+                    <span className="text-[10px] text-emerald-600 font-bold bg-emerald-50 px-2 py-0.5 rounded-sm">{product.sales} {t('dashboard.artifacts.sales')}</span>
                   </div>
                 </div>
               </motion.div>
@@ -378,11 +380,11 @@ export default function Dashboard() {
               <div>
                 <div className="flex items-center gap-4 mb-8">
                   <Zap size={16} className="text-brand-red animate-pulse" />
-                  <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-brand-red">System Core</p>
+                  <p className="text-[10px] uppercase tracking-[0.4em] font-bold text-brand-red">{t('dashboard.system.core')}</p>
                 </div>
-                <h2 className="text-4xl font-serif mb-6 italic leading-tight tracking-tight">Mamoru Monitor</h2>
+                <h2 className="text-4xl font-serif mb-6 italic leading-tight tracking-tight">{t('dashboard.system.monitor')}</h2>
                 <p className="text-brand-paper/40 text-sm font-serif leading-relaxed mb-10">
-                  The internal engine is operating at peak efficiency. All artifact registries are synchronized.
+                  {t('dashboard.system.description')}
                 </p>
                 
                 <div className="space-y-4">
@@ -391,8 +393,8 @@ export default function Dashboard() {
                       <div className="text-3xl font-serif text-brand-red">衛</div>
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-1">Guardian</p>
-                      <p className="text-[10px] text-white/30 italic font-serif">Registry verified</p>
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-1">{t('dashboard.system.guardian')}</p>
+                      <p className="text-[10px] text-white/30 italic font-serif">{t('dashboard.system.registry_verified')}</p>
                     </div>
                   </div>
                   
@@ -401,8 +403,8 @@ export default function Dashboard() {
                       <Database size={18} className="text-brand-paper/40" />
                     </div>
                     <div>
-                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-1">Repository</p>
-                      <p className="text-[10px] text-white/30 italic font-serif">SQLite Connected</p>
+                      <p className="text-[10px] font-bold tracking-[0.2em] uppercase mb-1">{t('dashboard.system.repository')}</p>
+                      <p className="text-[10px] text-white/30 italic font-serif">{t('dashboard.system.sqlite_connected')}</p>
                     </div>
                   </div>
                 </div>
@@ -411,7 +413,7 @@ export default function Dashboard() {
               <div className="mt-10 pt-8 border-t border-white/5 flex justify-between items-center">
                 <div className="flex items-center gap-2">
                   <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full"></div>
-                  <span className="text-[10px] font-mono text-white/40 italic">Secure Session</span>
+                  <span className="text-[10px] font-mono text-white/40 italic">{t('dashboard.system.secure_session')}</span>
                 </div>
                 <ArrowUpRight size={18} className="text-white/20 group-hover:text-brand-red transition-colors" />
               </div>
@@ -421,10 +423,10 @@ export default function Dashboard() {
           </motion.div>
 
           <div className="space-y-4">
-            <p className="text-[10px] uppercase font-bold text-brand-ink/30 tracking-[0.3em] ml-2 mb-4">Quick Logistics</p>
-            <QuickAction title="Catalog New Artifact" icon={Plus} link="/inventory" delay={0.7} />
-            <QuickAction title="Review Trades" icon={ShoppingBag} link="/orders" delay={0.8} />
-            <QuickAction title="Collector Management" icon={Users} link="/users" delay={0.9} />
+            <p className="text-[10px] uppercase font-bold text-brand-ink/30 tracking-[0.3em] ml-2 mb-4">{t('dashboard.logistics.quick')}</p>
+            <QuickAction title={t('dashboard.logistics.catalog')} icon={Plus} link="/inventory" delay={0.7} />
+            <QuickAction title={t('dashboard.logistics.review')} icon={ShoppingBag} link="/orders" delay={0.8} />
+            <QuickAction title={t('dashboard.logistics.management')} icon={Users} link="/users" delay={0.9} />
           </div>
         </div>
       </div>
@@ -440,15 +442,15 @@ export default function Dashboard() {
           <div className="relative z-10">
             <div className="flex items-center gap-3 mb-2">
               <div className="w-1 h-4 bg-brand-ink"></div>
-              <h2 className="text-3xl font-serif font-bold text-brand-ink">Recent Consignments</h2>
+              <h2 className="text-3xl font-serif font-bold text-brand-ink">{t('dashboard.logistics.recent')}</h2>
             </div>
-            <p className="text-sm text-brand-ink/40 font-serif italic">Reviewing the latest high-value acquisitions and trades.</p>
+            <p className="text-sm text-brand-ink/40 font-serif italic">{t('dashboard.logistics.recent_description')}</p>
           </div>
           <Link 
             to="/orders"
             className="relative z-10 bg-white border border-brand-clay text-brand-ink px-10 py-4 rounded-sm text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-brand-ink hover:text-white transition-all shadow-sm hover:shadow-xl active:scale-95"
           >
-            Access Logistics Archive
+            {t('dashboard.logistics.access_archive')}
           </Link>
           <div className="absolute top-0 right-0 text-[10rem] font-serif font-bold text-brand-clay/5 leading-none translate-x-1/4 -translate-y-1/4 pointer-events-none">録</div>
         </div>
@@ -457,11 +459,11 @@ export default function Dashboard() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-brand-paper/30 border-b border-brand-clay">
-                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Registry ID</th>
-                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Collector Identity</th>
-                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Valuation</th>
-                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Status Registry</th>
-                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40 text-right">Logged Date</th>
+                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('dashboard.table.id')}</th>
+                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('dashboard.table.collector')}</th>
+                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('dashboard.table.valuation')}</th>
+                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('dashboard.table.status')}</th>
+                <th className="px-12 py-6 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40 text-right">{t('dashboard.table.date')}</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-brand-clay/40">
@@ -499,7 +501,7 @@ export default function Dashboard() {
                           order.status === 'delivered' ? "bg-emerald-500" : 
                           order.status === 'cancelled' ? "bg-brand-red" : "bg-amber-500 animate-pulse"
                         )}></div>
-                        {order.status}
+                        {t(`orders.status.${order.status}`)}
                       </span>
                     </td>
                     <td className="px-12 py-8 text-right">
@@ -515,7 +517,7 @@ export default function Dashboard() {
                   <td colSpan={5} className="px-12 py-32 text-center">
                     <div className="flex flex-col items-center gap-4 text-brand-ink/20">
                       <ShoppingBag size={48} strokeWidth={1} />
-                      <p className="font-serif italic text-2xl">The consignment archive is currently empty.</p>
+                      <p className="font-serif italic text-2xl">{t('dashboard.table.empty')}</p>
                     </div>
                   </td>
                 </tr>

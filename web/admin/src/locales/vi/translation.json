@@ -1,0 +1,364 @@
+{
+  "nav": {
+    "dashboard": "Bảng điều khiển",
+    "inventory": "Kho hàng",
+    "categories": "Danh mục",
+    "orders": "Đơn hàng",
+    "users": "Người dùng",
+    "staff": "Nhân viên & Vai trò",
+    "settings": "Cài đặt"
+  },
+  "dashboard": {
+    "title": "Phân tích Đăng ký",
+    "overview": "Tổng quan vận hành",
+    "description": "Chào mừng bạn đến với lõi quản trị KIZUNA. Theo dõi luồng hiện vật, sự tham gia của nhà sưu tập và các chỉ số mua lại trong thời gian thực.",
+    "current_period": "Giai đoạn hiện tại",
+    "stats": {
+      "total_acquisitions": "Tổng giá trị mua lại",
+      "active_collectors": "Nhà sưu tập hoạt động",
+      "total_trades": "Tổng số giao dịch",
+      "archive_size": "Quy mô lưu trữ"
+    },
+    "charts": {
+      "trade_performance": "Hiệu suất giao dịch",
+      "collection_shares": "Tỷ trọng bộ sưu tập",
+      "trade_description": "Phân tích chỉ số mua lại và doanh số hàng tuần.",
+      "collection_description": "Phân bổ doanh thu theo danh mục."
+    },
+    "artifacts": {
+      "top_artifacts": "Hiện vật hàng đầu",
+      "top_description": "Những tác phẩm được săn đón nhất trong bộ sưu tập hiện tại.",
+      "sales": "Đã bán"
+    },
+    "system": {
+      "core": "Lõi hệ thống",
+      "monitor": "Giám sát Mamoru",
+      "description": "Động cơ nội bộ đang hoạt động với hiệu suất cao nhất. Tất cả các đăng ký hiện vật đã được đồng bộ hóa.",
+      "guardian": "Người bảo vệ",
+      "registry_verified": "Đăng ký đã xác minh",
+      "repository": "Kho lưu trữ",
+      "sqlite_connected": "Đã kết nối SQLite",
+      "secure_session": "Phiên bảo mật"
+    },
+    "logistics": {
+      "quick": "Logistics nhanh",
+      "catalog": "Đăng ký hiện vật mới",
+      "review": "Xem lại giao dịch",
+      "management": "Quản lý nhà sưu tập",
+      "recent": "Lô hàng ký gửi gần đây",
+      "recent_description": "Xem lại các giao dịch và mua lại có giá trị cao nhất gần đây.",
+      "access_archive": "Truy cập kho lưu trữ Logistics"
+    },
+    "table": {
+      "id": "ID Đăng ký",
+      "collector": "Danh tính nhà sưu tập",
+      "valuation": "Định giá",
+      "status": "Trạng thái",
+      "date": "Ngày ghi nhận",
+      "empty": "Kho lưu trữ ký gửi hiện đang trống."
+    }
+  },
+  "inventory": {
+    "title": "Lưu trữ Hiện vật",
+    "subtitle": "Quản lý Kho hàng",
+    "description": "Duy trì và quản lý đăng ký kỹ thuật số của các hiện vật thủ công Nhật Bản.",
+    "add_button": "Tiếp nhận mới",
+    "search_placeholder": "Tìm kiếm bộ sưu tập theo tên, ID hoặc nghệ nhân...",
+    "loading": "Đang lập danh mục bộ sưu tập...",
+    "confirm_delete": "Bạn có chắc chắn muốn gỡ bỏ hiện vật này không?",
+    "errors": {
+      "load_failed": "Không thể tải hiện vật.",
+      "fetch_error": "Đã xảy ra lỗi khi lấy dữ liệu."
+    },
+    "table": {
+      "artifact": "Chi tiết Hiện vật",
+      "reference": "Tham chiếu",
+      "classification": "Phân loại",
+      "valuation": "Định giá",
+      "logistics": "Hậu cần",
+      "actions": "Thao tác",
+      "unknown_artisan": "Nghệ nhân không xác định",
+      "in_storage": "trong kho",
+      "depleted": "HẾT HÀNG",
+      "empty": "Không có hiện vật nào khớp với tìm kiếm của bạn...",
+      "refine": "Chỉnh sửa đăng ký",
+      "decommission": "Gỡ bỏ"
+    },
+    "modal": {
+      "new_title": "Mục phân loại mới",
+      "update_title": "Chỉnh sửa đăng ký",
+      "id_label": "Mã tham chiếu đăng ký",
+      "category_label": "Phân loại",
+      "category_placeholder": "Chọn phân loại",
+      "name_label": "Tên gọi hiện vật",
+      "attributes_label": "Thuộc tính bộ sưu tập",
+      "attributes": {
+        "featured": "Được giám tuyển",
+        "new": "Gần đây",
+        "limited": "Hạn chế",
+        "cheap": "Dễ tiếp cận"
+      },
+      "price_label": "Định giá (USD)",
+      "stock_label": "Mức tồn kho hiện tại",
+      "brand_label": "Nghệ nhân / Thương hiệu",
+      "location_label": "Vị trí xưởng",
+      "image_label": "Tài liệu đăng ký hình ảnh",
+      "description_label": "Mô tả chi tiết",
+      "steps": {
+        "identity": "Danh tính",
+        "logistics": "Hậu cần",
+        "imagery": "Hình ảnh",
+        "narrative": "Mô tả"
+      },
+      "next": "Tiếp theo",
+      "back": "Quay lại",
+      "submit": "Hoàn tất đăng ký",
+      "cancel": "Hủy",
+      "finalize": "Hoàn tất đăng ký",
+      "confirm": "Xác nhận tiếp nhận",
+      "prev": "Quay lại",
+      "image_update": "Cập nhật hình ảnh đăng ký",
+      "drop_asset": "Thả tài sản hình ảnh vào đây",
+      "click_browse": "hoặc nhấp để duyệt kho lưu trữ cục bộ",
+      "description_title": "Mô tả Lịch sử & Kỹ thuật",
+      "description_help": "Mô tả này cung cấp bối cảnh thiết yếu cho Trợ lý Bán hàng AI.",
+      "description_placeholder": "Chi tiết về tay nghề, lựa chọn vật liệu, dòng dõi lịch sử và ý nghĩa văn hóa của tác phẩm này..."
+    }
+  },
+  "orders": {
+    "title": "Theo dõi ký gửi",
+    "subtitle": "Hoàn tất đơn hàng",
+    "total_active": "Tổng số đang hoạt động",
+    "search_placeholder": "Tìm kiếm theo ID hoặc email...",
+    "all_statuses": "Tất cả trạng thái",
+    "transactions_found": "giao dịch được tìm thấy",
+    "status": {
+      "pending": "Chờ xử lý",
+      "processing": "Đang xử lý",
+      "shipped": "Đang giao",
+      "delivered": "Đã giao",
+      "cancelled": "Đã hủy"
+    },
+    "errors": {
+      "load_failed": "Tải dữ liệu vận chuyển thất bại.",
+      "fetch_error": "Đã xảy ra lỗi khi lấy thông tin đơn hàng.",
+      "update_failed": "Cập nhật đơn hàng thất bại"
+    },
+    "table": {
+      "id": "Mã đơn hàng",
+      "customer": "Khách hàng",
+      "date": "Ngày",
+      "status": "Trạng thái",
+      "amount": "Số tiền",
+      "actions": "Thao tác",
+      "guest": "Khách",
+      "empty": "Không tìm thấy đơn hàng phù hợp với tiêu chí của bạn..."
+    },
+    "modal": {
+      "title": "Chi tiết đơn hàng",
+      "placed_on": "Đặt lúc",
+      "customer_info": "Thông tin khách hàng",
+      "shipping_logistics": "Hậu cần vận chuyển",
+      "payment_method": "Phương thức thanh toán",
+      "items": "Hiện vật ký gửi",
+      "verification": "Xác minh thanh toán",
+      "fulfillment": "Trạng thái hoàn tất đơn hàng",
+      "email": "Địa chỉ Email",
+      "phone": "Số điện thoại liên hệ",
+      "address": "Địa chỉ giao hàng",
+      "transaction_channel": "Kênh giao dịch",
+      "total_value": "Tổng giá trị ký gửi",
+      "verify_help": "Vui lòng kiểm tra kỹ biên lai đã tải lên. Xác minh rằng số tiền khớp với tổng giá trị ký gửi trước khi tiến hành hoàn tất đơn hàng.",
+      "admin_notes": "Ghi chú quản trị",
+      "admin_notes_placeholder": "Ghi lại chi tiết xác minh, mã giao dịch hoặc vấn đề...",
+      "verify_button": "Xác minh & Xử lý",
+      "save_notes": "Lưu ghi chú",
+      "view_artifact": "Xem toàn bộ hiện vật",
+      "no_receipt": "Chưa có biên lai thanh toán nào được tải lên cho giao dịch này.",
+      "updating": "Đang cập nhật...",
+      "table": {
+        "product": "Sản phẩm",
+        "qty": "SL",
+        "price": "Giá",
+        "total": "Tổng"
+      }
+    }
+  },
+  "users": {
+    "title": "Sổ đăng ký nhà sưu tập",
+    "subtitle": "Quan hệ khách hàng",
+    "search_placeholder": "Tìm kiếm theo tên, email hoặc tên người dùng...",
+    "loading": "Đang truy vấn sổ đăng ký nhà sưu tập...",
+    "confirm_delete": "Bạn có chắc chắn muốn xóa hồ sơ nhà sưu tập này không? Hành động này không thể hoàn tác.",
+    "error_load": "Không thể tải hồ sơ khách hàng.",
+    "error_delete": "Không thể xóa hồ sơ nhà sưu tập.",
+    "table": {
+      "collector": "Nhà sưu tập",
+      "contact": "Thông tin liên hệ",
+      "location": "Địa điểm",
+      "member_since": "Thành viên từ",
+      "actions": "Thao tác",
+      "not_provided": "Chưa cung cấp",
+      "empty": "Không tìm thấy nhà sưu tập nào khớp với tìm kiếm của bạn."
+    },
+    "modal": {
+      "edit_title": "Cập nhật hồ sơ nhà sưu tập",
+      "first_name": "Tên",
+      "last_name": "Họ",
+      "email": "Email",
+      "phone": "Điện thoại",
+      "address": "Địa chỉ",
+      "cancel": "Hủy",
+      "update_button": "Cập nhật sổ đăng ký"
+    }
+  },
+  "staff": {
+    "title": "Nhân viên & Giám tuyển",
+    "subtitle": "Đội ngũ nội bộ",
+    "add_button": "Thêm nhân viên mới",
+    "search_placeholder": "Tìm kiếm thành viên đội ngũ...",
+    "loading": "Đang tập hợp đội ngũ giám tuyển...",
+    "confirm_delete": "Bạn có chắc chắn muốn xóa nhân viên này không? Hành động này không thể hoàn tác.",
+    "error_load": "Không thể tải danh mục đội ngũ nội bộ.",
+    "error_delete": "Không thể xóa nhân viên.",
+    "table": {
+      "curator": "Giám tuyển",
+      "permission": "Cấp độ quyền hạn",
+      "contact": "Liên hệ",
+      "joined": "Ngày gia nhập",
+      "actions": "Thao tác",
+      "empty": "Không tìm thấy nhân viên nào."
+    },
+    "roles": {
+      "head": "Giám tuyển trưởng",
+      "staff": "Giám tuyển viên"
+    },
+    "modal": {
+      "update_title": "Cập nhật quyền hạn nhân viên",
+      "new_title": "Đăng ký thành viên nhân viên mới",
+      "username": "Tên người dùng",
+      "first_name": "Tên",
+      "last_name": "Họ",
+      "email": "Email",
+      "password_new": "Mật khẩu mới (tùy chọn)",
+      "password_temp": "Mật khẩu tạm thời",
+      "password_placeholder": "Để trống nếu muốn giữ nguyên",
+      "head_permission": "Quyền Giám tuyển trưởng",
+      "head_description": "Toàn quyền quản trị hệ thống",
+      "cancel": "Hủy",
+      "update_button": "Cập nhật sổ đăng ký nhân viên",
+      "confirm_button": "Xác nhận giám tuyển mới"
+    }
+  },
+  "categories": {
+    "title": "Phân loại",
+    "subtitle": "Cấu trúc",
+    "add_button": "Danh mục mới",
+    "search_placeholder": "Tìm kiếm danh mục...",
+    "loading": "Đang sắp xếp danh mục...",
+    "confirm_delete": "Bạn có chắc chắn muốn xóa danh mục này không? Điều này có thể ảnh hưởng đến các sản phẩm đang sử dụng nó.",
+    "error_load": "Không thể tải danh mục.",
+    "error_delete": "Không thể xóa danh mục. Nó có thể đang được sử dụng.",
+    "table": {
+      "name": "Tên danh mục",
+      "slug": "Slug",
+      "products": "Sản phẩm",
+      "actions": "Thao tác",
+      "empty": "Chưa có danh mục nào được định nghĩa."
+    },
+    "items_count": "{{count}} mục",
+    "modal": {
+      "update_title": "Cập nhật danh mục",
+      "new_title": "Mục phân loại mới",
+      "name_label": "Tên danh mục",
+      "slug_label": "Slug (đường dẫn URL)",
+      "cancel": "Hủy",
+      "update_button": "Cập nhật sổ đăng ký",
+      "confirm_button": "Xác nhận mục"
+    }
+  },
+  "settings": {
+    "title": "Cấu hình toàn cầu",
+    "subtitle": "Quản trị nền tảng",
+    "save_button": "Lưu thay đổi",
+    "saved": "Đã lưu",
+    "description": "Điều chỉnh sở thích nền tảng và các tham số vận hành của bạn.",
+    "sections": {
+      "general": "Thông tin chung",
+      "gallery": "Cấu hình bộ sưu tập",
+      "security": "Bảo mật",
+      "notifications": "Thông báo",
+      "database": "Hệ thống & Dữ liệu"
+    },
+    "general": {
+      "gallery_name": "Tên bộ sưu tập",
+      "primary_contact": "Liên hệ chính",
+      "status": "Trạng thái vận hành",
+      "active": "Hoạt động",
+      "active_desc": "Chấp nhận đơn hàng và khách truy cập",
+      "maintenance": "Bảo trì",
+      "maintenance_desc": "Chỉ chế độ triển lãm"
+    },
+    "gallery": {
+      "theme": "Chủ đề hình ảnh",
+      "grid": "Số cột lưới danh mục",
+      "logo_favicon": "Favicon & Logo",
+      "logo_desc": "Tiêu chuẩn hóa trên tất cả các trang bộ sưu tập",
+      "replace": "Thay thế",
+      "themes": {
+        "classic": "Giấy cổ điển",
+        "modern": "Mực hiện đại",
+        "minimalist": "Tối giản"
+      },
+      "grid_options": {
+        "spacious": "2 Cột (Rộng rãi)",
+        "balanced": "3 Cột (Cân bằng)",
+        "dense": "4 Cột (Dày đặc)"
+      }
+    },
+    "security": {
+      "two_factor": "Xác thực hai yếu tố",
+      "two_factor_desc": "Tăng cường bảo mật tài khoản nhân viên bằng cách yêu cầu mã xác thực khi đăng nhập.",
+      "configure_2fa": "Cấu hình 2FA",
+      "audit_logs": "Nhật ký kiểm tra",
+      "audit_logs_desc": "Theo dõi tất cả các thay đổi quản trị và truy cập hệ thống",
+      "view_history": "Xem lịch sử",
+      "ip_whitelisting": "Danh sách trắng IP",
+      "ip_whitelisting_desc": "Hạn chế quyền truy cập bảng điều khiển cho các địa chỉ văn phòng cụ thể",
+      "manage_ips": "Quản lý IP"
+    },
+    "coming_soon": "Các điều khiển {{section}} nâng cao hiện đang được chuẩn bị..."
+  },
+  "login": {
+    "hero_text": "Tuyển chọn những truyền thống tinh xảo nhất của nghề thủ công Nhật Bản cho thế giới hiện đại.",
+    "locations": "Tokyo • Kyoto • Osaka",
+    "title": "Chào mừng trở lại",
+    "subtitle": "Vui lòng đăng nhập để truy cập cổng quản trị.",
+    "email_label": "Địa chỉ Email",
+    "email_placeholder": "name@kizuna-gallery.jp",
+    "password_label": "Mật khẩu",
+    "password_placeholder": "••••••••",
+    "forgot_password": "Quên?",
+    "authenticate_button": "Xác thực",
+    "footer_text_line1": "Nếu bạn gặp vấn đề khi truy cập tài khoản,",
+    "footer_text_line2": "hãy liên hệ với <0>Phòng Hệ thống</0>.",
+    "errors": {
+      "access_denied": "Truy cập bị từ chối. Cần có quyền quản trị.",
+      "verify_failed": "Không thể xác minh quyền tài khoản.",
+      "connection_error": "Đã xảy ra lỗi kết nối. Vui lòng kiểm tra mạng của bạn.",
+      "invalid_credentials": "Thông tin xác thực không hợp lệ. Vui lòng thử lại."
+    }
+  },
+  "common": {
+    "search": "Tìm kiếm hiện vật, đơn hàng, hoặc nhân viên...",
+    "view_public": "Xem trang công khai",
+    "loading": "Đang đồng bộ hóa đăng ký...",
+    "admin_core": "Lõi Quản trị KIZUNA",
+    "error": "Lỗi",
+    "success": "Thành công",
+    "authenticating": "Đang xác thực với hệ thống KIZUNA...",
+    "edit": "Sửa",
+    "delete": "Xóa",
+    "loading_logistics": "Đang đồng bộ hóa hậu cần..."
+  }
+}

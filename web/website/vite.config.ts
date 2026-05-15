@@ -19,7 +19,10 @@ export default defineConfig(({mode}) => {
       hmr: process.env.DISABLE_HMR !== 'true',
       proxy: {
         '/api': {
-          // In Docker: use service name 'backend' instead of 127.0.0.1
+          target: process.env.BACKEND_URL || 'http://backend:8000',
+          changeOrigin: true,
+        },
+        '/media': {
           target: process.env.BACKEND_URL || 'http://backend:8000',
           changeOrigin: true,
         }

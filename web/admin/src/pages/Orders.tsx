@@ -22,18 +22,20 @@ import {
   FileText
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { apiFetch } from '../lib/api';
 
-const STATUS_CONFIG: Record<string, { color: string, icon: any, label: string }> = {
-  'pending': { color: 'bg-yellow-500', icon: Clock, label: 'Pending' },
-  'processing': { color: 'bg-blue-500', icon: Loader2, label: 'Processing' },
-  'shipped': { color: 'bg-purple-500', icon: Truck, label: 'Shipped' },
-  'delivered': { color: 'bg-green-500', icon: CheckCircle, label: 'Delivered' },
-  'cancelled': { color: 'bg-red-500', icon: XCircle, label: 'Cancelled' }
+const STATUS_CONFIG: Record<string, { color: string, icon: any, key: string }> = {
+  'pending': { color: 'bg-yellow-500', icon: Clock, key: 'pending' },
+  'processing': { color: 'bg-blue-500', icon: Loader2, key: 'processing' },
+  'shipped': { color: 'bg-purple-500', icon: Truck, key: 'shipped' },
+  'delivered': { color: 'bg-green-500', icon: CheckCircle, key: 'delivered' },
+  'cancelled': { color: 'bg-red-500', icon: XCircle, key: 'cancelled' }
 };
 
 export default function Orders() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -55,10 +57,10 @@ export default function Orders() {
         setOrders(data);
         setError(null);
       } else {
-        setError('Failed to load logistics data.');
+        setError(t('orders.errors.load_failed'));
       }
     } catch (err) {
-      setError('An error occurred while fetching orders.');
+      setError(t('orders.errors.fetch_error'));
     } finally {
       setLoading(false);
     }
@@ -88,7 +90,7 @@ export default function Orders() {
           setSelectedOrder(updatedOrder);
         }
       } else {
-        alert('Failed to update order');
+        alert(t('orders.errors.update_failed'));
       }
     } catch (err) {
       console.error(err);
@@ -113,7 +115,7 @@ export default function Orders() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-brand-red" />
-        <p className="text-sm font-serif italic text-brand-ink/40">Synchronizing logistics...</p>
+        <p className="text-sm font-serif italic text-brand-ink/40">{t('common.loading_logistics')}</p>
       </div>
     );
   }
@@ -122,12 +124,12 @@ export default function Orders() {
     <div className="ma-spacing space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">Order Fulfillment</p>
-          <h1 className="text-4xl font-serif font-bold">Consignment Tracking</h1>
+          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">{t('orders.subtitle')}</p>
+          <h1 className="text-4xl font-serif font-bold">{t('orders.title')}</h1>
         </div>
         <div className="flex items-center gap-4">
           <div className="bg-white px-6 py-3 rounded-lg border border-brand-clay shadow-sm text-center min-w-[120px]">
-            <p className="text-[10px] uppercase text-brand-ink/40 font-bold mb-1">Total Active</p>
+            <p className="text-[10px] uppercase text-brand-ink/40 font-bold mb-1">{t('orders.total_active')}</p>
             <p className="text-2xl font-serif font-bold text-brand-red">{orders.filter(o => o.status !== 'delivered' && o.status !== 'cancelled').length}</p>
           </div>
         </div>
@@ -139,7 +141,7 @@ export default function Orders() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-ink/30" size={18} />
             <input 
               type="text" 
-              placeholder="Search by ID or email..." 
+              placeholder={t('orders.search_placeholder')} 
               className="w-full pl-10 pr-4 py-2 bg-white border border-brand-clay rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -151,15 +153,15 @@ export default function Orders() {
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
             >
-              <option value="all">All Statuses</option>
-              <option value="pending">Pending</option>
-              <option value="processing">Processing</option>
-              <option value="shipped">Shipped</option>
-              <option value="delivered">Delivered</option>
-              <option value="cancelled">Cancelled</option>
+              <option value="all">{t('orders.all_statuses')}</option>
+              <option value="pending">{t('orders.status.pending')}</option>
+              <option value="processing">{t('orders.status.processing')}</option>
+              <option value="shipped">{t('orders.status.shipped')}</option>
+              <option value="delivered">{t('orders.status.delivered')}</option>
+              <option value="cancelled">{t('orders.status.cancelled')}</option>
             </select>
             <p className="text-xs text-brand-ink/40 font-medium ml-2">
-              {filteredOrders.length} transactions found
+              {filteredOrders.length} {t('orders.transactions_found')}
             </p>
           </div>
         </div>
@@ -177,12 +179,12 @@ export default function Orders() {
             <table className="w-full text-left">
               <thead className="bg-brand-paper">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Order ID</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Customer</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Date</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Status</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Amount</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('orders.table.id')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('orders.table.customer')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('orders.table.date')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('orders.table.status')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('orders.table.amount')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50 text-right">{t('orders.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-clay">
@@ -204,7 +206,7 @@ export default function Orders() {
                           <p className="text-[10px] text-brand-ink/40 uppercase tracking-widest">{order.payment_method}</p>
                         </td>
                         <td className="px-6 py-4">
-                          <p className="text-sm font-semibold text-brand-ink">{order.user_details?.email || order.email || 'Guest'}</p>
+                          <p className="text-sm font-semibold text-brand-ink">{order.user_details?.email || order.email || t('orders.table.guest')}</p>
                           <p className="text-xs text-brand-ink/40">{order.user_details?.first_name} {order.user_details?.last_name}</p>
                         </td>
                         <td className="px-6 py-4">
@@ -217,7 +219,7 @@ export default function Orders() {
                             statusInfo.color
                           )}>
                             <statusInfo.icon size={10} className={order.status === 'processing' ? 'animate-spin' : ''} />
-                            {statusInfo.label}
+                            {t(`orders.status.${order.status}`)}
                           </div>
                         </td>
                         <td className="px-6 py-4 text-sm font-bold text-brand-ink">
@@ -243,7 +245,7 @@ export default function Orders() {
                     <td colSpan={6} className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center gap-2 text-brand-ink/30">
                         <ShoppingBag size={40} strokeWidth={1} />
-                        <p className="font-serif italic">No orders found matching your criteria...</p>
+                        <p className="font-serif italic">{t('orders.table.empty')}</p>
                       </div>
                     </td>
                   </tr>
@@ -276,10 +278,10 @@ export default function Orders() {
               <div className="px-8 py-6 border-b border-brand-clay flex justify-between items-center bg-brand-paper/30">
                 <div>
                   <div className="flex items-center gap-3 mb-1">
-                    <h2 className="text-2xl font-serif font-bold">Order Details</h2>
+                    <h2 className="text-2xl font-serif font-bold">{t('orders.modal.title')}</h2>
                     <span className="text-sm font-mono font-bold text-brand-red bg-brand-red/10 px-2 py-0.5 rounded">#{selectedOrder.id}</span>
                   </div>
-                  <p className="text-xs text-brand-ink/40 uppercase tracking-widest font-medium">Placed on {new Date(selectedOrder.created_at).toLocaleString()}</p>
+                  <p className="text-xs text-brand-ink/40 uppercase tracking-widest font-medium">{t('orders.modal.placed_on')} {new Date(selectedOrder.created_at).toLocaleString()}</p>
                 </div>
                 <button 
                   onClick={() => setIsModalOpen(false)}
@@ -297,20 +299,20 @@ export default function Orders() {
                     <section>
                       <div className="flex items-center gap-2 mb-4">
                         <ShieldCheck className="text-brand-red" size={18} />
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">Customer Information</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.customer_info')}</h3>
                       </div>
                       <div className="bg-brand-paper/30 p-4 rounded-xl border border-brand-clay space-y-3">
                         <div className="flex items-start gap-3">
                           <Mail size={16} className="text-brand-ink/30 mt-0.5" />
                           <div>
-                            <p className="text-[10px] uppercase font-bold text-brand-ink/40 mb-0.5">Email Address</p>
+                            <p className="text-[10px] uppercase font-bold text-brand-ink/40 mb-0.5">{t('orders.modal.email')}</p>
                             <p className="text-sm font-medium">{selectedOrder.user_details?.email || selectedOrder.email || 'N/A'}</p>
                           </div>
                         </div>
                         <div className="flex items-start gap-3">
                           <Phone size={16} className="text-brand-ink/30 mt-0.5" />
                           <div>
-                            <p className="text-[10px] uppercase font-bold text-brand-ink/40 mb-0.5">Contact Number</p>
+                            <p className="text-[10px] uppercase font-bold text-brand-ink/40 mb-0.5">{t('orders.modal.phone')}</p>
                             <p className="text-sm font-medium">{selectedOrder.shipping_phone || 'N/A'}</p>
                           </div>
                         </div>
@@ -320,10 +322,10 @@ export default function Orders() {
                     <section>
                       <div className="flex items-center gap-2 mb-4">
                         <MapPin className="text-brand-red" size={18} />
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">Shipping Logistics</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.shipping_logistics')}</h3>
                       </div>
                       <div className="bg-brand-paper/30 p-4 rounded-xl border border-brand-clay">
-                        <p className="text-[10px] uppercase font-bold text-brand-ink/40 mb-2">Delivery Address</p>
+                        <p className="text-[10px] uppercase font-bold text-brand-ink/40 mb-2">{t('orders.modal.address')}</p>
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">
                           {selectedOrder.shipping_address}
                         </p>
@@ -333,12 +335,12 @@ export default function Orders() {
                     <section>
                       <div className="flex items-center gap-2 mb-4">
                         <CreditCard className="text-brand-red" size={18} />
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">Payment Method</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.payment_method')}</h3>
                       </div>
                       <div className="bg-brand-paper/30 p-4 rounded-xl border border-brand-clay flex items-center justify-between">
                         <div>
                           <p className="text-sm font-bold text-brand-ink capitalize">{selectedOrder.payment_method?.replace('_', ' ')}</p>
-                          <p className="text-[10px] text-brand-ink/40 font-bold uppercase">Transaction Channel</p>
+                          <p className="text-[10px] text-brand-ink/40 font-bold uppercase">{t('orders.modal.transaction_channel')}</p>
                         </div>
                         <div className={cn(
                           "px-3 py-1 rounded-full text-[10px] font-bold text-white",
@@ -355,16 +357,16 @@ export default function Orders() {
                     <section>
                       <div className="flex items-center gap-2 mb-4">
                         <Package className="text-brand-red" size={18} />
-                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">Artifacts in Consignment</h3>
+                        <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.items')}</h3>
                       </div>
                       <div className="bg-white border border-brand-clay rounded-xl overflow-hidden shadow-sm">
                         <table className="w-full text-left text-sm">
                           <thead className="bg-brand-paper/50">
                             <tr>
-                              <th className="px-4 py-3 font-bold text-brand-ink/60">Product</th>
-                              <th className="px-4 py-3 font-bold text-brand-ink/60 text-center">Qty</th>
-                              <th className="px-4 py-3 font-bold text-brand-ink/60 text-right">Price</th>
-                              <th className="px-4 py-3 font-bold text-brand-ink/60 text-right">Total</th>
+                              <th className="px-4 py-3 font-bold text-brand-ink/60">{t('orders.modal.table.product')}</th>
+                              <th className="px-4 py-3 font-bold text-brand-ink/60 text-center">{t('orders.modal.table.qty')}</th>
+                              <th className="px-4 py-3 font-bold text-brand-ink/60 text-right">{t('orders.modal.table.price')}</th>
+                              <th className="px-4 py-3 font-bold text-brand-ink/60 text-right">{t('orders.modal.table.total')}</th>
                             </tr>
                           </thead>
                           <tbody className="divide-y divide-brand-clay">
@@ -388,7 +390,7 @@ export default function Orders() {
                           </tbody>
                           <tfoot className="bg-brand-paper/10">
                             <tr>
-                              <td colSpan={3} className="px-4 py-4 text-right font-serif italic text-brand-ink/60">Total Consignment Value</td>
+                              <td colSpan={3} className="px-4 py-4 text-right font-serif italic text-brand-ink/60">{t('orders.modal.total_value')}</td>
                               <td className="px-4 py-4 text-right text-lg font-serif font-bold text-brand-red">${parseFloat(selectedOrder.total_amount).toLocaleString()}</td>
                             </tr>
                           </tfoot>
@@ -400,19 +402,19 @@ export default function Orders() {
                       <section>
                         <div className="flex items-center gap-2 mb-4">
                           <FileText className="text-brand-red" size={18} />
-                          <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">Payment Verification</h3>
+                          <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.verification')}</h3>
                         </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                           <div className="space-y-4">
                             <p className="text-xs text-brand-ink/60 leading-relaxed font-serif italic">
-                              Please examine the uploaded receipt carefully. Verify that the amount matches the total value of the consignment before proceeding with fulfillment.
+                              {t('orders.modal.verify_help')}
                             </p>
                             <div className="space-y-2">
-                              <label className="text-[10px] uppercase font-bold text-brand-ink/40">Administrative Notes</label>
+                              <label className="text-[10px] uppercase font-bold text-brand-ink/40">{t('orders.modal.admin_notes')}</label>
                               <textarea 
                                 value={adminNotes}
                                 onChange={(e) => setAdminNotes(e.target.value)}
-                                placeholder="Record verification details, transaction IDs, or issues..."
+                                placeholder={t('orders.modal.admin_notes_placeholder')}
                                 className="w-full h-32 p-3 text-sm bg-brand-paper/20 border border-brand-clay rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all resize-none"
                               />
                             </div>
@@ -425,14 +427,14 @@ export default function Orders() {
                                 })}
                                 className="flex-1 bg-brand-ink text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-red transition-all disabled:opacity-50 disabled:bg-brand-clay"
                               >
-                                {isUpdating ? 'Updating...' : 'Verify & Process'}
+                                {isUpdating ? t('orders.modal.updating') : t('orders.modal.verify_button')}
                               </button>
                               <button 
                                 disabled={isUpdating}
                                 onClick={() => handleUpdateOrder(selectedOrder.id, { admin_notes: adminNotes })}
                                 className="px-4 bg-brand-paper border border-brand-clay text-brand-ink py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:border-brand-ink transition-all"
                               >
-                                Save Notes
+                                {t('orders.modal.save_notes')}
                               </button>
                             </div>
                           </div>
@@ -452,13 +454,13 @@ export default function Orders() {
                                   className="absolute inset-0 bg-brand-ink/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-xs font-bold uppercase tracking-widest gap-2"
                                 >
                                   <ExternalLink size={16} />
-                                  View Full Artifact
+                                  {t('orders.modal.view_artifact')}
                                 </a>
                               </>
                             ) : (
                               <div className="absolute inset-0 flex flex-col items-center justify-center p-8 text-center gap-2">
                                 <FileText size={32} className="text-brand-ink/20" />
-                                <p className="text-xs font-serif italic text-brand-ink/40">No payment receipt has been uploaded for this transaction yet.</p>
+                                <p className="text-xs font-serif italic text-brand-ink/40">{t('orders.modal.no_receipt')}</p>
                               </div>
                             )}
                           </div>
@@ -472,7 +474,7 @@ export default function Orders() {
                           <div className="space-y-4 flex-1">
                             <div className="flex items-center gap-2">
                               <ShieldCheck size={18} className="text-green-600" />
-                              <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">Order Fulfillment Status</h3>
+                              <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.fulfillment')}</h3>
                             </div>
                             <div className="flex flex-wrap gap-2">
                               {Object.keys(STATUS_CONFIG).map(s => (
@@ -486,7 +488,7 @@ export default function Orders() {
                                       : "bg-white text-brand-ink/60 border-brand-clay hover:border-brand-ink"
                                   )}
                                 >
-                                  {s}
+                                  {t(`orders.status.${s}`)}
                                 </button>
                               ))}
                             </div>

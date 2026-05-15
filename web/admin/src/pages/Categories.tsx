@@ -11,8 +11,10 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../lib/api';
+import { useTranslation } from 'react-i18next';
 
 export default function Categories() {
+  const { t } = useTranslation();
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -33,10 +35,10 @@ export default function Categories() {
         setCategories(data);
         setError(null);
       } else {
-        setError('Failed to load categories.');
+        setError(t('categories.error_load'));
       }
     } catch (err) {
-      setError('An error occurred while fetching data.');
+      setError(t('common.error_occurred'));
     } finally {
       setLoading(false);
     }
@@ -87,13 +89,13 @@ export default function Categories() {
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('Are you sure you want to remove this category? This might affect products using it.')) {
+    if (window.confirm(t('categories.confirm_delete'))) {
       try {
         const response = await apiFetch(`/categories/${id}/`, { method: 'DELETE' });
         if (response.ok) {
           fetchCategories();
         } else {
-          alert('Failed to delete category. It might be in use.');
+          alert(t('categories.error_delete'));
         }
       } catch (err) {
         console.error('Delete error:', err);
@@ -109,7 +111,7 @@ export default function Categories() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-brand-red" />
-        <p className="text-sm font-serif italic text-brand-ink/40">Organizing categories...</p>
+        <p className="text-sm font-serif italic text-brand-ink/40">{t('categories.loading')}</p>
       </div>
     );
   }
@@ -118,15 +120,15 @@ export default function Categories() {
     <div className="ma-spacing space-y-8">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
-          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">Structure</p>
-          <h1 className="text-4xl font-serif font-bold">Taxonomy</h1>
+          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">{t('categories.subtitle')}</p>
+          <h1 className="text-4xl font-serif font-bold">{t('categories.title')}</h1>
         </div>
         <button 
           onClick={() => handleOpenModal()}
           className="flex items-center gap-2 bg-brand-ink text-white px-6 py-3 rounded-md text-sm font-medium hover:bg-brand-red transition-all shadow-lg hover:shadow-brand-red/20 group"
         >
           <Plus size={18} className="group-hover:rotate-90 transition-transform" />
-          <span>New Category</span>
+          <span>{t('categories.add_button')}</span>
         </button>
       </div>
 
@@ -136,7 +138,7 @@ export default function Categories() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-ink/30" size={18} />
             <input 
               type="text" 
-              placeholder="Search categories..." 
+              placeholder={t('categories.search_placeholder')} 
               className=" Japanese-input w-full pl-10 pr-4 py-2 bg-white border border-brand-clay rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -157,10 +159,10 @@ export default function Categories() {
             <table className="w-full text-left">
               <thead className="bg-brand-paper">
                 <tr>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Category Name</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Slug</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">Products</th>
-                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50 text-right">Actions</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('categories.table.name')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('categories.table.slug')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50">{t('categories.table.products')}</th>
+                  <th className="px-6 py-4 text-[10px] uppercase tracking-wider text-brand-ink/50 text-right">{t('categories.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-clay">
@@ -186,7 +188,7 @@ export default function Categories() {
                         <code className="text-xs text-brand-ink/40 bg-brand-paper px-2 py-0.5 rounded">/{category.slug}</code>
                       </td>
                       <td className="px-6 py-4">
-                        <span className="text-sm font-medium">{category.product_count} items</span>
+                        <span className="text-sm font-medium">{t('categories.items_count', { count: category.product_count })}</span>
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -210,7 +212,7 @@ export default function Categories() {
                 {filteredCategories.length === 0 && !loading && (
                   <tr>
                     <td colSpan={4} className="px-6 py-20 text-center">
-                      <p className="font-serif italic text-brand-ink/30 text-lg">No categories defined yet.</p>
+                      <p className="font-serif italic text-brand-ink/30 text-lg">{t('categories.table.empty')}</p>
                     </td>
                   </tr>
                 )}
@@ -239,7 +241,7 @@ export default function Categories() {
             >
               <div className="p-6 border-b border-brand-clay flex justify-between items-center bg-brand-paper/50">
                 <h2 className="text-xl font-serif font-bold">
-                  {editingCategory ? 'Update Category' : 'New Taxonomy Entry'}
+                  {editingCategory ? t('categories.modal.update_title') : t('categories.modal.new_title')}
                 </h2>
                 <button onClick={() => setIsModalOpen(false)} className="text-brand-ink/40 hover:text-brand-red">
                   <X size={20} />
@@ -247,7 +249,7 @@ export default function Categories() {
               </div>
               <form onSubmit={handleSubmit} className="p-6 space-y-4">
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">Category Name</label>
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('categories.modal.name_label')}</label>
                   <input 
                     required
                     className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
@@ -260,7 +262,7 @@ export default function Categories() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">Slug (URL path)</label>
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('categories.modal.slug_label')}</label>
                   <div className="flex items-center">
                     <span className="text-xs text-brand-ink/30 mr-1">/</span>
                     <input 
@@ -278,13 +280,13 @@ export default function Categories() {
                     onClick={() => setIsModalOpen(false)}
                     className="flex-1 px-4 py-2 border border-brand-clay rounded-md text-sm"
                   >
-                    Cancel
+                    {t('categories.modal.cancel')}
                   </button>
                   <button 
                     type="submit"
                     className="flex-1 px-4 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-colors shadow-lg hover:shadow-brand-red/20"
                   >
-                    {editingCategory ? 'Update Registry' : 'Confirm Entry'}
+                    {editingCategory ? t('categories.modal.update_button') : t('categories.modal.confirm_button')}
                   </button>
                 </div>
               </form>

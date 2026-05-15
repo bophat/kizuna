@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Product } from '@/types';
+import { apiFetch } from '@/lib/api';
 
 export function FeaturedProducts() {
   const [products, setProducts] = useState<Product[]>([]);
@@ -10,7 +11,7 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await fetch('/api/shop/products/');
+        const res = await apiFetch('/shop/products/');
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();
         const mapped: Product[] = data.map((p: any) => ({

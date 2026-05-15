@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { motion } from 'motion/react';
+import { apiFetch } from '@/lib/api';
 
 interface Category {
   id: number;
@@ -32,7 +34,7 @@ export function CategoryGrid() {
   useEffect(() => {
     const fetchCategories = async () => {
       try {
-        const res = await fetch('/api/shop/categories/');
+        const res = await apiFetch('/shop/categories/');
         if (!res.ok) throw new Error('Failed to fetch categories');
         const data = await res.json();
         setCategories(data);

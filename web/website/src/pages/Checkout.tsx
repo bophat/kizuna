@@ -95,7 +95,7 @@ export function CheckoutPage() {
     const productIds = cart.items.map(i => i.product_id);
     Promise.all(
       productIds.map(id =>
-        fetch(`http://127.0.0.1:8000/api/shop/products/${id}/`)
+        apiFetch(`/shop/products/${id}/`)
           .then(r => r.ok ? r.json() : null)
           .catch(() => null)
       )

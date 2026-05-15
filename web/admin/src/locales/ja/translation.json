@@ -1,0 +1,364 @@
+{
+  "nav": {
+    "dashboard": "ダッシュボード",
+    "inventory": "在庫管理",
+    "categories": "カテゴリー",
+    "orders": "注文管理",
+    "users": "ユーザー",
+    "staff": "スタッフと役割",
+    "settings": "設定"
+  },
+  "dashboard": {
+    "title": "レジストリ分析",
+    "overview": "運用概要",
+    "description": "KIZUNA管理コアへようこそ。アーティファクトのフロー、コレクターの関与、取得指標をリアルタイムで監視しています。",
+    "current_period": "現在の期間",
+    "stats": {
+      "total_acquisitions": "総取得額",
+      "active_collectors": "アクティブコレクター",
+      "total_trades": "総取引数",
+      "archive_size": "アーカイブサイズ"
+    },
+    "charts": {
+      "trade_performance": "取引パフォーマンス",
+      "collection_shares": "コレクションシェア",
+      "trade_description": "週間取得および売上指標の分析。",
+      "collection_description": "カテゴリー別の収益分布。"
+    },
+    "artifacts": {
+      "top_artifacts": "トップアーティファクト",
+      "top_description": "現在のコレクションで最も切望されている作品。",
+      "sales": "販売数"
+    },
+    "system": {
+      "core": "システムコア",
+      "monitor": "守護モニター",
+      "description": "内部エンジンは最高効率で動作しています。すべてのアーティファクトレジストリが同期されています。",
+      "guardian": "ガーディアン",
+      "registry_verified": "レジストリ確認済み",
+      "repository": "リポジトリ",
+      "sqlite_connected": "SQLite 接続済み",
+      "secure_session": "セキュアセッション"
+    },
+    "logistics": {
+      "quick": "クイック物流",
+      "catalog": "新規登録",
+      "review": "取引レビュー",
+      "management": "コレクター管理",
+      "recent": "最近の委託",
+      "recent_description": "最新の高価値な取得と取引を確認しています。",
+      "access_archive": "物流アーカイブにアクセス"
+    },
+    "table": {
+      "id": "レジストリID",
+      "collector": "コレクターID",
+      "valuation": "評価額",
+      "status": "ステータス",
+      "date": "登録日",
+      "empty": "委託アーカイブは現在空です。"
+    }
+  },
+  "inventory": {
+    "title": "アーティファクト・アーカイブ",
+    "subtitle": "在庫管理",
+    "description": "日本の伝統工芸品のデジタル登録を維持・管理します。",
+    "add_button": "新規収蔵",
+    "search_placeholder": "名前、ID、または職人でコレクションを検索...",
+    "loading": "コレクションをカタログ化中...",
+    "confirm_delete": "このアーティファクトを廃止してもよろしいですか？",
+    "errors": {
+      "load_failed": "アーティファクトの読み込みに失敗しました。",
+      "fetch_error": "データの取得中にエラーが発生しました。"
+    },
+    "table": {
+      "artifact": "アーティファクト詳細",
+      "reference": "リファレンス",
+      "classification": "分類",
+      "valuation": "評価額",
+      "logistics": "ロジスティクス",
+      "actions": "アクション",
+      "unknown_artisan": "職人不明",
+      "in_storage": "保管中",
+      "depleted": "在庫切れ",
+      "empty": "検索条件に一致するアーティファクトが見つかりません...",
+      "refine": "登録を修正",
+      "decommission": "廃止"
+    },
+    "modal": {
+      "new_title": "新規分類エントリ",
+      "update_title": "登録を修正",
+      "id_label": "登録リファレンスID",
+      "category_label": "分類",
+      "category_placeholder": "分類を選択",
+      "name_label": "アーティファクト名称",
+      "attributes_label": "コレクション属性",
+      "attributes": {
+        "featured": "キュレート済み",
+        "new": "新作",
+        "limited": "限定品",
+        "cheap": "アクセシブル"
+      },
+      "price_label": "評価額 (USD)",
+      "stock_label": "現在の在庫レベル",
+      "brand_label": "職人 / ブランド",
+      "location_label": "工房の所在地",
+      "image_label": "視覚的登録ドキュメント",
+      "description_label": "ナラティブ説明",
+      "steps": {
+        "identity": "アイデンティティ",
+        "logistics": "ロジスティクス",
+        "imagery": "画像",
+        "narrative": "ナラティブ"
+      },
+      "next": "次へ",
+      "back": "戻る",
+      "submit": "登録を完了",
+      "cancel": "キャンセル",
+      "finalize": "登録を確定",
+      "confirm": "収蔵を確定",
+      "prev": "前へ",
+      "image_update": "登録画像を更新",
+      "drop_asset": "ここに視覚的アセットをドロップ",
+      "click_browse": "またはクリックしてローカルアーカイブを参照",
+      "description_title": "歴史的・技術的ナラティブ",
+      "description_help": "このナラティブは、AIセールスコンシェルジュに不可欠なコンテキストを提供します。",
+      "description_placeholder": "職人技、素材の選択、歴史的な系統、およびこの作品の文化的意義を詳細に記述してください..."
+    }
+  },
+  "orders": {
+    "title": "委託追跡",
+    "subtitle": "注文履行",
+    "total_active": "アクティブ合計",
+    "search_placeholder": "IDまたはメールで検索...",
+    "all_statuses": "すべてのステータス",
+    "transactions_found": "件の取引が見つかりました",
+    "status": {
+      "pending": "保留中",
+      "processing": "処理中",
+      "shipped": "発送済み",
+      "delivered": "配達済み",
+      "cancelled": "キャンセル"
+    },
+    "errors": {
+      "load_failed": "物流データの読み込みに失敗しました。",
+      "fetch_error": "注文の取得中にエラーが発生しました。",
+      "update_failed": "注文の更新に失敗しました"
+    },
+    "table": {
+      "id": "注文ID",
+      "customer": "顧客",
+      "date": "日付",
+      "status": "ステータス",
+      "amount": "金額",
+      "actions": "操作",
+      "guest": "ゲスト",
+      "empty": "条件に一致する注文が見つかりませんでした..."
+    },
+    "modal": {
+      "title": "注文詳細",
+      "placed_on": "注文日時",
+      "customer_info": "顧客情報",
+      "shipping_logistics": "配送ロジスティクス",
+      "payment_method": "支払い方法",
+      "items": "委託品",
+      "verification": "支払い確認",
+      "fulfillment": "注文履行ステータス",
+      "email": "メールアドレス",
+      "phone": "連絡先番号",
+      "address": "配送先住所",
+      "transaction_channel": "取引チャネル",
+      "total_value": "委託総額",
+      "verify_help": "アップロードされた領収書を注意深く確認してください。履行を進める前に、金額が委託の総額と一致していることを確認してください。",
+      "admin_notes": "管理メモ",
+      "admin_notes_placeholder": "確認の詳細、トランザクションID、または問題を記録します...",
+      "verify_button": "確認して処理",
+      "save_notes": "メモを保存",
+      "view_artifact": "フルアーティファクトを表示",
+      "no_receipt": "この取引の支払い領収書はまだアップロードされていません。",
+      "updating": "更新中...",
+      "table": {
+        "product": "製品",
+        "qty": "数量",
+        "price": "単価",
+        "total": "合計"
+      }
+    }
+  },
+  "users": {
+    "title": "コレクター登録",
+    "subtitle": "顧客関係",
+    "search_placeholder": "名前、メール、またはユーザー名で検索...",
+    "loading": "コレクター登録を確認中...",
+    "confirm_delete": "このコレクタープロファイルを削除してもよろしいですか？この操作は取り消せません。",
+    "error_load": "顧客プロファイルの読み込みに失敗しました。",
+    "error_delete": "コレクタープロファイルの削除に失敗しました。",
+    "table": {
+      "collector": "コレクター",
+      "contact": "連絡先情報",
+      "location": "場所",
+      "member_since": "入会日",
+      "actions": "操作",
+      "not_provided": "提供なし",
+      "empty": "検索条件に一致するコレクターが見つかりませんでした。"
+    },
+    "modal": {
+      "edit_title": "コレクタープロファイルの更新",
+      "first_name": "名",
+      "last_name": "姓",
+      "email": "メール",
+      "phone": "電話",
+      "address": "住所",
+      "cancel": "キャンセル",
+      "update_button": "登録を更新"
+    }
+  },
+  "staff": {
+    "title": "スタッフ＆キュレーター",
+    "subtitle": "内部チーム",
+    "add_button": "新しいスタッフを追加",
+    "search_placeholder": "チームメンバーを検索...",
+    "loading": "キュレーターチームを集めています...",
+    "confirm_delete": "このスタッフメンバーを削除してもよろしいですか？この操作は取り消せません。",
+    "error_load": "内部チームディレクトリの読み込みに失敗しました。",
+    "error_delete": "スタッフメンバーの削除に失敗しました。",
+    "table": {
+      "curator": "キュレーター",
+      "permission": "権限レベル",
+      "contact": "連絡先",
+      "joined": "参加日",
+      "actions": "操作",
+      "empty": "スタッフメンバーが見つかりませんでした。"
+    },
+    "roles": {
+      "head": "主任キュレーター",
+      "staff": "一般キュレーター"
+    },
+    "modal": {
+      "update_title": "スタッフ権限の更新",
+      "new_title": "新しいスタッフメンバーの登録",
+      "username": "ユーザー名",
+      "first_name": "名",
+      "last_name": "姓",
+      "email": "メール",
+      "password_new": "新しいパスワード（任意）",
+      "password_temp": "仮パスワード",
+      "password_placeholder": "現在のままにする場合は空白",
+      "head_permission": "主任キュレーター権限",
+      "head_description": "システム全体の管理アクセス権",
+      "cancel": "キャンセル",
+      "update_button": "スタッフ登録を更新",
+      "confirm_button": "新しいキュレーターを確認"
+    }
+  },
+  "categories": {
+    "title": "タクソノミー",
+    "subtitle": "構造",
+    "add_button": "新規カテゴリー",
+    "search_placeholder": "カテゴリーを検索...",
+    "loading": "カテゴリーを整理しています...",
+    "confirm_delete": "このカテゴリーを削除してもよろしいですか？これを使用している製品に影響が出る可能性があります。",
+    "error_load": "カテゴリーの読み込みに失敗しました。",
+    "error_delete": "カテゴリーの削除に失敗しました。使用中の可能性があります。",
+    "table": {
+      "name": "カテゴリー名",
+      "slug": "スラッグ",
+      "products": "製品",
+      "actions": "操作",
+      "empty": "カテゴリーがまだ定義されていません。"
+    },
+    "items_count": "{{count}} アイテム",
+    "modal": {
+      "update_title": "カテゴリーを更新",
+      "new_title": "新しいタクソノミー項目",
+      "name_label": "カテゴリー名",
+      "slug_label": "スラッグ（URLパス）",
+      "cancel": "キャンセル",
+      "update_button": "登録を更新",
+      "confirm_button": "登録を確定"
+    }
+  },
+  "settings": {
+    "title": "グローバル設定",
+    "subtitle": "プラットフォーム管理",
+    "save_button": "変更を保存",
+    "saved": "保存済み",
+    "description": "プラットフォームの基本設定と運用パラメータを調整します。",
+    "sections": {
+      "general": "基本情報",
+      "gallery": "ギャラリー設定",
+      "security": "セキュリティ",
+      "notifications": "通知",
+      "database": "システム＆データ"
+    },
+    "general": {
+      "gallery_name": "ギャラリー名",
+      "primary_contact": "主な連絡先",
+      "status": "運用ステータス",
+      "active": "アクティブ",
+      "active_desc": "注文と訪問者を受け入れ中",
+      "maintenance": "メンテナンス",
+      "maintenance_desc": "展示モードのみ"
+    },
+    "gallery": {
+      "theme": "ビジュアルテーマ",
+      "grid": "カタロググリッド列",
+      "logo_favicon": "ファビコン＆ロゴ",
+      "logo_desc": "すべてのコレクションページで標準化",
+      "replace": "置換",
+      "themes": {
+        "classic": "クラシックペーパー",
+        "modern": "モダンインク",
+        "minimalist": "ミニマリスト"
+      },
+      "grid_options": {
+        "spacious": "2列 (広め)",
+        "balanced": "3列 (標準)",
+        "dense": "4列 (密集)"
+      }
+    },
+    "security": {
+      "two_factor": "2要素認証",
+      "two_factor_desc": "サインイン時に認証トークンを要求することで、スタッフアカウントのセキュリティを強化します。",
+      "configure_2fa": "2FAを設定",
+      "audit_logs": "監査ログ",
+      "audit_logs_desc": "すべての管理変更とシステムアクセスを追跡します",
+      "view_history": "履歴を表示",
+      "ip_whitelisting": "IPホワイトリスト",
+      "ip_whitelisting_desc": "ダッシュボードへのアクセスを特定のオフィスアドレスに制限します",
+      "manage_ips": "IPを管理"
+    },
+    "coming_soon": "高度な {{section}} コントロールは現在準備中です..."
+  },
+  "login": {
+    "hero_text": "現代の世界に向けて、日本の伝統工芸の粋をお届けします。",
+    "locations": "東京 • 京都 • 大阪",
+    "title": "おかえりなさい",
+    "subtitle": "管理ポータルにアクセスするにはサインインしてください。",
+    "email_label": "メールアドレス",
+    "email_placeholder": "name@kizuna-gallery.jp",
+    "password_label": "パスワード",
+    "password_placeholder": "••••••••",
+    "forgot_password": "お忘れですか？",
+    "authenticate_button": "認証する",
+    "footer_text_line1": "アカウントへのアクセスに問題がある場合は、",
+    "footer_text_line2": "<0>システム部門</0>までお問い合わせください。",
+    "errors": {
+      "access_denied": "アクセスが拒否されました。管理者権限が必要です。",
+      "verify_failed": "アカウント権限の確認に失敗しました。",
+      "connection_error": "接続エラーが発生しました。ネットワークを確認してください。",
+      "invalid_credentials": "資格情報が無効です。もう一度お試しください。"
+    }
+  },
+  "common": {
+    "search": "アーティファクト、注文、またはスタッフを検索...",
+    "view_public": "サイトを表示",
+    "loading": "レジストリを同期中...",
+    "admin_core": "KIZUNA 管理コア",
+    "error": "エラー",
+    "success": "成功",
+    "authenticating": "KIZUNAシステムで認証中...",
+    "edit": "編集",
+    "delete": "削除",
+    "loading_logistics": "物流情報を同期中..."
+  }
+}

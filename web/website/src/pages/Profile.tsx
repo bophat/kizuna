@@ -3,6 +3,7 @@ import { Icons } from '@/components/Icons';
 import { Loader2, Package, Star, LogOut, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { EmptyState } from '@/components/EmptyState';
+import { apiFetch } from '@/lib/api';
 
 interface OrderItem {
   id: number;
@@ -37,7 +38,7 @@ interface UserData {
   profile: UserProfile;
 }
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+
 
 export function ProfilePage() {
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items'>('info');
@@ -63,14 +64,7 @@ export function ProfilePage() {
 
   const fetchProfile = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        navigate('/login');
-        return;
-      }
-      const res = await fetch(`${API_BASE}/shop/me/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await apiFetch('/shop/me/');
       if (res.status === 401) {
         navigate('/login');
         return;
@@ -91,10 +85,7 @@ export function ProfilePage() {
 
   const fetchOrders = async () => {
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_BASE}/shop/orders/`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await apiFetch('/shop/orders/');
       if (res.ok) {
         const data = await res.json();
         setOrders(data);
@@ -111,13 +102,8 @@ export function ProfilePage() {
     setIsUpdating(true);
     setMessage(null);
     try {
-      const token = localStorage.getItem('access_token');
-      const res = await fetch(`${API_BASE}/shop/me/`, {
+      const res = await apiFetch('/shop/me/', {
         method: 'PATCH',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
         body: JSON.stringify(formData)
       });
       if (res.ok) {

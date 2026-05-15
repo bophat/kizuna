@@ -12,6 +12,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all().order_by('-created_at')
     serializer_class = PublicProductSerializer
 
+    @action(detail=False, methods=['get'])
+    def likes_counts(self, request):
+        products = Product.objects.all().values('id', 'likes')
+        return Response(list(products))
+
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
@@ -263,6 +268,10 @@ class FavoriteViewSet(viewsets.ViewSet):
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
         favorite, created = Favorite.objects.get_or_create(user=request.user, product=product)
+        if created:
+            product.likes += 1
+            product.save()
+            
         serializer = FavoriteSerializer(favorite, context={'request': request})
         return Response(serializer.data, status=status.HTTP_201_CREATED if created else status.HTTP_200_OK)
 
@@ -272,7 +281,15 @@ class FavoriteViewSet(viewsets.ViewSet):
         if not product_id:
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        deleted, _ = Favorite.objects.filter(user=request.user, product_id=product_id).delete()
+        try:
+            product = Product.objects.get(id=product_id)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
+        deleted, _ = Favorite.objects.filter(user=request.user, product=product).delete()
         if deleted:
+            if product.likes > 0:
+                product.likes -= 1
+                product.save()
             return Response({"message": "Removed from favorites"}, status=status.HTTP_200_OK)
         return Response({"error": "Favorite not found"}, status=status.HTTP_404_NOT_FOUND)

@@ -14,10 +14,12 @@ import {
   Image as ImageIcon
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useTranslation } from 'react-i18next';
 import { cn } from '../lib/utils';
 import { apiFetch } from '../lib/api';
 
-export default function Inventory() {
+export default function InventoryPage() {
+  const { t } = useTranslation();
   const [products, setProducts] = useState<any[]>([]);
   const [categories, setCategories] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -61,10 +63,10 @@ export default function Inventory() {
         setCategories(catData);
         setError(null);
       } else {
-        setError('Failed to load artifacts.');
+        setError(t('inventory.errors.load_failed'));
       }
     } catch (err) {
-      setError('An error occurred while fetching data.');
+      setError(t('inventory.errors.fetch_error'));
     } finally {
       setLoading(false);
     }
@@ -169,7 +171,7 @@ export default function Inventory() {
         fetchData();
       } else {
         const errorData = await response.json();
-        alert(`Error: ${JSON.stringify(errorData)}`);
+        alert(`${t('common.error')}: ${JSON.stringify(errorData)}`);
       }
     } catch (err) {
       console.error('Submit error:', err);
@@ -177,7 +179,7 @@ export default function Inventory() {
   };
 
   const handleDelete = async (id: string) => {
-    if (window.confirm('Are you sure you want to decommission this artifact?')) {
+    if (window.confirm(t('inventory.confirm_delete'))) {
       try {
         const response = await apiFetch(`/products/${id}/`, { method: 'DELETE' });
         if (response.ok) {
@@ -199,16 +201,16 @@ export default function Inventory() {
     return (
       <div className="flex flex-col items-center justify-center h-[60vh] gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-brand-red" />
-        <p className="text-sm font-serif italic text-brand-ink/40">Cataloging collection...</p>
+        <p className="text-sm font-serif italic text-brand-ink/40">{t('inventory.loading')}</p>
       </div>
     );
   }
 
   const steps = [
-    { number: 1, title: 'Identity', icon: Package },
-    { number: 2, title: 'Logistics', icon: Filter },
-    { number: 3, title: 'Imagery', icon: ImageIcon },
-    { number: 4, title: 'Narrative', icon: Edit },
+    { number: 1, title: t('inventory.modal.steps.identity'), icon: Package },
+    { number: 2, title: t('inventory.modal.steps.logistics'), icon: Filter },
+    { number: 3, title: t('inventory.modal.steps.imagery'), icon: ImageIcon },
+    { number: 4, title: t('inventory.modal.steps.narrative'), icon: Edit },
   ];
 
   return (
@@ -217,17 +219,17 @@ export default function Inventory() {
         <div>
           <div className="flex items-center gap-3 mb-3">
             <div className="w-1.5 h-6 bg-brand-red"></div>
-            <p className="text-xs font-bold text-brand-red tracking-[0.3em] uppercase">Inventory Management</p>
+            <p className="text-xs font-bold text-brand-red tracking-[0.3em] uppercase">{t('inventory.subtitle')}</p>
           </div>
-          <h1 className="text-5xl font-serif font-bold text-brand-ink leading-tight">Artifact Repository</h1>
-          <p className="text-brand-ink/40 font-serif italic mt-2 text-lg">Curating the collection of fine Japanese craftsmanship.</p>
+          <h1 className="text-5xl font-serif font-bold text-brand-ink leading-tight">{t('inventory.title')}</h1>
+          <p className="text-brand-ink/40 font-serif italic mt-2 text-lg">{t('inventory.description')}</p>
         </div>
         <button 
           onClick={() => handleOpenModal()}
           className="flex items-center gap-3 bg-brand-ink text-white px-8 py-4 rounded-sm text-sm font-bold hover:bg-brand-red transition-all shadow-xl hover:shadow-brand-red/20 group"
         >
           <Plus size={18} className="group-hover:rotate-90 transition-transform duration-500" />
-          <span className="tracking-widest uppercase">Catalog New Artifact</span>
+          <span className="tracking-widest uppercase">{t('inventory.add_button')}</span>
         </button>
       </div>
 
@@ -237,7 +239,7 @@ export default function Inventory() {
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20" size={20} />
             <input 
               type="text" 
-              placeholder="Search by name, reference ID or category..." 
+              placeholder={t('inventory.search_placeholder')} 
               className="w-full pl-12 pr-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
@@ -247,7 +249,7 @@ export default function Inventory() {
           <div className="flex items-center gap-4 w-full lg:w-auto">
             <div className="flex items-center gap-2 px-4 py-2 bg-brand-clay/30 rounded-sm border border-brand-clay text-brand-ink/60 text-xs font-bold uppercase tracking-wider">
               <Filter size={14} />
-              <span>Filter by</span>
+              <span>{t('inventory.filter_by')}</span>
             </div>
             <select 
               className="flex-1 lg:w-48 px-4 py-2 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:border-brand-red transition-all"
@@ -255,7 +257,7 @@ export default function Inventory() {
                 setSearchQuery(e.target.value === 'all' ? '' : e.target.value);
               }}
             >
-              <option value="all">All Categories</option>
+              <option value="all">{t('inventory.all_categories')}</option>
               {categories.map(cat => (
                 <option key={cat.id} value={cat.name}>{cat.name}</option>
               ))}
@@ -276,12 +278,12 @@ export default function Inventory() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-brand-paper/50 border-b border-brand-clay">
-                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Artifact Details</th>
-                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Reference</th>
-                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Category</th>
-                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">Price</th>
-                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40 text-center">Stock Availability</th>
-                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40 text-right">Actions</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('inventory.table.artifact')}</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('inventory.table.reference')}</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('inventory.table.classification')}</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40">{t('inventory.table.valuation')}</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40 text-center">{t('inventory.table.logistics')}</th>
+                  <th className="px-8 py-5 text-[10px] uppercase tracking-[0.2em] font-bold text-brand-ink/40 text-right">{t('inventory.table.actions')}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-brand-clay/50">
@@ -317,7 +319,7 @@ export default function Inventory() {
                           </div>
                           <div className="space-y-1">
                             <p className="text-base font-serif font-bold text-brand-ink group-hover:text-brand-red transition-colors">{product.name}</p>
-                            <p className="text-xs text-brand-ink/40 font-medium tracking-wide">{product.brand || 'Artisan Unknown'}</p>
+                            <p className="text-xs text-brand-ink/40 font-medium tracking-wide">{product.brand || t('inventory.table.unknown_artisan')}</p>
                           </div>
                         </div>
                       </td>
@@ -356,7 +358,7 @@ export default function Inventory() {
                             "text-[10px] font-bold uppercase tracking-widest",
                             product.stock > 10 ? "text-emerald-600" : product.stock > 0 ? "text-amber-600" : "text-brand-red"
                           )}>
-                            {product.stock > 0 ? `${product.stock} in storage` : 'Depleted'}
+                            {product.stock > 0 ? `${product.stock} ${t('inventory.table.in_storage')}` : t('inventory.table.depleted')}
                           </span>
                         </div>
                       </td>
@@ -365,14 +367,14 @@ export default function Inventory() {
                           <button 
                             onClick={() => handleOpenModal(product)}
                             className="p-2.5 bg-white border border-brand-clay text-brand-ink hover:bg-brand-ink hover:text-white rounded-sm transition-all shadow-sm hover:shadow-md"
-                            title="Refine Registry"
+                            title={t('inventory.table.refine')}
                           >
                             <Edit size={16} />
                           </button>
                           <button 
                             onClick={() => handleDelete(product.id)}
                             className="p-2.5 bg-white border border-brand-clay text-brand-red hover:bg-brand-red hover:text-white rounded-sm transition-all shadow-sm hover:shadow-md"
-                            title="Decommission"
+                            title={t('inventory.table.decommission')}
                           >
                             <Trash2 size={16} />
                           </button>
@@ -383,10 +385,10 @@ export default function Inventory() {
                 </AnimatePresence>
                 {filteredProducts.length === 0 && !error && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-20 text-center">
+                    <td colSpan={6} className="px-6 py-20 text-center">
                       <div className="flex flex-col items-center gap-2 text-brand-ink/30">
                         <Search size={40} strokeWidth={1} />
-                        <p className="font-serif italic">No artifacts match your search...</p>
+                        <p className="font-serif italic">{t('inventory.table.empty')}</p>
                       </div>
                     </td>
                   </tr>
@@ -418,7 +420,7 @@ export default function Inventory() {
               <div className="p-6 border-b border-brand-clay flex justify-between items-center bg-brand-paper/50">
                 <div className="flex items-center gap-6">
                   <h2 className="text-2xl font-serif font-bold">
-                    {editingProduct ? 'Update Artifact Registry' : 'New Artifact Cataloging'}
+                    {editingProduct ? t('inventory.modal.update_title') : t('inventory.modal.new_title')}
                   </h2>
                   <div className="flex items-center gap-2">
                     {steps.map((step) => (
@@ -457,7 +459,7 @@ export default function Inventory() {
                       >
                         <div className="grid grid-cols-2 gap-8">
                           <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Registry Reference ID</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.id_label')}</label>
                             <input 
                               required
                               placeholder="e.g. KOG-9921"
@@ -468,14 +470,14 @@ export default function Inventory() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Classification</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.category_label')}</label>
                             <select 
                               required
                               className="w-full px-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:border-brand-red transition-all appearance-none cursor-pointer"
                               value={formData.category}
                               onChange={(e) => setFormData({...formData, category: e.target.value})}
                             >
-                              <option value="" disabled>Select Classification</option>
+                              <option value="" disabled>{t('inventory.modal.category_placeholder')}</option>
                               {categories.map(cat => (
                                 <option key={cat.id} value={cat.id}>{cat.name}</option>
                               ))}
@@ -484,7 +486,7 @@ export default function Inventory() {
                         </div>
 
                         <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Artifact Nomenclature</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.name_label')}</label>
                           <input 
                             required
                             placeholder="e.g. Hand-painted Edo-period Ceramic"
@@ -495,7 +497,7 @@ export default function Inventory() {
                         </div>
 
                         <div className="space-y-4">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Collection Attributes</label>
+                          <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.attributes_label')}</label>
                           <div className="grid grid-cols-4 gap-4">
                             {[
                               { id: 'is_featured', label: 'Curated' },
@@ -537,7 +539,7 @@ export default function Inventory() {
                       >
                         <div className="grid grid-cols-2 gap-8">
                           <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Evaluation (USD)</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.price_label')}</label>
                             <div className="relative">
                               <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/40 font-bold">$</span>
                               <input 
@@ -551,7 +553,7 @@ export default function Inventory() {
                             </div>
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Current Stock Level</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.stock_label')}</label>
                             <input 
                               required
                               type="number"
@@ -564,7 +566,7 @@ export default function Inventory() {
 
                         <div className="grid grid-cols-2 gap-8">
                           <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Artisan / Brand</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.brand_label')}</label>
                             <input 
                               placeholder="e.g. Takumi Workshop"
                               className="w-full px-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all"
@@ -573,7 +575,7 @@ export default function Inventory() {
                             />
                           </div>
                           <div className="space-y-2">
-                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Workshop Location</label>
+                            <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.location_label')}</label>
                             <input 
                               placeholder="e.g. Kyoto, Japan"
                               className="w-full px-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all"
@@ -593,7 +595,7 @@ export default function Inventory() {
                         exit={{ x: -20, opacity: 0 }}
                         className="space-y-4"
                       >
-                        <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Visual Registry Documentation</label>
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.image_label')}</label>
                         <div 
                           onDragOver={onDragOver}
                           onDragLeave={onDragLeave}
@@ -613,7 +615,7 @@ export default function Inventory() {
                               <div className="absolute inset-0 bg-brand-ink/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                                 <label className="cursor-pointer bg-white text-brand-ink px-8 py-4 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-brand-red hover:text-white transition-all">
                                   <Upload size={16} />
-                                  Update Registry Image
+                                  {t('inventory.modal.image_update')}
                                   <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && handleImageChange(e.target.files[0])} />
                                 </label>
                               </div>
@@ -624,8 +626,8 @@ export default function Inventory() {
                                 <ImageIcon size={64} strokeWidth={1} />
                               </div>
                               <div className="text-center space-y-2">
-                                <span className="block text-xs font-bold uppercase tracking-[0.3em]">Drop Visual Asset Here</span>
-                                <span className="block text-[10px] italic">or click to browse local archive</span>
+                                <span className="block text-xs font-bold uppercase tracking-[0.3em]">{t('inventory.modal.drop_asset')}</span>
+                                <span className="block text-[10px] italic">{t('inventory.modal.click_browse')}</span>
                               </div>
                               <input type="file" className="hidden" accept="image/*" onChange={(e) => e.target.files && handleImageChange(e.target.files[0])} />
                             </label>
@@ -643,11 +645,11 @@ export default function Inventory() {
                         className="space-y-6"
                       >
                         <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">Historical & Technical Narrative</label>
-                          <p className="text-[10px] text-brand-ink/30 italic mb-4">This narrative provides essential context for the AI Sales Concierge.</p>
+                          <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">{t('inventory.modal.description_title')}</label>
+                          <p className="text-[10px] text-brand-ink/30 italic mb-4">{t('inventory.modal.description_help')}</p>
                           <textarea 
                             rows={10}
-                            placeholder="Detail the craftsmanship, material choices, historical lineage, and cultural significance of this piece..."
+                            placeholder={t('inventory.modal.description_placeholder')}
                             className="w-full px-6 py-5 bg-white border border-brand-clay rounded-sm text-base font-serif italic text-brand-ink/80 focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all resize-none shadow-inner"
                             value={formData.description}
                             onChange={(e) => setFormData({...formData, description: e.target.value})}
@@ -666,7 +668,7 @@ export default function Inventory() {
                   onClick={() => setIsModalOpen(false)}
                   className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-brand-ink/40 hover:text-brand-red transition-colors"
                 >
-                  Cancel Session
+                  {t('inventory.modal.cancel')}
                 </button>
                 
                 <div className="flex items-center gap-4">
@@ -676,7 +678,7 @@ export default function Inventory() {
                       onClick={() => setCurrentStep(prev => prev - 1)}
                       className="px-8 py-3 border border-brand-clay rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all"
                     >
-                      Previous Step
+                      {t('inventory.modal.prev')}
                     </button>
                   )}
                   
@@ -686,14 +688,14 @@ export default function Inventory() {
                       onClick={() => setCurrentStep(prev => prev + 1)}
                       className="px-12 py-3 bg-brand-ink text-white rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-brand-red transition-all shadow-xl hover:shadow-brand-red/20"
                     >
-                      Next Step
+                      {t('inventory.modal.next')}
                     </button>
                   ) : (
                     <button 
                       onClick={handleSubmit}
                       className="px-12 py-3 bg-brand-red text-white rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-brand-ink transition-all shadow-xl shadow-brand-red/10"
                     >
-                      {editingProduct ? 'Finalize Registry' : 'Confirm Cataloging'}
+                      {editingProduct ? t('inventory.modal.finalize') : t('inventory.modal.confirm')}
                     </button>
                   )}
                 </div>

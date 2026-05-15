@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Icons } from '@/components/Icons';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { apiFetch } from '@/lib/api';
 
 interface OrderItem {
   id: number;
@@ -29,7 +30,7 @@ const STATUS_LABELS: Record<string, string> = {
   cancelled: 'Cancelled',
 };
 
-const API_BASE = 'http://127.0.0.1:8000/api';
+
 
 export function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([]);
@@ -39,13 +40,7 @@ export function OrderHistoryPage() {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const token = localStorage.getItem('access_token');
-        const res = await fetch(`${API_BASE}/shop/orders/`, {
-          headers: {
-            'Authorization': token ? `Bearer ${token}` : '',
-            'Content-Type': 'application/json',
-          }
-        });
+        const res = await apiFetch('/shop/orders/');
         if (!res.ok) throw new Error('Failed to fetch orders');
         const data = await res.json();
         setOrders(data);
