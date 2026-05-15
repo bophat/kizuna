@@ -64,7 +64,7 @@ export function LoginPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 min-h-screen">
         <div className="w-full max-w-[400px]">
           <div className="mb-12 text-center md:text-left flex flex-col items-center md:items-start gap-8">
-            <Logo size="lg" />
+            <Logo size="lg" forceBlack />
             <div>
               <h2 className="headline-lg mb-2">{t('auth.access_collection')}</h2>
               <p className="body-md text-secondary">Welcome back to the artisan collection.</p>

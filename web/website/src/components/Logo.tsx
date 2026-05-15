@@ -6,13 +6,15 @@ interface LogoProps {
   isDark?: boolean;
   isCollapsed?: boolean;
   size?: 'sm' | 'md' | 'lg' | 'xl';
+  forceBlack?: boolean;
 }
 
 export function Logo({
   className,
   isDark = false,
   isCollapsed = false,
-  size = 'md'
+  size = 'md',
+  forceBlack = false,
 }: LogoProps) {
   const sizes = {
     sm: 'h-8',
@@ -21,7 +23,7 @@ export function Logo({
     xl: 'h-32',
   };
 
-  const primaryColor = isDark ? 'fill-zinc-50' : 'fill-zinc-950 dark:fill-zinc-50';
+  const primaryColor = forceBlack ? 'fill-zinc-950' : isDark ? 'fill-zinc-50' : 'fill-zinc-950 dark:fill-zinc-50';
   const accentColor = 'fill-[#b63e2f]';
 
   return (
