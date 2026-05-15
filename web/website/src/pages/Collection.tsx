@@ -198,7 +198,7 @@ export function CollectionPage() {
               {searchQuery ? `Search Results for "${searchQuery}"` : t('nav.products')}
             </h1>
             <p className="body-md text-secondary mt-2">
-              {filteredProducts.length} {t('nav.products').toLowerCase()} available
+              {t('filter.results', { count: filteredProducts.length })}
             </p>
           </div>
 
@@ -252,7 +252,7 @@ export function CollectionPage() {
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
               <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
-              <p className="body-lg text-secondary">Loading collection...</p>
+              <p className="body-lg text-secondary">{t('common.loading')}</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
@@ -261,14 +261,14 @@ export function CollectionPage() {
                 onClick={() => window.location.reload()}
                 className="text-primary border-b border-primary hover:text-primary-container transition-all"
               >
-                Try Again
+                {t('product.back_to_shop')}
               </button>
             </div>
           ) : filteredProducts.length > 0 ? (
             <ProductGrid products={filteredProducts} layout="grid-6" />
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="body-lg text-secondary mb-4">No products found matching your criteria.</p>
+              <p className="body-lg text-secondary mb-4">{t('product.not_found')}</p>
               <button 
                 onClick={clearFilters}
                 className="text-primary border-b border-primary hover:text-primary-container hover:border-primary-container transition-all"
@@ -382,10 +382,10 @@ export function CollectionPage() {
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
                         {[
-                          { label: 'Under $100', value: '0-100' },
+                          { label: t('filter.price_under_100', { defaultValue: 'Under $100' }), value: '0-100' },
                           { label: '$100 - $300', value: '100-300' },
                           { label: '$300 - $500', value: '300-500' },
-                          { label: 'Over $500', value: '500' }
+                          { label: t('filter.price_over_500', { defaultValue: 'Over $500' }), value: '500' }
                         ].map(range => (
                           <FilterCheckbox
                             key={range.value}

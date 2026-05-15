@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icons } from '@/components/Icons';
 import { cn } from '@/lib/utils';
@@ -9,6 +10,7 @@ import { apiFetch } from '@/lib/api';
 const STEPS = ['Information', 'Shipping', 'Payment', 'Success'];
 
 export function CheckoutPage() {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');
@@ -151,11 +153,11 @@ export function CheckoutPage() {
             </motion.div>
 
             <h1 className="text-xl md:text-2xl font-black text-white mb-4 tracking-tight leading-tight">
-              Order Placed Successfully!
+              {t('checkout.success_title')}
             </h1>
             <p className="text-base md:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-              Your order <span className="font-bold text-primary">#{orderData.order.id}</span> has been received. <br className="hidden md:block" />
-              An invoice has been sent to <span className="text-primary font-bold">{email}</span>.
+              {t('checkout.success_message', { id: orderData.order.id })} <br className="hidden md:block" />
+              {t('checkout.invoice_sent', { email: email })}
             </p>
           </div>
 
@@ -166,22 +168,22 @@ export function CheckoutPage() {
                 <div className="bg-white rounded-xl md:rounded-2xl p-6 md:p-8 border border-primary/20 text-center">
                   <div className="flex items-center justify-center gap-2 text-primary mb-2">
                     <Icons.Landmark size={18} />
-                    <span className="text-[10px] md:label-sm uppercase tracking-widest font-bold">Bank Transfer Details</span>
+                    <span className="text-[10px] md:label-sm uppercase tracking-widest font-bold">{t('checkout.bank_details_title')}</span>
                   </div>
                   <p className="text-3xl md:text-4xl font-black text-black tracking-tighter">${orderTotal.toFixed(2)}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">Bank</p>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">{t('checkout.bank')}</p>
                     <p className="text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-50">{orderData.bank_details.bank_name}</p>
                   </div>
                   <div className="space-y-1">
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">Account Name</p>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">{t('checkout.account_name')}</p>
                     <p className="text-base md:text-lg font-bold text-zinc-900 dark:text-zinc-50 uppercase">{orderData.bank_details.account_name}</p>
                   </div>
                   <div className="col-span-1 md:col-span-2 space-y-2">
-                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">Account Number</p>
+                    <p className="text-[10px] uppercase tracking-wider text-zinc-400 font-bold">{t('checkout.account_number')}</p>
                     <div className="flex items-center gap-3 bg-zinc-50 dark:bg-zinc-800 p-4 md:p-5 rounded-xl md:rounded-2xl border border-zinc-100 dark:border-zinc-700 overflow-hidden">
                       <p className="text-xl md:text-2xl font-mono font-bold text-zinc-900 dark:text-zinc-50 tracking-widest flex-grow truncate">
                         {orderData.bank_details.account_number}
@@ -189,7 +191,7 @@ export function CheckoutPage() {
                       <button
                         onClick={() => {
                           navigator.clipboard.writeText(orderData.bank_details.account_number);
-                          alert('Account number copied!');
+                          alert(t('checkout.copied'));
                         }}
                         className="p-3 bg-white dark:bg-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-600 rounded-xl transition-all text-primary shadow-sm border border-zinc-200 dark:border-zinc-600 shrink-0"
                       >
@@ -204,7 +206,7 @@ export function CheckoutPage() {
                     <div className="p-4 bg-white rounded-2xl md:rounded-3xl shadow-xl border border-zinc-100">
                       <img src={orderData.bank_details.qr_code_url} alt="Bank QR" className="w-40 h-40 md:w-48 md:h-48" />
                     </div>
-                    <p className="text-xs text-zinc-500 italic text-center">Scan to complete payment</p>
+                    <p className="text-xs text-zinc-500 italic text-center">{t('checkout.scan_to_pay')}</p>
                   </div>
                 )}
               </div>
@@ -212,14 +214,14 @@ export function CheckoutPage() {
               <div className="space-y-1 md:space-y-2">
                 <div className="bg-zinc-800 rounded-xl md:rounded-xl p-1 md:p-3 border border-zinc-700 flex items-center justify-between">
                   <div>
-                    <p className="text-xs md:label-sm text-zinc-500">Payment Method</p>
-                    <p className="text-base md:text-lg font-bold text-white">Cash on Delivery</p>
+                    <p className="text-xs md:label-sm text-zinc-500">{t('checkout.payment_method')}</p>
+                    <p className="text-base md:text-lg font-bold text-white">{t('checkout.cod')}</p>
                   </div>
                   <Icons.Banknote size={28} className="text-primary md:w-8 md:h-8" />
                 </div>
                 <div className="bg-zinc-800 rounded-xl md:rounded-xl p-3 md:p-4 border border-zinc-700 flex items-center justify-between">
                   <div>
-                    <p className="text-xs md:label-sm text-zinc-500">Total Amount</p>
+                    <p className="text-xs md:label-sm text-zinc-500">{t('checkout.total_amount')}</p>
                     <p className="text-base md:text-lg font-bold text-white">${orderTotal.toFixed(2)}</p>
                   </div>
                   <Icons.ShoppingBag size={28} className="text-primary md:w-8 md:h-8" />
@@ -229,10 +231,10 @@ export function CheckoutPage() {
 
             <div className="mt-8 md:mt-10 flex flex-col gap-3">
               <Link to="/order-history" className="w-full bg-zinc-900 dark:bg-zinc-50 text-white dark:text-zinc-900 text-center py-3.5 md:py-4 rounded-xl label-md font-bold hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300 shadow-xl shadow-zinc-900/10 dark:shadow-zinc-50/10">
-                View Order History
+                {t('checkout.view_history')}
               </Link>
               <Link to="/collections" className="w-full text-center py-3 md:py-3.5 rounded-xl label-md font-bold text-secondary hover:text-zinc-900 dark:hover:text-zinc-50 hover:bg-zinc-100 dark:hover:bg-zinc-800 hover:-translate-y-0.5 active:scale-[0.98] transition-all duration-300">
-                Continue Shopping
+                {t('cart.continue_shopping')}
               </Link>
             </div>
           </div>
@@ -245,7 +247,7 @@ export function CheckoutPage() {
   return (
     <div className="max-w-[1280px] mx-auto px-8 py-12">
       <nav className="flex items-center gap-2 label-sm text-secondary mb-12 overflow-x-auto whitespace-nowrap pb-2">
-        <Link to="/cart" className="hover:text-primary transition-colors">Cart</Link>
+        <Link to="/cart" className="hover:text-primary transition-colors">{t('nav.cart')}</Link>
         <Icons.ChevronRight size={14} />
         {STEPS.slice(0, 3).map((s, i) => (
           <div key={s} className="flex items-center gap-2">
@@ -254,7 +256,7 @@ export function CheckoutPage() {
               step === i ? "text-on-surface font-bold" : "text-tertiary",
               step < i && "opacity-50"
             )}>
-              {s}
+              {t(`checkout.steps.${s.toLowerCase()}` as any)}
             </span>
             {i < 2 && <Icons.ChevronRight size={14} />}
           </div>
@@ -291,7 +293,7 @@ export function CheckoutPage() {
         {/* Sidebar Summary */}
         <div className="lg:col-span-4">
           <div className="lg:sticky lg:top-32 bg-zinc-900 border border-zinc-800 p-8 rounded-2xl shadow-[0_20px_50px_-12px_rgba(0,0,0,0.5)] text-white">
-            <h2 className="headline-md text-xl mb-8 text-white">Order Summary</h2>
+            <h2 className="headline-md text-xl mb-8 text-white">{t('cart.order_summary')}</h2>
             <div className="flex flex-col gap-6 mb-8 max-h-[400px] overflow-y-auto pr-2 custom-scrollbar">
               {items.map((item, i) => (
                 <div key={i} className="flex gap-4 items-center">
@@ -309,17 +311,17 @@ export function CheckoutPage() {
 
             <div className="border-t border-zinc-800 pt-6 flex flex-col gap-3 mb-8">
               <div className="flex justify-between body-md text-zinc-400">
-                <span>Subtotal</span>
+                <span>{t('cart.subtotal')}</span>
                 <span className="text-white">${subtotal.toFixed(2)}</span>
               </div>
               <div className="flex justify-between body-md text-zinc-400">
-                <span>Shipping</span>
+                <span>{t('cart.shipping')}</span>
                 <span className="text-white">${shipping.toFixed(2)}</span>
               </div>
             </div>
 
             <div className="border-t border-zinc-800 pt-6 flex justify-between items-baseline">
-              <span className="headline-md text-white">Total</span>
+              <span className="headline-md text-white">{t('cart.total')}</span>
               <div className="text-right">
                 <span className="label-sm text-zinc-500 mr-2">USD</span>
                 <span className="headline-lg text-white">${total.toFixed(2)}</span>
@@ -332,20 +334,6 @@ export function CheckoutPage() {
   );
 }
 
-interface InformationFormProps {
-  email: string;
-  setEmail: (v: string) => void;
-  firstName: string;
-  setFirstName: (v: string) => void;
-  lastName: string;
-  setLastName: (v: string) => void;
-  phone: string;
-  setPhone: (v: string) => void;
-  address: string;
-  setAddress: (v: string) => void;
-  onNext: () => void;
-}
-
 function InformationForm({
   email, setEmail,
   firstName, setFirstName,
@@ -354,10 +342,11 @@ function InformationForm({
   address, setAddress,
   onNext
 }: InformationFormProps) {
+  const { t } = useTranslation();
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !firstName || !lastName || !phone || !address) {
-      alert("Please fill in all required fields");
+      alert(t('checkout.fill_required'));
       return;
     }
     onNext();
@@ -367,11 +356,11 @@ function InformationForm({
     <form onSubmit={handleSubmit} className="flex flex-col gap-10">
       <section>
         <div className="flex justify-between items-end mb-6">
-          <h2 className="headline-md">Contact Information</h2>
+          <h2 className="headline-md">{t('checkout.contact_info')}</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <label className="label-sm text-secondary">Email Address *</label>
+            <label className="label-sm text-secondary">{t('auth.email')} *</label>
             <input
               required
               type="email"
@@ -382,7 +371,7 @@ function InformationForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="label-sm text-secondary">Phone Number *</label>
+            <label className="label-sm text-secondary">{t('users.phone')} *</label>
             <input
               required
               type="tel"
@@ -396,10 +385,10 @@ function InformationForm({
       </section>
 
       <section className="flex flex-col gap-6">
-        <h2 className="headline-md">Shipping Address</h2>
+        <h2 className="headline-md">{t('checkout.shipping_address')}</h2>
         <div className="grid grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
-            <label className="label-sm text-secondary">First Name *</label>
+            <label className="label-sm text-secondary">{t('checkout.first_name')} *</label>
             <input
               required
               value={firstName}
@@ -409,7 +398,7 @@ function InformationForm({
             />
           </div>
           <div className="flex flex-col gap-2">
-            <label className="label-sm text-secondary">Last Name *</label>
+            <label className="label-sm text-secondary">{t('checkout.last_name')} *</label>
             <input
               required
               value={lastName}
@@ -421,13 +410,13 @@ function InformationForm({
           </div>
         </div>
         <div className="flex flex-col gap-2">
-          <label className="label-sm text-secondary">Address *</label>
+          <label className="label-sm text-secondary">{t('checkout.address')} *</label>
           <input
             required
             value={address}
             onChange={(e) => setAddress(e.target.value)}
             className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
-            placeholder="Street address, City, Country"
+            placeholder={t('checkout.address_placeholder')}
           />
         </div>
       </section>
@@ -435,13 +424,13 @@ function InformationForm({
       <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 border-t border-surface-variant gap-4">
         <Link to="/cart" className="flex items-center gap-2 label-sm text-secondary hover:text-on-surface transition-colors">
           <Icons.ArrowLeft size={16} />
-          Return to cart
+          {t('checkout.return_to_cart')}
         </Link>
         <button
           type="submit"
           className="w-full md:w-auto bg-primary text-white label-md px-12 py-4 rounded-sm hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
         >
-          Continue to Shipping
+          {t('checkout.continue_to_shipping')}
         </button>
       </div>
     </form>
@@ -449,20 +438,21 @@ function InformationForm({
 }
 
 function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: () => void, onPrev: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-10">
-      <h2 className="headline-lg">Shipping Method</h2>
+      <h2 className="headline-lg">{t('checkout.steps.shipping')}</h2>
 
       <div className="border border-surface-variant rounded-sm overflow-hidden bg-white">
         <div className="flex flex-col md:flex-row p-6 border-b border-surface-variant gap-4">
-          <span className="label-md text-tertiary w-32 border-none">Contact</span>
+          <span className="label-md text-tertiary w-32 border-none">{t('checkout.contact')}</span>
           <span className="body-md flex-grow">{email || 'guest@example.com'}</span>
-          <button onClick={onPrev} className="label-sm text-primary underline underline-offset-8">Change</button>
+          <button onClick={onPrev} className="label-sm text-primary underline underline-offset-8">{t('checkout.change')}</button>
         </div>
       </div>
 
       <section className="flex flex-col gap-6">
-        <h3 className="headline-md">Select Method</h3>
+        <h3 className="headline-md">{t('checkout.select_method')}</h3>
         <div className="flex flex-col border border-surface-variant rounded-sm bg-white overflow-hidden">
           <label className="flex items-center justify-between p-6 cursor-pointer transition-colors border-surface-variant bg-surface-container-low">
             <div className="flex items-center gap-4">
@@ -470,8 +460,8 @@ function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: 
                 <div className="w-2.5 h-2.5 bg-primary rounded-full transition-all" />
               </div>
               <div>
-                <p className="label-md lowercase tracking-tight text-on-surface">Standard Shipping (Fixed)</p>
-                <p className="label-sm text-tertiary mt-1 tracking-normal normal-case">Estimated delivery: 7-14 Business Days</p>
+                <p className="label-md lowercase tracking-tight text-on-surface">{t('checkout.standard_shipping')}</p>
+                <p className="label-sm text-tertiary mt-1 tracking-normal normal-case">{t('checkout.est_delivery')}</p>
               </div>
             </div>
             <span className="label-md">$75.00</span>
@@ -482,13 +472,13 @@ function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: 
       <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 border-t border-surface-variant gap-4">
         <button onClick={onPrev} className="flex items-center gap-2 label-sm text-secondary hover:text-on-surface transition-colors">
           <Icons.ArrowLeft size={16} />
-          Return to Information
+          {t('checkout.return_to_info')}
         </button>
         <button
           onClick={onNext}
           className="w-full md:w-auto bg-primary text-white label-md px-12 py-4 rounded-sm hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-lg hover:shadow-primary/20 transition-all duration-300 font-bold"
         >
-          Continue to Payment
+          {t('checkout.continue_to_payment')}
         </button>
       </div>
     </div>
@@ -496,11 +486,12 @@ function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: 
 }
 
 function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPrev, onSubmit }: { isSubmitting: boolean, paymentMethod: string, setPaymentMethod: (v: string) => void, onPrev: () => void, onSubmit: () => void }) {
+  const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-10">
       <div>
-        <h2 className="headline-lg">Payment Method</h2>
-        <p className="body-md text-secondary mt-2">All transactions are secure and encrypted.</p>
+        <h2 className="headline-lg">{t('checkout.payment_method')}</h2>
+        <p className="body-md text-secondary mt-2">{t('checkout.secure_payment_desc')}</p>
       </div>
 
       <div className="flex flex-col border border-surface-variant rounded-sm bg-white overflow-hidden">
@@ -516,7 +507,7 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPr
             <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", paymentMethod === 'cash' ? "border-primary" : "border-outline")}>
               {paymentMethod === 'cash' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
             </div>
-            <span className="label-md">Cash on Delivery (COD)</span>
+            <span className="label-md">{t('checkout.cod')}</span>
           </div>
           <Icons.Banknote size={18} className="text-secondary" />
         </label>
@@ -533,7 +524,7 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPr
             <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", paymentMethod === 'bank_transfer' ? "border-primary" : "border-outline")}>
               {paymentMethod === 'bank_transfer' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
             </div>
-            <span className="label-md">Bank Transfer</span>
+            <span className="label-md">{t('checkout.bank_transfer')}</span>
           </div>
           <Icons.Landmark size={18} className="text-secondary" />
         </label>
@@ -542,7 +533,7 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPr
       <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 border-t border-surface-variant gap-4">
         <button onClick={onPrev} className="flex items-center gap-2 label-sm text-secondary hover:text-on-surface transition-colors">
           <Icons.ArrowLeft size={16} />
-          Return to Shipping
+          {t('checkout.steps.shipping')}
         </button>
         <button
           onClick={onSubmit}
@@ -553,13 +544,13 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPr
           )}
         >
           {isSubmitting && <Icons.Loader2 className="animate-spin" size={18} />}
-          {isSubmitting ? 'Processing...' : 'Place Order'}
+          {isSubmitting ? t('checkout.processing') : t('checkout.place_order')}
         </button>
       </div>
 
       <div className="text-center text-secondary label-sm normal-case tracking-normal py-4">
         <Icons.ShieldCheck size={14} className="inline mr-2" />
-        Secure encrypted transaction
+        {t('checkout.secure_transaction')}
       </div>
     </div>
   );

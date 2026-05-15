@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Icons } from '@/components/Icons';
 import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { apiFetch } from '@/lib/api';
 
 interface OrderItem {
@@ -23,16 +24,17 @@ interface Order {
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
 const STATUS_LABELS: Record<string, string> = {
-  pending: 'Confirmed',
-  processing: 'Shipping from Japan',
-  shipped: 'Customs Clearance',
-  delivered: 'Delivered',
-  cancelled: 'Cancelled',
+  pending: 'order.status.pending',
+  processing: 'order.status.processing',
+  shipped: 'order.status.shipped',
+  delivered: 'order.status.delivered',
+  cancelled: 'order.status.cancelled',
 };
 
 
 
 export function OrderHistoryPage() {
+  const { t } = useTranslation();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -46,7 +48,7 @@ export function OrderHistoryPage() {
         setOrders(data);
       } catch (err) {
         console.error(err);
-        setError('Could not load your order history.');
+        setError(t('order.error_loading'));
       } finally {
         setIsLoading(false);
       }
@@ -60,9 +62,9 @@ export function OrderHistoryPage() {
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
       <header className="mb-12">
-        <h1 className="headline-xl">Order History</h1>
+        <h1 className="headline-xl">{t('order.history_title')}</h1>
         <p className="body-md text-secondary mt-2 max-w-2xl">
-          Review your past acquisitions and track current shipments.
+          {t('order.history_subtitle')}
         </p>
       </header>
 
@@ -76,9 +78,9 @@ export function OrderHistoryPage() {
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20">
-          <p className="body-lg text-secondary mb-4">You haven't placed any orders yet.</p>
+          <p className="body-lg text-secondary mb-4">{t('order.no_orders')}</p>
           <Link to="/collections" className="text-primary border-b border-primary hover:text-primary-container transition-all">
-            Browse Collection
+            {t('order.browse_collection')}
           </Link>
         </div>
       ) : (
@@ -97,22 +99,22 @@ export function OrderHistoryPage() {
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8 border-b border-surface-variant pb-8">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="label-md lowercase tracking-tight">Order #{order.id}</span>
+                      <span className="label-md lowercase tracking-tight">{t('order.order_number', { id: order.id })}</span>
                       <span className="bg-primary-container/10 text-primary px-3 py-1 rounded-sm label-sm border border-primary-container/20 capitalize">
-                        {STATUS_LABELS[order.status] || order.status}
+                        {t(STATUS_LABELS[order.status] || order.status)}
                       </span>
                     </div>
-                    <p className="body-md text-secondary">Placed on {orderDate}</p>
+                    <p className="body-md text-secondary">{t('order.placed_on', { date: orderDate })}</p>
                     <p className="body-md text-secondary mt-1">
-                      Total: <strong>${parseFloat(order.total_amount).toFixed(2)}</strong>
+                      {t('order.total', { amount: `$${parseFloat(order.total_amount).toFixed(2)}` })}
                       {' · '}
-                      Payment: <span className="capitalize">{order.payment_method}</span>
+                      {t('order.payment', { method: order.payment_method })}
                     </p>
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-sm hover:opacity-90 transition-all label-md tracking-normal normal-case">
                       <Icons.Truck size={18} />
-                      Track Package
+                      {t('order.track_package')}
                     </button>
                   </div>
                 </div>
@@ -130,7 +132,7 @@ export function OrderHistoryPage() {
                         <div key={step} className="flex flex-col items-center gap-2 bg-white px-4">
                           <div className={`w-4 h-4 rounded-full border-2 transition-all ${i <= stepIndex ? 'bg-primary border-primary' : 'bg-white border-surface-variant'}`} />
                           <span className={`label-sm lowercase tracking-normal ${i === stepIndex ? 'text-primary font-bold' : 'text-secondary'}`}>
-                            {STATUS_LABELS[step]}
+                            {t(STATUS_LABELS[step])}
                           </span>
                         </div>
                       ))}
@@ -147,9 +149,9 @@ export function OrderHistoryPage() {
                       </div>
                       <div>
                         <h3 className="label-md normal-case tracking-normal font-mono text-xs text-secondary">
-                          Product ID: {item.product_id}
+                          {t('order.product_id', { id: item.product_id })}
                         </h3>
-                        <p className="body-md text-secondary mt-1">Qty: {item.quantity}</p>
+                        <p className="body-md text-secondary mt-1">{t('order.qty', { count: item.quantity })}</p>
                         <p className="label-md mt-2">${parseFloat(item.price).toFixed(2)}</p>
                       </div>
                     </div>

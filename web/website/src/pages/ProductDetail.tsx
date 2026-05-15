@@ -100,12 +100,12 @@ export function ProductDetail() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
-        <p className="text-error mb-4">{error || 'Product not found'}</p>
+        <p className="text-error mb-4">{error || t('product.not_found')}</p>
         <button 
           onClick={() => navigate('/collections')}
           className="px-6 py-2 bg-primary text-white rounded-full font-medium"
         >
-          Back to Shop
+          {t('product.back_to_shop')}
         </button>
       </div>
     );
@@ -178,7 +178,7 @@ export function ProductDetail() {
           className="flex items-center gap-2 text-secondary hover:text-on-surface transition-colors mb-8"
         >
           <ArrowLeft size={20} />
-          <span>Back</span>
+          <span>{t('product.back')}</span>
         </button>
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-20 mb-20">
@@ -218,12 +218,12 @@ export function ProductDetail() {
               <div className="absolute top-4 left-4 flex flex-col gap-2">
                 {product.isNew && (
                   <span className="bg-blue-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-sm">
-                    New
+                    {t('product.new')}
                   </span>
                 )}
                 {product.isCheap && (
                   <span className="bg-green-500 text-white text-[10px] font-bold px-3 py-1 uppercase tracking-wider rounded-sm">
-                    Best Price
+                    {t('product.best_price')}
                   </span>
                 )}
               </div>
@@ -266,7 +266,7 @@ export function ProductDetail() {
                   "text-sm font-bold transition-colors duration-300",
                   inWishlist ? "text-primary" : "text-secondary"
                 )}>
-                  {displayLikes} favorites
+                  {displayLikes} {t('product.favorites')}
                 </span>
               </div>
             </div>
@@ -276,13 +276,13 @@ export function ProductDetail() {
               <span className="text-3xl font-medium">${product.price.toLocaleString()}</span>
               {product.sales && product.sales > 0 ? (
                 <span className="px-2 py-1 bg-surface-variant text-on-surface text-xs rounded-full">
-                  {product.sales} sold
+                  {t('product.sold', { count: product.sales })}
                 </span>
               ) : null}
             </div>
             
             <p className="body-lg text-secondary mb-10 whitespace-pre-line">
-              {product.description || "No description available for this product."}
+              {product.description || t('product.no_description')}
             </p>
             
             {/* Action Area */}
@@ -290,7 +290,7 @@ export function ProductDetail() {
               
               {/* Quantity Selector */}
               <div>
-                <p className="text-sm font-medium mb-3">Quantity</p>
+                <p className="text-sm font-medium mb-3">{t('product.quantity')}</p>
                 <div className="flex items-center w-32 bg-surface-variant rounded-full p-1 border border-transparent focus-within:border-primary">
                   <button 
                     onClick={decreaseQuantity}
@@ -307,7 +307,9 @@ export function ProductDetail() {
                   </button>
                 </div>
                 <p className="text-xs text-secondary mt-2">
-                  {product.stock ? `${product.stock} items available` : 'In stock'}
+                  {product.stock 
+                    ? t('product.items_available', { count: product.stock }) 
+                    : t('product.in_stock')}
                 </p>
               </div>
               
@@ -318,7 +320,7 @@ export function ProductDetail() {
                   className="flex-1 bg-primary text-white h-14 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-lg shadow-primary/20"
                 >
                   <ShoppingBag size={20} />
-                  <span>Add to Cart - ${(product.price * quantity).toLocaleString()}</span>
+                  <span>{t('product.add_to_cart')} - ${(product.price * quantity).toLocaleString()}</span>
                 </button>
                 
                 <button 
@@ -338,11 +340,11 @@ export function ProductDetail() {
               <div className="mt-6 pt-6 border-t border-surface-variant/50 flex flex-col gap-3 text-sm text-secondary">
                 <p className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
-                  Ships from {product.location || 'Warehouse'}
+                  {t('product.ships_from', { location: product.location || 'Warehouse' })}
                 </p>
                 <p className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  Free standard shipping on orders over $100
+                  {t('product.free_shipping')}
                 </p>
               </div>
             </div>
@@ -353,12 +355,12 @@ export function ProductDetail() {
         {relatedProducts.length > 0 && (
           <div className="mt-24 pt-16 border-t border-surface-variant">
             <div className="flex items-center justify-between mb-8">
-              <h2 className="headline-md">Related Products</h2>
+              <h2 className="headline-md">{t('product.related_products')}</h2>
               <button 
                 onClick={() => navigate('/collections')}
                 className="text-primary font-medium hover:underline"
               >
-                View all
+                {t('product.view_all')}
               </button>
             </div>
             <ProductGrid products={relatedProducts} layout="grid-4" />

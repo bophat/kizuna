@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
 import { Icons } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
@@ -8,6 +9,7 @@ import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
 
 export function CartPage() {
+  const { t } = useTranslation();
   const { cart, removeFromCart, updateQuantity } = useCart();
   const navigate = useNavigate();
   const [productCache, setProductCache] = useState<Record<string, any>>({});
@@ -63,15 +65,17 @@ export function CartPage() {
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
       <div className="mb-12">
-        <h1 className="headline-xl">Shopping Cart</h1>
-        <p className="body-md text-secondary mt-2">{items.length} items in your cart</p>
+        <h1 className="headline-xl">{t('cart.title')}</h1>
+        <p className="body-md text-secondary mt-2">
+          {t('cart.items_count', { count: items.length })}
+        </p>
       </div>
 
       {items.length === 0 ? (
         <EmptyState 
           icon={<ShoppingBag size={48} />}
-          title="Your cart is empty"
-          description="Explore our collections to find items you love and add them to your cart."
+          title={t('cart.empty_title')}
+          description={t('cart.empty_description')}
         />
       ) : (
         <div className="flex flex-col lg:flex-row gap-12">
@@ -119,7 +123,7 @@ export function CartPage() {
                       onClick={() => removeFromCart(item.product_id)}
                       className="label-sm text-secondary hover:text-primary transition-colors underline underline-offset-8"
                     >
-                      Remove
+                      {t('cart.remove')}
                     </button>
                   </div>
                 </div>
@@ -131,19 +135,19 @@ export function CartPage() {
           {/* Order Summary */}
           <div className="w-full lg:w-1/3">
             <div className="bg-surface-bright border border-surface-variant p-8 sticky top-32">
-              <h2 className="headline-md text-xl mb-6">Order Summary</h2>
+              <h2 className="headline-md text-xl mb-6">{t('cart.order_summary')}</h2>
               <div className="flex flex-col gap-4 mb-8">
                 <div className="flex justify-between body-md text-secondary">
-                  <span>Subtotal</span>
+                  <span>{t('cart.subtotal')}</span>
                   <span className="text-on-surface">${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between body-md text-secondary">
-                  <span>Shipping (Japan to Global)</span>
+                  <span>{t('cart.shipping')}</span>
                   <span className="text-on-surface">${subtotal > 0 ? shipping : 0}</span>
                 </div>
               </div>
               <div className="flex justify-between headline-md text-xl pt-6 border-t border-surface-variant mb-8">
-                <span>Total</span>
+                <span>{t('cart.total')}</span>
                 <span>${total.toFixed(2)}</span>
               </div>
               <div className="flex flex-col gap-4">
@@ -152,16 +156,16 @@ export function CartPage() {
                     to="/checkout"
                     className="w-full bg-primary text-white label-md px-4 py-5 rounded-sm hover:opacity-90 transition-all text-center tracking-widest"
                   >
-                    Proceed to Checkout
+                    {t('cart.proceed_to_checkout')}
                   </Link>
                 )}
                 <Link to="/collections" className="w-full text-center label-md text-secondary normal-case tracking-normal hover:text-on-surface transition-colors mt-2">
-                  Continue Shopping
+                  {t('cart.continue_shopping')}
                 </Link>
               </div>
               <div className="mt-8 pt-8 border-t border-surface-variant flex items-center gap-3 text-secondary">
                 <Icons.ShieldCheck size={18} />
-                <span className="label-sm normal-case tracking-normal">Secure Checkout Protected</span>
+                <span className="label-sm normal-case tracking-normal">{t('cart.secure_checkout')}</span>
               </div>
             </div>
           </div>

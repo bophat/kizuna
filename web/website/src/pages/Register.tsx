@@ -73,7 +73,7 @@ export function RegisterPage() {
             <Logo size="lg" forceBlack />
             <div>
               <h2 className="headline-lg mb-2">{t('auth.community_join')}</h2>
-              <p className="body-md text-secondary">Begin your journey into artisan excellence.</p>
+              <p className="body-md text-secondary">{t('auth.begin_journey')}</p>
             </div>
           </div>
           <form className="space-y-4" onSubmit={handleRegister}>

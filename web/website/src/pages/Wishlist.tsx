@@ -1,12 +1,14 @@
 import React from 'react';
 import { motion } from 'motion/react';
 import { useWishlist } from '@/context/WishlistContext';
+import { useTranslation } from 'react-i18next';
 import { ProductCard } from '@/components/products/ProductCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 export function WishlistPage() {
+  const { t } = useTranslation();
   const { wishlistItems, isLoading } = useWishlist();
 
   if (isLoading) {
@@ -24,17 +26,17 @@ export function WishlistPage() {
         animate={{ opacity: 1, y: 0 }}
       >
         <div className="mb-12">
-          <h1 className="headline-xl">Your Wishlist</h1>
+          <h1 className="headline-xl">{t('wishlist.title')}</h1>
           <p className="body-md text-secondary mt-2">
-            {wishlistItems.length} {wishlistItems.length === 1 ? 'item' : 'items'} saved
+            {t(wishlistItems.length === 1 ? 'wishlist.item_saved' : 'wishlist.items_saved', { count: wishlistItems.length })}
           </p>
         </div>
 
         {wishlistItems.length === 0 ? (
           <EmptyState 
             icon={<Heart size={48} />}
-            title="Your wishlist is empty"
-            description="Save items you love to your wishlist to keep track of them and purchase them later."
+            title={t('wishlist.empty_title')}
+            description={t('wishlist.empty_description')}
           />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

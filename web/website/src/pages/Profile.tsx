@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/Icons';
 import { Loader2, Package, Star, LogOut, CheckCircle2 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
 
@@ -41,6 +42,7 @@ interface UserData {
 
 
 export function ProfilePage() {
+  const { t } = useTranslation();
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items'>('info');
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -109,13 +111,13 @@ export function ProfilePage() {
       if (res.ok) {
         const updatedUser = await res.json();
         setUser(updatedUser);
-        setMessage({ type: 'success', text: 'Profile updated successfully!' });
+        setMessage({ type: 'success', text: t('profile.update_success') });
         setTimeout(() => setMessage(null), 3000);
       } else {
-        setMessage({ type: 'error', text: 'Failed to update profile.' });
+        setMessage({ type: 'error', text: t('profile.update_error') });
       }
     } catch (err) {
-      setMessage({ type: 'error', text: 'An error occurred.' });
+      setMessage({ type: 'error', text: t('common.error') });
     } finally {
       setIsUpdating(false);
     }
@@ -150,14 +152,14 @@ export function ProfilePage() {
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-4 mb-2">
-            <h1 className="headline-xl">Profile</h1>
+            <h1 className="headline-xl">{t('profile.title')}</h1>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 border border-primary/10 rounded-full">
               <Star size={14} className="text-primary fill-primary" />
-              <span className="label-sm text-primary font-bold">{user?.profile?.points || 0} Points</span>
+              <span className="label-sm text-primary font-bold">{t('profile.points', { count: user?.profile?.points || 0 })}</span>
             </div>
           </div>
           <p className="body-md text-secondary max-w-2xl">
-            Welcome back, {user?.first_name || user?.username}. Manage your preferences and track your orders.
+            {t('profile.welcome_back', { name: user?.first_name || user?.username })}
           </p>
         </div>
         <button 
@@ -165,7 +167,7 @@ export function ProfilePage() {
           className="flex items-center gap-2 text-secondary hover:text-red-500 transition-colors label-md tracking-normal lowercase"
         >
           <LogOut size={18} />
-          Sign Out
+          {t('profile.sign_out')}
         </button>
       </header>
 
@@ -177,7 +179,7 @@ export function ProfilePage() {
             activeTab === 'info' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-primary'
           }`}
         >
-          Personal Information
+          {t('profile.personal_info')}
         </button>
         <button
           onClick={() => setActiveTab('orders')}
@@ -185,7 +187,7 @@ export function ProfilePage() {
             activeTab === 'orders' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-primary'
           }`}
         >
-          Order History ({orders.length})
+          {t('profile.order_history_count', { count: orders.length })}
         </button>
         <button
           onClick={() => setActiveTab('items')}
@@ -193,7 +195,7 @@ export function ProfilePage() {
             activeTab === 'items' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-primary'
           }`}
         >
-          Purchased Items ({purchasedItems.length})
+          {t('profile.purchased_items', { count: purchasedItems.length })}
         </button>
       </div>
 
@@ -203,7 +205,7 @@ export function ProfilePage() {
             <div className="max-w-3xl">
               <form onSubmit={handleUpdate} className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-2">
-                  <label className="label-sm text-secondary lowercase">First Name</label>
+                  <label className="label-sm text-secondary lowercase">{t('profile.first_name')}</label>
                   <input
                     type="text"
                     value={formData.first_name}
@@ -212,7 +214,7 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <label className="label-sm text-secondary lowercase">Last Name</label>
+                  <label className="label-sm text-secondary lowercase">{t('profile.last_name')}</label>
                   <input
                     type="text"
                     value={formData.last_name}
@@ -221,7 +223,7 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="label-sm text-secondary lowercase">Email Address</label>
+                  <label className="label-sm text-secondary lowercase">{t('auth.email')}</label>
                   <input
                     type="email"
                     value={formData.email}
@@ -230,7 +232,7 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="label-sm text-secondary lowercase">Phone Number</label>
+                  <label className="label-sm text-secondary lowercase">{t('users.phone')}</label>
                   <input
                     type="tel"
                     value={formData.phone}
@@ -240,13 +242,13 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="label-sm text-secondary lowercase">Default Address</label>
+                  <label className="label-sm text-secondary lowercase">{t('profile.default_address')}</label>
                   <textarea
                     rows={3}
                     value={formData.address}
                     onChange={(e) => setFormData({ ...formData, address: e.target.value })}
                     className="w-full bg-surface-container border border-surface-variant p-4 body-md focus:border-primary outline-none transition-all rounded-sm resize-none"
-                    placeholder="Street, City, Country"
+                    placeholder={t('profile.address_placeholder')}
                   />
                 </div>
                 
@@ -257,7 +259,7 @@ export function ProfilePage() {
                     className="bg-primary text-white px-10 py-4 label-md tracking-normal lowercase hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-3 rounded-sm"
                   >
                     {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 size={18} />}
-                    Update Profile
+                    {t('profile.update_profile')}
                   </button>
                   
                   {message && (
@@ -277,9 +279,9 @@ export function ProfilePage() {
               {orders.length === 0 ? (
                 <EmptyState
                   icon={<Package size={48} strokeWidth={1} />}
-                  title="No orders found"
-                  description="You haven't placed any orders yet. Start shopping to build your collection."
-                  actionText="Browse Collection"
+                  title={t('order.no_orders')}
+                  description={t('profile.collection_empty_desc')}
+                  actionText={t('order.browse_collection')}
                   actionLink="/collections"
                 />
               ) : (
@@ -288,17 +290,17 @@ export function ProfilePage() {
                     <div className="bg-surface-container/30 p-6 flex flex-wrap justify-between items-center gap-4 border-b border-surface-variant">
                       <div className="flex gap-8">
                         <div>
-                          <p className="label-xs text-secondary lowercase mb-1">Order Date</p>
+                          <p className="label-xs text-secondary lowercase mb-1">{t('profile.order_date')}</p>
                           <p className="body-sm font-medium">{new Date(order.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}</p>
                         </div>
                         <div>
-                          <p className="label-xs text-secondary lowercase mb-1">Total</p>
+                          <p className="label-xs text-secondary lowercase mb-1">{t('cart.total')}</p>
                           <p className="body-sm font-medium">${parseFloat(order.total_amount).toFixed(2)}</p>
                         </div>
                         <div>
-                          <p className="label-xs text-secondary lowercase mb-1">Status</p>
+                          <p className="label-xs text-secondary lowercase mb-1">{t('order.status_label')}</p>
                           <span className="bg-primary/5 text-primary px-2 py-0.5 rounded-sm text-[10px] uppercase font-bold tracking-wider border border-primary/10">
-                            {order.status}
+                            {t(`order.status.${order.status}` as any)}
                           </span>
                         </div>
                       </div>
@@ -338,9 +340,9 @@ export function ProfilePage() {
               {purchasedItems.length === 0 ? (
                 <EmptyState
                   icon={<Package size={48} strokeWidth={1} />}
-                  title="No items purchased"
-                  description="Your collection is waiting to be started. Explore our unique offerings."
-                  actionText="Explore Collection"
+                  title={t('profile.no_items_purchased')}
+                  description={t('profile.collection_empty_desc')}
+                  actionText={t('hero.cta')}
                   actionLink="/collections"
                 />
               ) : (
@@ -358,12 +360,12 @@ export function ProfilePage() {
                       </div>
                       <div className="flex flex-col justify-center">
                         <h3 className="label-md lowercase tracking-tight line-clamp-1">{item.product_name}</h3>
-                        <p className="body-sm text-secondary mt-1">Acquired for ${parseFloat(item.price).toFixed(2)}</p>
+                        <p className="body-sm text-secondary mt-1">{t('profile.acquired_for', { price: `$${parseFloat(item.price).toFixed(2)}` })}</p>
                         <button 
                           onClick={() => navigate(`/product/${item.product_id}`)}
                           className="mt-3 text-primary label-sm lowercase tracking-normal border-b border-primary w-fit hover:text-primary-container transition-colors"
                         >
-                          View Product
+                          {t('profile.view_product')}
                         </button>
                       </div>
                     </div>

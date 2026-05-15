@@ -81,7 +81,7 @@ export function Header() {
                 <Package size={22} />
               </Link>
 
-              <Link to="/concierge" className="text-secondary hover:text-primary transition-colors" title={t('nav.concierge') || 'Concierge'}>
+              <Link to="/concierge" className="text-secondary hover:text-primary transition-colors" title={t('nav.concierge')}>
                 <Headset size={22} />
               </Link>
 
@@ -110,7 +110,7 @@ export function Header() {
           {showStatus && (
             <div className="flex items-center gap-2 text-secondary px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-full border border-zinc-200 dark:border-zinc-800">
               <Icons.Lock size={16} className="text-primary" />
-              <span className="label-xs font-bold tracking-widest uppercase">Secure Checkout</span>
+              <span className="label-xs font-bold tracking-widest uppercase">{t('checkout.secure_checkout')}</span>
             </div>
           )}
 

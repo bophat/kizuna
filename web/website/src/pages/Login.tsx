@@ -67,7 +67,7 @@ export function LoginPage() {
             <Logo size="lg" forceBlack />
             <div>
               <h2 className="headline-lg mb-2">{t('auth.access_collection')}</h2>
-              <p className="body-md text-secondary">Welcome back to the artisan collection.</p>
+              <p className="body-md text-secondary">{t('auth.welcome_back')}</p>
             </div>
           </div>
           <form className="space-y-6" onSubmit={handleLogin}>
@@ -129,7 +129,7 @@ export function LoginPage() {
           <div className="mt-12 flex flex-col items-center md:items-start space-y-6">
             <div className="w-full h-px bg-surface-variant" />
             <div className="text-center md:text-left w-full pt-4">
-              <span className="body-md text-secondary">{t('auth.new_to_kogei')}</span>
+              <span className="body-md text-secondary">{t('auth.new_to_kizuna')}</span>
               <Link to="/register" className="ml-2 label-sm text-on-surface hover:text-primary transition-colors border-b border-on-surface hover:border-primary pb-1">
                 {t('auth.create_account')}
               </Link>

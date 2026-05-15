@@ -3,6 +3,7 @@ import { Icons } from '../Icons';
 import { Link, useNavigate } from 'react-router-dom';
 import { Product } from '@/types';
 import { Heart, ShoppingBag as Cart } from 'lucide-react';
+import { useTranslation } from 'react-i18next';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { cn } from '@/lib/utils';
@@ -15,6 +16,7 @@ interface ProductCardProps {
 }
 
 export function ProductCard({ product, variant = 'standard' }: ProductCardProps) {
+  const { t } = useTranslation();
   const isLarge = variant === 'large';
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist, isLoading: wishlistLoading, likesMap } = useWishlist();
@@ -120,7 +122,9 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
         <div className="flex items-center justify-between mt-2">
           <p className="label-lg font-bold">${product.price.toLocaleString()}</p>
           {product.sales && (
-            <p className="text-[10px] text-secondary italic">{product.sales}+ sold</p>
+            <p className="text-[10px] text-secondary italic">
+              {t('product.sold', { count: product.sales })}
+            </p>
           )}
         </div>
       </div>
