@@ -13,19 +13,21 @@ import {
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from './Logo';
-
-const navItems = [
-  { icon: LayoutDashboard, label: 'Dashboard', path: '/' },
-  { icon: Package, label: 'Inventory', path: '/inventory' },
-  { icon: Menu, label: 'Categories', path: '/categories' },
-  { icon: ShoppingBag, label: 'Orders', path: '/orders' },
-  { icon: Users, label: 'Users', path: '/users' },
-  { icon: UserSquare, label: 'Staff & Roles', path: '/staff' },
-  { icon: Settings, label: 'Settings', path: '/settings' },
-];
+import { useTranslation } from 'react-i18next';
 
 export function Sidebar() {
+  const { t } = useTranslation();
   const [isOpen, setIsOpen] = React.useState(true);
+
+  const navItems = [
+    { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
+    { icon: Package, label: t('nav.inventory'), path: '/inventory' },
+    { icon: Menu, label: t('nav.categories'), path: '/categories' },
+    { icon: ShoppingBag, label: t('nav.orders'), path: '/orders' },
+    { icon: Users, label: t('nav.users'), path: '/users' },
+    { icon: UserSquare, label: t('nav.staff'), path: '/staff' },
+    { icon: Settings, label: t('nav.settings'), path: '/settings' },
+  ];
 
   return (
     <>
@@ -99,7 +101,7 @@ export function Sidebar() {
                 {isOpen && (
                   <div className="overflow-hidden">
                     <p className="text-xs font-semibold text-brand-ink truncate">Akira Tanaka</p>
-                    <p className="text-[10px] text-brand-ink/50 uppercase tracking-tighter">Chief Curator</p>
+                    <p className="text-[10px] text-brand-ink/50 uppercase tracking-tighter">{t('staff.roles.head_curator')}</p>
                   </div>
                 )}
               </div>

@@ -2,10 +2,12 @@ import React from 'react';
 import { motion } from 'motion/react';
 import { Lock, Mail, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
+import { useTranslation, Trans } from 'react-i18next';
 import { Logo } from '../components/Logo';
 import { apiFetch } from '../lib/api';
 
 export default function Login() {
+  const { t } = useTranslation();
   const [showPassword, setShowPassword] = React.useState(false);
   const [isLoading, setIsLoading] = React.useState(false);
   const [email, setEmail] = React.useState('');
@@ -36,18 +38,18 @@ export default function Login() {
           if (userData.is_staff || userData.is_superuser) {
             window.location.href = '/';
           } else {
-            setError('Access denied. Admin privileges required.');
+            setError(t('login.errors.access_denied'));
             localStorage.clear();
           }
         } else {
-          setError('Failed to verify account permissions.');
+          setError(t('login.errors.verify_failed'));
         }
       } else {
         const errorData = await response.json();
-        setError(errorData.detail || 'Invalid credentials. Please try again.');
+        setError(errorData.detail || t('login.errors.invalid_credentials'));
       }
     } catch (err) {
-      setError('A connection error occurred. Please check your network.');
+      setError(t('login.errors.connection_error'));
     } finally {
       setIsLoading(false);
     }
@@ -74,14 +76,14 @@ export default function Login() {
 
             <Logo className="mb-16 justify-center" isDark size="xl" />
             <p className="text-brand-clay/60 text-lg font-light leading-relaxed font-serif italic">
-              Curating the finest traditions of Japanese craftsmanship for a modern world.
+              {t('login.hero_text')}
             </p>
           </motion.div>
         </div>
         
         <div className="absolute bottom-12 left-12 right-12 flex justify-between items-center text-[10px] uppercase tracking-[0.3em] text-white/30 font-bold">
           <span>Est. 1924</span>
-          <span>Tokyo • Kyoto • Osaka</span>
+          <span>{t('login.locations')}</span>
         </div>
       </div>
 
@@ -93,8 +95,8 @@ export default function Login() {
           className="w-full max-w-md"
         >
           <div className="mb-12">
-            <h2 className="text-3xl font-serif font-bold text-brand-ink mb-2">Welcome Back</h2>
-            <p className="text-brand-ink/50 text-sm italic font-serif">Please sign in to access the administration portal.</p>
+            <h2 className="text-3xl font-serif font-bold text-brand-ink mb-2">{t('login.title')}</h2>
+            <p className="text-brand-ink/50 text-sm italic font-serif">{t('login.subtitle')}</p>
           </div>
 
           {error && (
@@ -110,7 +112,7 @@ export default function Login() {
 
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 ml-1">Email Address</label>
+              <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 ml-1">{t('login.email_label')}</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20 group-focus-within:text-brand-red transition-colors" size={18} />
                 <input 
@@ -118,7 +120,7 @@ export default function Login() {
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="name@kogei-gallery.jp"
+                  placeholder={t('login.email_placeholder')}
                   className="w-full bg-white border border-brand-clay rounded-md px-12 py-4 text-sm focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/10 transition-all shadow-sm"
                 />
               </div>
@@ -126,8 +128,8 @@ export default function Login() {
 
             <div className="space-y-2">
               <div className="flex justify-between items-center px-1">
-                <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">Password</label>
-                <a href="#" className="text-[10px] uppercase tracking-widest font-bold text-brand-red hover:underline transition-all">Forgot?</a>
+                <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('login.password_label')}</label>
+                <a href="#" className="text-[10px] uppercase tracking-widest font-bold text-brand-red hover:underline transition-all">{t('login.forgot_password')}</a>
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20 group-focus-within:text-brand-red transition-colors" size={18} />
@@ -136,7 +138,7 @@ export default function Login() {
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="••••••••"
+                  placeholder={t('login.password_placeholder')}
                   className="w-full bg-white border border-brand-clay rounded-md px-12 py-4 text-sm focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/10 transition-all shadow-sm"
                 />
                 <button 
@@ -158,7 +160,7 @@ export default function Login() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>Authenticate</span>
+                  <span>{t('login.authenticate_button')}</span>
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}
@@ -167,8 +169,10 @@ export default function Login() {
 
           <div className="mt-12 pt-12 border-t border-brand-clay text-center">
             <p className="text-[10px] text-brand-ink/30 uppercase tracking-widest font-bold leading-loose">
-              If you have issues accessing your account,<br /> 
-              contact the <span className="text-brand-ink font-bold">Systems Department</span>.
+              {t('login.footer_text_line1')}<br />
+              <Trans i18nKey="login.footer_text_line2">
+                contact the <span className="text-brand-ink font-bold">Systems Department</span>.
+              </Trans>
             </p>
           </div>
         </motion.div>
