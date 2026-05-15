@@ -70,7 +70,7 @@ export function RegisterPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 min-h-screen">
         <div className="w-full max-w-[400px]">
           <div className="mb-8 text-center md:text-left flex flex-col items-center md:items-start gap-8">
-            <Logo size="lg" />
+            <Logo size="lg" forceBlack />
             <div>
               <h2 className="headline-lg mb-2">{t('auth.community_join')}</h2>
               <p className="body-md text-secondary">Begin your journey into artisan excellence.</p>
