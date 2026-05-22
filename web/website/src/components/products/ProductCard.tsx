@@ -7,7 +7,8 @@ import { useTranslation } from 'react-i18next';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { cn } from '@/lib/utils';
-import { getMediaUrl } from '@/lib/api';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
+import { ProductImage } from './ProductImage';
 
 interface ProductCardProps {
   product: Product;
@@ -17,6 +18,7 @@ interface ProductCardProps {
 
 export function ProductCard({ product, variant = 'standard' }: ProductCardProps) {
   const { t } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   const isLarge = variant === 'large';
   const { addToCart } = useCart();
   const { isInWishlist, addToWishlist, removeFromWishlist, isLoading: wishlistLoading, likesMap } = useWishlist();
@@ -50,14 +52,15 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
   return (
     <Link 
       to={`/product/${product.id}`}
-      className={`group relative flex flex-col bg-white overflow-hidden border border-surface-variant rounded-sm transition-all duration-500 hover:shadow-2xl hover:-translate-y-1 ${isLarge ? 'h-full' : ''}`}
+      className={`group relative flex flex-col bg-white overflow-hidden border border-surface-variant rounded-sm gpu-transform transition-[transform,box-shadow] duration-300 ease-out hover:shadow-lg hover:-translate-y-0.5 ${isLarge ? 'h-full' : ''}`}
     >
       {/* Image Container */}
       <div className={`relative overflow-hidden ${isLarge ? 'flex-grow' : 'aspect-square'}`}>
-        <img 
-          src={getMediaUrl(product.image)} 
+        <ProductImage
+          src={product.image}
           alt={product.name}
-          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+          preset="card"
+          className="w-full h-full gpu-transform transition-transform duration-500 ease-out group-hover:scale-[1.03]"
         />
         
         {/* Badges */}
@@ -75,9 +78,9 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
         </div>
 
         {/* Quick Actions */}
-        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex items-center justify-center gap-4">
+        <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 ease-out flex items-center justify-center gap-4">
           <button 
-            className={`p-4 rounded-full shadow-lg transition-all duration-300 scale-90 group-hover:scale-100 ${
+            className={`p-4 rounded-full shadow-lg transition-transform duration-200 ease-out scale-95 group-hover:scale-100 ${
               inWishlist ? 'bg-primary text-white' : 'bg-white text-on-surface hover:bg-primary hover:text-white'
             }`}
             onClick={handleWishlistToggle}
@@ -85,7 +88,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
             <Heart size={20} className={inWishlist ? 'fill-white' : ''} />
           </button>
           <button 
-            className="p-4 bg-primary text-white hover:bg-primary-container rounded-full shadow-lg transition-all duration-300 scale-90 group-hover:scale-100"
+            className="p-4 bg-primary text-white hover:bg-primary-container rounded-full shadow-lg transition-transform duration-200 ease-out scale-95 group-hover:scale-100"
             onClick={handleAddToCart}
           >
             <Cart size={20} />
@@ -122,7 +125,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
         </div>
         
         <div className="flex items-center justify-between mt-2">
-          <p className="label-lg font-bold">${product.price.toLocaleString()}</p>
+          <p className="label-lg font-bold">{formatPrice(product.price)}</p>
           {product.sales > 0 && (
             <p className="text-[10px] text-secondary italic">
               {t('product.sold', { count: product.sales })}

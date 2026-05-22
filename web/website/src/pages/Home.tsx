@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
-import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Product } from '../types';
 import { ProductGrid } from '../components/products/ProductGrid';
 import { apiFetch } from '@/lib/api';
+import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
+
+const HERO_IMAGE =
+  'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=2070&auto=format&fit=crop';
 
 export function HomePage() {
   const { t } = useTranslation();
@@ -43,21 +46,18 @@ export function HomePage() {
     <div className="flex flex-col gap-xl pb-20">
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-surface-container-highest">
-        <motion.img
-          initial={{ scale: 1.1, opacity: 0 }}
-          animate={{ scale: 1, opacity: 1 }}
-          transition={{ duration: 1.5, ease: "easeOut" }}
-          src="https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=2070&auto=format&fit=crop"
+        <img
+          src={optimizeImageUrl(HERO_IMAGE, IMAGE_WIDTH.hero)}
           alt={t('hero.title')}
-          className="h-full w-full object-cover object-center"
+          width={IMAGE_WIDTH.hero}
+          height={Math.round(IMAGE_WIDTH.hero * 0.6)}
+          loading="eager"
+          fetchPriority="high"
+          decoding="async"
+          className="h-full w-full object-cover object-center animate-hero-zoom gpu-transform"
         />
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-xl text-center">
-          <motion.div
-            initial={{ y: 50, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.5, duration: 0.8 }}
-            className="max-w-2xl"
-          >
+          <div className="max-w-2xl animate-fade-up">
             <h1 className="headline-xl text-white mb-4">{t('hero.title')}</h1>
             <p className="body-lg text-white/90 mb-8">
               {t('hero.subtitle')}
@@ -68,7 +68,7 @@ export function HomePage() {
             >
               {t('hero.cta')}
             </Link>
-          </motion.div>
+          </div>
         </div>
       </section>
 

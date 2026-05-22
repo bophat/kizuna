@@ -4,6 +4,7 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '@/lib/api';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 
 interface OrderItem {
   id: number;
@@ -35,6 +36,7 @@ const STATUS_LABELS: Record<string, string> = {
 
 export function OrderHistoryPage() {
   const { t, i18n } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +110,7 @@ export function OrderHistoryPage() {
                     </div>
                     <p className="body-md text-secondary">{t('order.placed_on', { date: orderDate })}</p>
                     <p className="body-md text-secondary mt-1">
-                      {t('order.total', { amount: `$${parseFloat(order.total_amount).toFixed(2)}` })}
+                      {t('order.total', { amount: formatPrice(order.total_amount) })}
                       {' · '}
                       {t('order.payment', { method: order.payment_method })}
                     </p>
@@ -154,7 +156,7 @@ export function OrderHistoryPage() {
                           {t('order.product_id', { id: item.product_id })}
                         </h3>
                         <p className="body-md text-secondary mt-1">{t('order.qty', { count: item.quantity })}</p>
-                        <p className="label-md mt-2">${parseFloat(item.price).toFixed(2)}</p>
+                        <p className="label-md mt-2">{formatPrice(item.price)}</p>
                       </div>
                     </div>
                   ))}

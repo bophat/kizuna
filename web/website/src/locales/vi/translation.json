@@ -83,7 +83,7 @@
     "in_stock": "Còn hàng",
     "add_to_cart": "Thêm vào giỏ hàng",
     "ships_from": "Gửi từ {{location}}",
-    "free_shipping": "Miễn phí vận chuyển cho đơn hàng trên $100",
+    "free_shipping": "Miễn phí vận chuyển cho đơn hàng trên {{amount}}",
     "related_products": "Sản phẩm liên quan",
     "view_all": "Xem tất cả"
   },
@@ -192,7 +192,12 @@
     "no_items_purchased": "Chưa có sản phẩm nào được mua",
     "collection_empty_desc": "Bộ sưu tập của bạn đang chờ được bắt đầu. Hãy khám phá những sản phẩm độc đáo của chúng tôi.",
     "view_product": "Xem sản phẩm",
-    "acquired_for": "Mua với giá {{price}}"
+    "acquired_for": "Mua với giá {{price}}",
+    "phone": "Số điện thoại",
+    "phone_placeholder": "+84 000 000 000",
+    "order_number": "Đơn hàng #{{id}}",
+    "more_items": "+{{count}} sản phẩm",
+    "payment_method": "Thanh toán"
   },
   "users": {
     "phone": "Số điện thoại"

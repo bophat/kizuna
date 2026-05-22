@@ -27,14 +27,15 @@ services:
   # ─────────────────────────────────────────
   website:
     build:
-      context: ./website
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: website/Dockerfile
     container_name: myprj_website
     restart: unless-stopped
     ports:
       - "3000:3000"
     volumes:
       - ./website/src:/app/src          # hot-reload: source changes reflected
+      - ./shared:/app/shared            # shared Logo, utils
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DISABLE_HMR=false
@@ -49,14 +50,15 @@ services:
   # ─────────────────────────────────────────
   admin:
     build:
-      context: ./admin
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: admin/Dockerfile
     container_name: myprj_admin
     restart: unless-stopped
     ports:
       - "3001:3001"
     volumes:
       - ./admin/src:/app/src            # hot-reload: source changes reflected
+      - ./shared:/app/shared            # shared Logo, utils
     environment:
       - GEMINI_API_KEY=${GEMINI_API_KEY}
       - DISABLE_HMR=false

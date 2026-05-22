@@ -83,7 +83,7 @@
     "in_stock": "In stock",
     "add_to_cart": "Add to Cart",
     "ships_from": "Ships from {{location}}",
-    "free_shipping": "Free standard shipping on orders over $100",
+    "free_shipping": "Free standard shipping on orders over {{amount}}",
     "related_products": "Related Products",
     "view_all": "View all"
   },
@@ -192,7 +192,12 @@
     "no_items_purchased": "No items purchased",
     "collection_empty_desc": "Your collection is waiting to be started. Explore our unique offerings.",
     "view_product": "View Product",
-    "acquired_for": "Acquired for {{price}}"
+    "acquired_for": "Acquired for {{price}}",
+    "phone": "Phone Number",
+    "phone_placeholder": "+1 000 000 0000",
+    "order_number": "Order #{{id}}",
+    "more_items": "+{{count}} more",
+    "payment_method": "Payment"
   },
   "users": {
     "phone": "Phone Number"

@@ -2,15 +2,18 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import { Filter, X, ChevronDown, LayoutGrid, List, SlidersHorizontal, Loader2 } from 'lucide-react';
+import { Filter, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, List, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Icons } from '@/components/Icons';
 import { apiFetch } from '@/lib/api';
+import { fade, scaleIn, tweenBase } from '@/lib/motion';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 
 export function CollectionPage() {
   const { t } = useTranslation();
+  const { getRangeLabel, priceRangeOptions } = useFormatPrice();
   const [searchParams, setSearchParams] = useSearchParams();
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   
@@ -208,7 +211,7 @@ export function CollectionPage() {
           {/* Title & Stats */}
           <div>
             <h1 className="headline-xl capitalize">
-              {searchQuery ? `Search Results for "${searchQuery}"` : t('nav.products')}
+              {searchQuery ? `Search Results for "${searchQuery}"` : t('products')}
             </h1>
             <p className="body-md text-secondary mt-2">
               {t('filter.results', { count: filteredProducts.length })}
@@ -252,7 +255,7 @@ export function CollectionPage() {
             ))}
             {priceRangeFilter && (
               <button onClick={() => updateFilter('priceRange', '')} className="flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-xs hover:bg-surface-variant transition-colors">
-                {priceRangeFilter} <X size={12} />
+                {getRangeLabel(priceRangeFilter)} <X size={12} />
               </button>
             )}
             <button onClick={clearFilters} className="text-xs text-primary font-bold hover:underline ml-2">
@@ -383,19 +386,16 @@ export function CollectionPage() {
         {isFilterDrawerOpen && (
           <>
             <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
+              {...fade}
+              transition={tweenBase}
               onClick={() => setIsFilterDrawerOpen(false)}
-              className="fixed inset-0 bg-black/60 z-[60] backdrop-blur-sm"
+              className="fixed inset-0 bg-black/60 z-[60]"
             />
             <div className="fixed inset-0 z-[70] flex items-center justify-center p-4 sm:p-6 pointer-events-none">
               <motion.div
-                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                animate={{ opacity: 1, scale: 1, y: 0 }}
-                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                transition={{ type: 'spring', damping: 25, stiffness: 300 }}
-                className="w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col pointer-events-auto overflow-hidden"
+                {...scaleIn}
+                transition={tweenBase}
+                className="w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col pointer-events-auto overflow-hidden gpu-transform"
               >
                 {/* Header */}
                 <div className="p-6 border-b border-surface-variant flex items-center justify-between shrink-0">
@@ -479,12 +479,7 @@ export function CollectionPage() {
                         {t('filter.price_range')}
                       </h3>
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-1">
-                        {[
-                          { label: t('filter.price_under_100', { defaultValue: 'Under $100' }), value: '0-100' },
-                          { label: '$100 - $300', value: '100-300' },
-                          { label: '$300 - $500', value: '300-500' },
-                          { label: t('filter.price_over_500', { defaultValue: 'Over $500' }), value: '500' }
-                        ].map(range => (
+                        {priceRangeOptions.map(range => (
                           <FilterCheckbox
                             key={range.value}
                             label={range.label}

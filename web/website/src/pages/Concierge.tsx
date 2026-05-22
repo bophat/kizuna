@@ -1,8 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { fade, fadeUp, tweenFast } from '@/lib/motion';
 import { GoogleGenerativeAI } from '@google/generative-ai';
 import { MessageItem } from '@/components/concierge/MessageItem';
 import { ChatInput } from '@/components/concierge/ChatInput';
+import { CHAT_API_BASE_URL, GEMINI_API_KEY } from '@/lib/env';
 
 interface Message {
   id: string;
@@ -12,14 +14,46 @@ interface Message {
 
 export function ConciergePage() {
   const [messages, setMessages] = useState<Message[]>([
-    { 
-      id: '1', 
-      role: 'assistant', 
-      content: 'Welcome to Takumi Artisan Concierge. I am Kenji. How may I assist you in your pursuit of craftsmanship today?' 
+    {
+      id: '1',
+      role: 'assistant',
+      content: 'Chào bạn! Mình là Kizuna AI, chuyên viên tư vấn trực tuyến của shop. Cảm ơn bạn đã ghé thăm. Bạn đang quan tâm hoặc muốn tìm kiếm mặt hàng cụ thể nào, xin vui lòng để lại thông tin để mình có thể hỗ trợ và tư vấn nhanh nhất cho bạn ạ.'
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+
+  // Live Chat state
+  const [sessionId] = useState(() => {
+    let sid = localStorage.getItem('concierge_session_id');
+    if (!sid) {
+      sid = `web_${Date.now()}`;
+      localStorage.setItem('concierge_session_id', sid);
+    }
+    return sid;
+  });
+  const [adminTookOver, setAdminTookOver] = useState(false);
+
+  useEffect(() => {
+    // Connect to SSE for admin replies
+    const eventSource = new EventSource(`${CHAT_API_BASE_URL}/chat/${sessionId}/stream`);
+    eventSource.onmessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        if (data.is_admin) {
+          setAdminTookOver(true);
+          setMessages(prev => [...prev, {
+            id: data.id,
+            role: 'assistant',
+            content: data.content
+          }]);
+        }
+      } catch (err) {
+        console.error("SSE parse error", err);
+      }
+    };
+    return () => eventSource.close();
+  }, [sessionId]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -38,19 +72,37 @@ export function ConciergePage() {
     setIsLoading(true);
 
     try {
+      // Notify Admin Dashboard and get status
+      const res = await fetch(`${CHAT_API_BASE_URL}/concierge/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: content, session_id: sessionId, sender: 'user' })
+      });
+      const data = await res.json();
+
+      if (data.adminTookOver) {
+        setAdminTookOver(true);
+      }
+
+      // If admin took over, don't call Gemini
+      if (data.adminTookOver || adminTookOver) {
+        setIsLoading(false);
+        return;
+      }
+
       // Note: In Vite, use import.meta.env.VITE_...
-      const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
-      
+      const apiKey = GEMINI_API_KEY;
+
       if (!apiKey) {
         throw new Error('Gemini API Key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
       }
 
       const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({ 
-        model: "gemini-2.0-flash",
-        systemInstruction: "You are Kenji, an expert Japanese artisan concierge for 'KIZUNA'. You are sophisticated, polite, and deeply knowledgeable about Japanese traditional crafts like Kintsugi, Hinoki woodwork, Ceramics, and Textiles. You specialize in bespoke requests. Keep your tone serene and premium."
+      const model = genAI.getGenerativeModel({
+        model: "gemini-2.5-flash",
+        systemInstruction: "You are Kenji, an expert Japanese artisan concierge for 'KIZUNA'. You are sophisticated, polite, and deeply knowledgeable about Japanese traditional crafts like Kintsugi, Hinoki woodwork, Ceramics, and Textiles. You specialize in bespoke requests. Keep your tone serene and premium. Note: We are a shop, you can verify requests and tell the customer you will forward it to our human artisans."
       });
-      
+
       const chatHistory = messages.map(m => ({
         role: m.role === 'assistant' ? 'model' : 'user',
         parts: [{ text: m.content }]
@@ -69,12 +121,20 @@ export function ConciergePage() {
         role: 'assistant',
         content: text,
       }]);
+
+      // Push AI reply to session as well so Admin sees it
+      await fetch(`${CHAT_API_BASE_URL}/concierge/message`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: text, session_id: sessionId, sender: 'ai' })
+      });
+
     } catch (err) {
       console.error('Concierge Error:', err);
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content: "I apologize, but I am experiencing difficulties connecting with our artisans at the moment. Please try again shortly.",
+        content: "Cảm ơn quý khách đã quan tâm và gửi yêu cầu mua hàng. Shop đã ghi nhận thông tin và sẽ liên hệ lại với quý khách để xác nhận trong thời gian sớm nhất. Xin vui lòng chờ trong giây lát!",
       }]);
     } finally {
       setIsLoading(false);
@@ -93,17 +153,16 @@ export function ConciergePage() {
             {messages.map((msg) => (
               <motion.div
                 key={msg.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4 }}
+                {...fadeUp}
+                transition={tweenFast}
               >
                 <MessageItem message={msg} />
               </motion.div>
             ))}
             {isLoading && (
-              <motion.div 
-                initial={{ opacity: 0 }} 
-                animate={{ opacity: 1 }} 
+              <motion.div
+                {...fade}
+                transition={tweenFast}
                 className="flex gap-4 items-start"
               >
                 <div className="w-8 h-8 rounded-full border border-surface-variant flex items-center justify-center bg-surface">

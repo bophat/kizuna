@@ -18,6 +18,9 @@
     "paths": {
       "@/*": [
         "./*"
+      ],
+      "@izuna/shared/*": [
+        "../shared/*"
       ]
     },
     "allowImportingTsExtensions": true,

@@ -8,12 +8,17 @@ import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { cn } from '@/lib/utils';
-import { apiFetch, getMediaUrl } from '@/lib/api';
+import { apiFetch } from '@/lib/api';
+import { ProductImage } from '@/components/products/ProductImage';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
+import { tweenFast } from '@/lib/motion';
+import { FREE_SHIPPING_MIN_USD } from '@/lib/formatPrice';
 
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   
   const [product, setProduct] = useState<Product | null>(null);
   const [relatedProducts, setRelatedProducts] = useState<Product[]>([]);
@@ -186,15 +191,21 @@ export function ProductDetail() {
           {/* Column 1: Image Gallery */}
           <div className="flex flex-col gap-4">
             <div className="aspect-square bg-surface-variant/20 rounded-2xl overflow-hidden border border-surface-variant relative group">
-              <motion.img 
+              <motion.div
                 key={selectedImage}
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                transition={{ duration: 0.3 }}
-                src={getMediaUrl(selectedImage)} 
-                alt={product.name}
-                className="w-full h-full object-cover"
-              />
+                transition={tweenFast}
+                className="w-full h-full"
+              >
+                <ProductImage
+                  src={selectedImage}
+                  alt={product.name}
+                  preset="detail"
+                  priority
+                  className="w-full h-full gpu-transform"
+                />
+              </motion.div>
               
               {/* Navigation Arrows */}
               {galleryImages.length > 1 && (
@@ -241,7 +252,12 @@ export function ProductDetail() {
                       selectedImage === img ? "border-primary" : "border-transparent hover:border-surface-variant"
                     )}
                   >
-                    <img src={getMediaUrl(img)} alt={`Thumbnail ${idx}`} className="w-full h-full object-cover" />
+                    <ProductImage
+                      src={img}
+                      alt={`${product.name} ${idx + 1}`}
+                      preset="thumb"
+                      className="w-full h-full"
+                    />
                   </button>
                 ))}
               </div>
@@ -275,7 +291,7 @@ export function ProductDetail() {
             <h1 className="headline-lg mb-4">{product.name}</h1>
             
             <div className="flex items-center gap-4 mb-8">
-              <span className="text-3xl font-medium">${product.price.toLocaleString()}</span>
+              <span className="text-3xl font-medium">{formatPrice(product.price)}</span>
               {product.sales && product.sales > 0 ? (
                 <span className="px-2 py-1 bg-surface-variant text-on-surface text-xs rounded-full">
                   {t('product.sold', { count: product.sales })}
@@ -322,7 +338,7 @@ export function ProductDetail() {
                   className="flex-1 bg-primary text-white h-14 rounded-full font-bold flex items-center justify-center gap-2 hover:bg-primary-container transition-colors shadow-lg shadow-primary/20"
                 >
                   <ShoppingBag size={20} />
-                  <span>{t('product.add_to_cart')} - ${(product.price * quantity).toLocaleString()}</span>
+                  <span>{t('product.add_to_cart')} - {formatPrice(product.price * quantity)}</span>
                 </button>
                 
                 <button 
@@ -346,7 +362,9 @@ export function ProductDetail() {
                 </p>
                 <p className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                  {t('product.free_shipping')}
+                  {t('product.free_shipping', {
+                    amount: formatPrice(FREE_SHIPPING_MIN_USD),
+                  })}
                 </p>
               </div>
             </div>

@@ -6,7 +6,30 @@
     "orders": "Orders",
     "users": "Users",
     "staff": "Staff & Roles",
+    "profile": "Profile",
+    "chat": "Live Chat",
     "settings": "Settings"
+  },
+  "chat": {
+    "title": "Live Chat",
+    "subtitle": "Online support",
+    "description": "Monitor and reply to customer messages from the website concierge.",
+    "active_sessions": "Open sessions",
+    "sessions_title": "Session list",
+    "loading": "Loading chat sessions...",
+    "no_sessions": "No chat sessions yet",
+    "no_messages": "No messages yet",
+    "customer_label": "Guest #{{id}}",
+    "admin_badge": "ADMIN",
+    "session_title": "Session: {{id}}",
+    "status_admin": "You are handling this chat",
+    "status_ai": "AI is auto-replying",
+    "ai_handling": "AI active",
+    "ai_reply": "AI reply",
+    "admin_reply": "Admin reply",
+    "input_admin": "Type your reply...",
+    "input_takeover": "Type to take over from AI...",
+    "select_session": "Select a chat session to begin"
   },
   "dashboard": {
     "title": "Registry Insight",
@@ -105,6 +128,7 @@
         "cheap": "Accessible"
       },
       "price_label": "Evaluation (USD)",
+      "price_preview": "{{localized}} (registry {{usd}})",
       "stock_label": "Current Stock Level",
       "brand_label": "Artisan / Brand",
       "location_label": "Workshop Location",
@@ -130,6 +154,49 @@
       "description_help": "This narrative provides essential context for the AI Sales Concierge.",
       "description_placeholder": "Detail the craftsmanship, material choices, historical lineage, and cultural significance of this piece..."
     }
+  },
+  "pricing": {
+    "title": "Pricing calculator",
+    "subtitle": "Land cost → selling price (Japan → Vietnam)",
+    "section_costs": "Cost inputs",
+    "section_result": "Calculation result",
+    "fields": {
+      "origin_vnd": "Origin cost (VND)",
+      "origin_jpy": "Origin cost (JPY)",
+      "origin_jpy_hint": "Auto-converted via ¥ → ₫ rate",
+      "jpy_rate": "¥ → ₫ rate",
+      "usd_rate": "$ → ₫ rate",
+      "tax_japan": "Japan tax (8–10%)",
+      "tax_vietnam": "VN tax / customs",
+      "ship_int": "Japan → Vietnam shipping",
+      "ship_japan": "Japan domestic ship",
+      "ship_vietnam": "VN domestic ship",
+      "hidden": "Packaging / hidden costs",
+      "hidden_hint": "Box, bubble wrap, FX risk, damage",
+      "margin": "Target profit margin"
+    },
+    "cost": {
+      "origin": "Origin (converted)",
+      "tax_japan": "Japan tax",
+      "tax_vietnam": "Vietnam tax",
+      "ship_int": "International ship",
+      "ship_japan": "JP domestic ship",
+      "ship_vietnam": "VN domestic ship",
+      "hidden": "Hidden costs"
+    },
+    "result": {
+      "total_cost": "Total landed cost",
+      "break_even": "Break-even price",
+      "selling": "Selling price ({{margin}}% margin)",
+      "profit": "Expected profit",
+      "usd_price": "Registry price (USD)"
+    },
+    "apply_price": "Apply to valuation",
+    "save_rates": "Save rates",
+    "fetch_live_rates": "Fetch live rates",
+    "rates_synced": "Rates synced ({{date}})",
+    "rates_sync_failed": "Could not fetch rates. Check backend and network.",
+    "formula_note": "Selling = Total cost × (1 + margin%). Total cost = origin + tax + shipping + hidden."
   },
   "orders": {
     "title": "Consignment Tracking",
@@ -256,6 +323,39 @@
       "confirm_button": "Confirm New Curator"
     }
   },
+  "profile": {
+    "subtitle": "Personal Information",
+    "title": "My Profile",
+    "description": "Manage your personal details and account settings",
+    "avatar_section": "Profile Photo",
+    "avatar_description": "Upload your profile picture",
+    "avatar_hint": "JPEG, PNG, WEBP. Max 2MB.",
+    "avatar_alt": "Profile photo",
+    "fields": {
+      "username": "Username",
+      "email": "Email",
+      "first_name": "First Name",
+      "last_name": "Last Name",
+      "phone": "Phone Number",
+      "address": "Address",
+      "role": "Role",
+      "member_since": "Member since"
+    },
+    "roles": {
+      "admin": "Administrator",
+      "staff": "Staff"
+    },
+    "save_success": "Changes saved",
+    "save_error": "Failed to save changes",
+    "error_load": "Could not load profile",
+    "logout": "Sign out",
+    "logout_confirm": "Are you sure you want to sign out?",
+    "logout_success": "Signed out",
+    "errors": {
+      "update_failed": "Failed to update profile",
+      "avatar_failed": "Failed to upload avatar"
+    }
+  },
   "categories": {
     "title": "Taxonomy",
     "subtitle": "Structure",
@@ -355,6 +455,15 @@
       "invalid_credentials": "Invalid credentials. Please try again."
     }
   },
+  "notifications": {
+    "title": "Notifications",
+    "mark_all_read": "Mark all as read",
+    "empty": "No notifications yet",
+    "new_order": "New Order",
+    "new_order_message": "You have a new order from customer #{{id}}",
+    "new_chat": "New Message",
+    "new_chat_message": "Hello admin, I would like to ask if this product is still in stock?"
+  },
   "common": {
     "search": "Search artifacts, orders, or staff...",
     "view_public": "View Public Site",
@@ -365,6 +474,9 @@
     "authenticating": "Authenticating with KIZUNA systems...",
     "edit": "Edit",
     "delete": "Delete",
-    "loading_logistics": "Synchronizing logistics..."
+    "loading_logistics": "Synchronizing logistics...",
+    "reset": "Reset",
+    "save": "Save",
+    "error_occurred": "An error occurred"
   }
 }

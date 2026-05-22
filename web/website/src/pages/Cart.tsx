@@ -2,14 +2,18 @@ import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
+import { fade, tweenFast } from '@/lib/motion';
 import { Icons } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
+import { ProductImage } from '@/components/products/ProductImage';
 
 export function CartPage() {
   const { t } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   const { cart, removeFromCart, updateQuantity } = useCart();
   const navigate = useNavigate();
   const [productCache, setProductCache] = useState<Record<string, any>>({});
@@ -81,18 +85,22 @@ export function CartPage() {
         <div className="flex flex-col lg:flex-row gap-12">
           {/* Cart Items List */}
           <div className="w-full lg:w-2/3 flex flex-col gap-6">
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout" initial={false}>
             {items.map((item) => (
               <motion.div
                 key={item.product_id}
-                layout
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
+                {...fade}
+                exit={{ opacity: 0 }}
+                transition={tweenFast}
                 className="flex flex-col sm:flex-row gap-8 pb-8 border-b border-surface-variant"
               >
                 <div className="w-full sm:w-[200px] aspect-[4/5] bg-surface-container-highest shrink-0 overflow-hidden rounded-sm relative">
-                  <img src={item.productDetail.image} alt={item.productDetail.name} className="h-full w-full object-cover" />
+                  <ProductImage
+                    src={item.productDetail.image}
+                    alt={item.productDetail.name}
+                    preset="cart"
+                    className="h-full w-full"
+                  />
                 </div>
                 <div className="flex flex-col flex-grow justify-between py-2">
                   <div className="flex justify-between items-start">
@@ -100,7 +108,7 @@ export function CartPage() {
                       <h3 className="headline-md font-medium text-lg lg:text-xl">{item.productDetail.name}</h3>
                       <p className="label-sm text-secondary normal-case mt-2">{item.productDetail.location}</p>
                     </div>
-                    <span className="headline-md text-lg lg:text-xl">${parseFloat(item.price).toFixed(2)}</span>
+                    <span className="headline-md text-lg lg:text-xl">{formatPrice(item.price)}</span>
                   </div>
 
                   <div className="flex justify-between items-center mt-8">
@@ -139,16 +147,16 @@ export function CartPage() {
               <div className="flex flex-col gap-4 mb-8">
                 <div className="flex justify-between body-md text-secondary">
                   <span>{t('cart.subtotal')}</span>
-                  <span className="text-on-surface">${subtotal.toFixed(2)}</span>
+                  <span className="text-on-surface">{formatPrice(subtotal)}</span>
                 </div>
                 <div className="flex justify-between body-md text-secondary">
                   <span>{t('cart.shipping')}</span>
-                  <span className="text-on-surface">${subtotal > 0 ? shipping : 0}</span>
+                  <span className="text-on-surface">{subtotal > 0 ? formatPrice(shipping) : formatPrice(0)}</span>
                 </div>
               </div>
               <div className="flex justify-between headline-md text-xl pt-6 border-t border-surface-variant mb-8">
                 <span>{t('cart.total')}</span>
-                <span>${total.toFixed(2)}</span>
+                <span>{formatPrice(total)}</span>
               </div>
               <div className="flex flex-col gap-4">
                 {subtotal > 0 && (

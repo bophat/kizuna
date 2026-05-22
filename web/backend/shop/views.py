@@ -2,11 +2,20 @@ from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
+from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, Category, Favorite
 from .serializers import CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer, CategorySerializer, FavoriteSerializer
+
+class ExchangeRatesView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        force = request.query_params.get('refresh') == '1'
+        return Response(get_exchange_rates(force_refresh=force))
+
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Product.objects.all().order_by('-created_at')

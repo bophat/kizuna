@@ -5,6 +5,8 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
+import { ProductImage } from '@/components/products/ProductImage';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
 
 interface OrderItem {
   id: number;
@@ -43,6 +45,7 @@ interface UserData {
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items'>('info');
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
@@ -141,8 +144,9 @@ export function ProfilePage() {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center min-h-[60vh]">
+      <div className="flex flex-col justify-center items-center min-h-[60vh] gap-3">
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <p className="body-sm text-secondary">{t('common.loading')}</p>
       </div>
     );
   }
@@ -232,13 +236,13 @@ export function ProfilePage() {
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
-                  <label className="label-sm text-secondary lowercase">{t('users.phone')}</label>
+                  <label className="label-sm text-secondary lowercase">{t('profile.phone')}</label>
                   <input
                     type="tel"
                     value={formData.phone}
                     onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                     className="w-full bg-surface-container border border-surface-variant p-4 body-md focus:border-primary outline-none transition-all rounded-sm"
-                    placeholder="+84 000 000 000"
+                    placeholder={t('profile.phone_placeholder')}
                   />
                 </div>
                 <div className="space-y-2 md:col-span-2">
@@ -295,7 +299,7 @@ export function ProfilePage() {
                         </div>
                         <div>
                           <p className="label-xs text-secondary lowercase mb-1">{t('cart.total')}</p>
-                          <p className="body-sm font-medium">${parseFloat(order.total_amount).toFixed(2)}</p>
+                          <p className="body-sm font-medium">{formatPrice(order.total_amount)}</p>
                         </div>
                         <div>
                           <p className="label-xs text-secondary lowercase mb-1">{t('order.status_label')}</p>
@@ -305,7 +309,7 @@ export function ProfilePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="label-xs text-secondary">Order #{order.id}</span>
+                        <span className="label-xs text-secondary">{t('profile.order_number', { id: order.id })}</span>
                         <Icons.ChevronRight size={16} className="text-secondary group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>
@@ -314,7 +318,12 @@ export function ProfilePage() {
                         {order.items.map((item) => (
                           <div key={item.id} className="w-16 h-16 bg-surface-container rounded-sm overflow-hidden flex-shrink-0 border border-surface-variant">
                             {item.image ? (
-                              <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" />
+                              <ProductImage
+                                src={item.image}
+                                alt={item.product_name}
+                                preset="thumb"
+                                className="w-full h-full"
+                              />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-secondary">
                                 <Package size={16} />
@@ -324,7 +333,7 @@ export function ProfilePage() {
                         ))}
                         {order.items.length > 5 && (
                           <div className="w-16 h-16 bg-surface-container rounded-sm flex items-center justify-center label-sm text-secondary">
-                            +{order.items.length - 5}
+                            {t('profile.more_items', { count: order.items.length - 5 })}
                           </div>
                         )}
                       </div>
@@ -351,7 +360,12 @@ export function ProfilePage() {
                     <div key={item.id} className="flex gap-4 p-4 border border-surface-variant rounded-sm hover:border-primary transition-colors">
                       <div className="w-24 h-24 bg-surface-container rounded-sm overflow-hidden flex-shrink-0">
                         {item.image ? (
-                          <img src={item.image} alt={item.product_name} className="w-full h-full object-cover" />
+                          <ProductImage
+                            src={item.image}
+                            alt={item.product_name}
+                            preset="thumb"
+                            className="w-full h-full"
+                          />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-secondary">
                             <Package size={24} />
@@ -360,7 +374,7 @@ export function ProfilePage() {
                       </div>
                       <div className="flex flex-col justify-center">
                         <h3 className="label-md lowercase tracking-tight line-clamp-1">{item.product_name}</h3>
-                        <p className="body-sm text-secondary mt-1">{t('profile.acquired_for', { price: `$${parseFloat(item.price).toFixed(2)}` })}</p>
+                        <p className="body-sm text-secondary mt-1">{t('profile.acquired_for', { price: formatPrice(item.price) })}</p>
                         <button 
                           onClick={() => navigate(`/product/${item.product_id}`)}
                           className="mt-3 text-primary label-sm lowercase tracking-normal border-b border-primary w-fit hover:text-primary-container transition-colors"

@@ -1,0 +1,12 @@
+# Django backend — bổ sung cho .gitignore gốc (repo root)
+
+.env
+.env.*
+!.env.example
+
+staticfiles/
+media/
+__pycache__/
+*.pyc
+.venv/
+venv/

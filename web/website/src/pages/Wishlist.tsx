@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { fadeUp, tweenBase } from '@/lib/motion';
 import { useWishlist } from '@/context/WishlistContext';
 import { useTranslation } from 'react-i18next';
 import { ProductCard } from '@/components/products/ProductCard';
@@ -22,8 +23,8 @@ export function WishlistPage() {
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
+        {...fadeUp}
+        transition={tweenBase}
       >
         <div className="mb-12">
           <h1 className="headline-xl">{t('wishlist.title')}</h1>

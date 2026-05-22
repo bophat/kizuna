@@ -1,0 +1,8 @@
+# Thư mục web/ — env & DB local
+
+.env
+.env.*
+!.env.example
+
+database/
+*.sqlite3

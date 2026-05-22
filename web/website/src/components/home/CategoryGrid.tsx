@@ -3,6 +3,8 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { motion } from 'motion/react';
 import { apiFetch } from '@/lib/api';
+import { ProductImage } from '@/components/products/ProductImage';
+import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
 
 interface Category {
   id: number;
@@ -21,10 +23,12 @@ const CATEGORY_FALLBACK_IMAGES: Record<string, string> = {
 function getCategoryImage(cat: Category): string {
   const key = (cat.slug || cat.name).toLowerCase();
   for (const [k, v] of Object.entries(CATEGORY_FALLBACK_IMAGES)) {
-    if (key.includes(k)) return v;
+    if (key.includes(k)) return optimizeImageUrl(v, IMAGE_WIDTH.card);
   }
-  // Generic fallback
-  return 'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop';
+  return optimizeImageUrl(
+    'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=800&auto=format&fit=crop',
+    IMAGE_WIDTH.card
+  );
 }
 
 export function CategoryGrid() {
@@ -74,10 +78,11 @@ export function CategoryGrid() {
             to={`/collections?category=${cat.slug || cat.name.toLowerCase()}`}
             className="group relative block aspect-square overflow-hidden rounded-sm border border-surface-variant"
           >
-            <img
+            <ProductImage
               src={getCategoryImage(cat)}
               alt={cat.name}
-              className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-110"
+              preset="card"
+              className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             />
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />
             <div className="absolute bottom-4 left-4">

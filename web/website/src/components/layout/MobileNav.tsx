@@ -1,4 +1,5 @@
 import { motion } from 'motion/react';
+import { springNav } from '@/lib/motion';
 import { Link, useLocation } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Icons } from '../Icons';
@@ -12,7 +13,7 @@ export function MobileNav() {
     {
       to: '/collections',
       icon: Icons.Package,
-      label: t('nav.products'),
+      label: t('products'),
     },
     {
       to: '/wishlist',
@@ -42,7 +43,7 @@ export function MobileNav() {
               key={item.to}
               to={item.to}
               className={cn(
-                "relative flex flex-col items-center gap-1 min-w-[64px] transition-all duration-300",
+                "relative flex flex-col items-center gap-1 min-w-[64px] transition-colors duration-200",
                 isActive ? "text-primary" : "text-zinc-500"
               )}
             >
@@ -50,7 +51,7 @@ export function MobileNav() {
                 <motion.div
                   layoutId="active-nav"
                   className="absolute -top-1 w-12 h-1 bg-primary rounded-full"
-                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  transition={springNav}
                 />
               )}
               <div className="relative pt-1">

@@ -3,7 +3,7 @@ import { motion } from 'motion/react';
 import { Lock, Mail, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
-import { Logo } from '../components/Logo';
+import { Logo } from '@izuna/shared/components/Logo';
 import { apiFetch } from '../lib/api';
 
 export default function Login() {
@@ -74,7 +74,6 @@ export default function Login() {
             transition={{ duration: 0.8 }}
           >
 
-            <Logo className="mb-16 justify-center" isDark size="xl" />
             <p className="text-brand-clay/60 text-lg font-light leading-relaxed font-serif italic">
               {t('login.hero_text')}
             </p>
@@ -95,6 +94,7 @@ export default function Login() {
           className="w-full max-w-md"
         >
           <div className="mb-12">
+            <Logo className="mb-8" size="lg" forceBlack />
             <h2 className="text-3xl font-serif font-bold text-brand-ink mb-2">{t('login.title')}</h2>
             <p className="text-brand-ink/50 text-sm italic font-serif">{t('login.subtitle')}</p>
           </div>

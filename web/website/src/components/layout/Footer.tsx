@@ -1,6 +1,6 @@
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import { Logo } from '../Logo';
+import { Logo } from '@izuna/shared/components/Logo';
 
 export function Footer() {
   const { t } = useTranslation();

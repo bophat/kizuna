@@ -3,8 +3,11 @@ import { Link } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { Product } from '@/types';
 import { apiFetch } from '@/lib/api';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
+import { ProductImage } from '@/components/products/ProductImage';
 
 export function FeaturedProducts() {
+  const { format: formatPrice } = useFormatPrice();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -62,10 +65,11 @@ export function FeaturedProducts() {
         <Link to={`/collections`} className="md:col-span-8 group cursor-pointer">
           <div className="relative aspect-[16/10] overflow-hidden rounded-sm border border-surface-variant">
             {main.image ? (
-              <img
+              <ProductImage
                 src={main.image}
                 alt={main.name}
-                className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                preset="detail"
+                className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
               />
             ) : (
               <div className="h-full w-full bg-surface-container" />
@@ -81,7 +85,7 @@ export function FeaturedProducts() {
               <h3 className="label-md lowercase tracking-tight">{main.name}</h3>
               <p className="body-md text-secondary mt-1">{main.location}</p>
             </div>
-            <span className="label-md">${main.price}</span>
+            <span className="label-md">{formatPrice(main.price)}</span>
           </div>
         </Link>
         {/* Side Items */}
@@ -90,10 +94,11 @@ export function FeaturedProducts() {
             <Link key={product.id} to={`/collections`} className="group cursor-pointer flex-1">
               <div className="relative aspect-[4/3] overflow-hidden rounded-sm border border-surface-variant">
                 {product.image ? (
-                  <img
+                  <ProductImage
                     src={product.image}
                     alt={product.name}
-                    className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                    preset="card"
+                    className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
                   />
                 ) : (
                   <div className="h-full w-full bg-surface-container" />
@@ -104,7 +109,7 @@ export function FeaturedProducts() {
                   <h3 className="label-md lowercase tracking-tight">{product.name}</h3>
                   <p className="body-md text-secondary mt-1">{product.location}</p>
                 </div>
-                <span className="label-md">${product.price}</span>
+                <span className="label-md">{formatPrice(product.price)}</span>
               </div>
             </Link>
           ))}

@@ -12,7 +12,8 @@ import Orders from './pages/Orders';
 import Users from './pages/Users';
 import Staff from './pages/Staff';
 import Categories from './pages/Categories';
-import Settings from './pages/Settings';
+import Chat from './pages/Chat';
+import Profile from './pages/Profile';
 import Login from './pages/Login';
 import { apiFetch } from './lib/api';
 import { Loader2 } from 'lucide-react';
@@ -79,7 +80,8 @@ function App() {
                   <Route path="/orders" element={<Orders />} />
                   <Route path="/users" element={<Users />} />
                   <Route path="/staff" element={<Staff />} />
-                  <Route path="/settings" element={<Settings />} />
+                  <Route path="/profile" element={<Profile />} />
+                  <Route path="/chat" element={<Chat />} />
                 </Routes>
               </Layout>
             ) : (

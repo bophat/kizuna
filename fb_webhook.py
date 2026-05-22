@@ -3,7 +3,9 @@ import requests
 from flask import Flask, request, jsonify, render_template, redirect, url_for
 import json
 import time
+import queue
 from dotenv import load_dotenv
+from flask_cors import CORS
 
 # Import functions from chatbot
 from chatbot import init_db, generate_reply, search_product_japan, add_product_to_local_db, save_missing_products, save_order, get_today_orders
@@ -11,6 +13,23 @@ from chatbot import init_db, generate_reply, search_product_japan, add_product_t
 load_dotenv()
 
 app = Flask(__name__)
+CORS(app)
+
+# Global list of queues for SSE clients
+clients = []
+
+# Chat sessions for Live Chat
+chat_sessions = {}
+session_clients = {}
+
+def notify_session(session_id, data):
+    if session_id in session_clients:
+        for q in session_clients[session_id]:
+            q.put(data)
+
+def notify_clients(notification_data):
+    for q in clients:
+        q.put(notification_data)
 
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "my_secure_verify_token")
 PAGE_ACCESS_TOKEN = os.getenv("FACEBOOK_ACCESS_TOKEN", "your_page_access_token")
@@ -18,7 +37,6 @@ KB_FILE = "knowledge_base.json"
 
 # Khởi tạo DB khi khởi chạy app
 init_db()
-sync_page_name_to_kb()
 
 def load_kb():
     """Tải dữ liệu từ file JSON kiến thức"""
@@ -136,6 +154,103 @@ def process_image(image_url):
 def index():
     return "Bot is running! Go to <a href='/admin'>/admin</a> to manage products.", 200
 
+@app.route("/api/notifications/stream", methods=["GET"])
+def stream_notifications():
+    def event_stream():
+        q = queue.Queue()
+        clients.append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            clients.remove(q)
+    return app.response_class(event_stream(), mimetype="text/event-stream")
+
+@app.route("/api/concierge/message", methods=["POST"])
+def concierge_message():
+    data = request.json
+    user_input = data.get("message", "")
+    session_id = data.get("session_id", "default")
+    sender = data.get("sender", "user")
+
+    if session_id not in chat_sessions:
+        chat_sessions[session_id] = {"messages": [], "adminTookOver": False, "updated_at": time.time()}
+    
+    if user_input:
+        chat_sessions[session_id]["messages"].append({
+            "id": str(int(time.time() * 1000)),
+            "role": "user" if sender == "user" else "assistant",
+            "content": user_input,
+            "timestamp": time.time()
+        })
+        chat_sessions[session_id]["updated_at"] = time.time()
+
+        if sender == "user":
+            notify_clients({
+                "id": f"notif_concierge_{int(time.time() * 1000)}",
+                "type": "CHAT",
+                "title": "Tin nhắn từ Website",
+                "message": f"Khách: {user_input}",
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                "session_id": session_id
+            })
+    return jsonify({"status": "success", "adminTookOver": chat_sessions[session_id]["adminTookOver"]}), 200
+
+@app.route("/api/chat/sessions", methods=["GET"])
+def get_chat_sessions():
+    return jsonify(chat_sessions)
+
+@app.route("/api/chat/<session_id>/reply", methods=["POST"])
+def admin_reply(session_id):
+    data = request.json
+    message = data.get("message", "")
+    if session_id in chat_sessions:
+        chat_sessions[session_id]["adminTookOver"] = True
+        msg_obj = {
+            "id": str(int(time.time() * 1000)),
+            "role": "assistant",
+            "content": message,
+            "is_admin": True,
+            "timestamp": time.time()
+        }
+        chat_sessions[session_id]["messages"].append(msg_obj)
+        chat_sessions[session_id]["updated_at"] = time.time()
+        notify_session(session_id, msg_obj)
+        return jsonify({"status": "success", "message": msg_obj})
+    return jsonify({"error": "Session not found"}), 404
+
+@app.route("/api/chat/<session_id>/stream", methods=["GET"])
+def stream_session(session_id):
+    def event_stream():
+        q = queue.Queue()
+        if session_id not in session_clients:
+            session_clients[session_id] = []
+        session_clients[session_id].append(q)
+        try:
+            while True:
+                data = q.get()
+                yield f"data: {json.dumps(data)}\n\n"
+        except GeneratorExit:
+            session_clients[session_id].remove(q)
+    return app.response_class(event_stream(), mimetype="text/event-stream")
+
+
+@app.route("/api/order/new", methods=["POST"])
+def new_order_notification():
+    data = request.json or {}
+    order_id = data.get("order_id", "Unknown")
+    total = data.get("total", "0")
+    
+    notify_clients({
+        "id": f"notif_order_web_{int(time.time() * 1000)}",
+        "type": "ORDER",
+        "title": "Đơn hàng mới từ Website",
+        "message": f"Mã đơn: #{order_id} - Tổng: ${total}",
+        "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    })
+    return jsonify({"status": "success"}), 200
+
 @app.route("/webhook", methods=["GET", "POST"])
 def webhook():
     if request.method == "GET":
@@ -171,6 +286,16 @@ def webhook():
                                 process_image(image_url)
 
                         user_input = text.strip()
+                        
+                        if user_input:
+                            notify_clients({
+                                "id": f"notif_{int(time.time() * 1000)}",
+                                "type": "CHAT",
+                                "title": "Tin nhắn mới",
+                                "message": f"Khách hàng: {user_input}",
+                                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                            })
+
                         
                         # 1. Trả về report nếu nhắn đúng lệnh
                         if user_input.lower() == "report list order hôm nay":
@@ -215,6 +340,14 @@ def webhook():
                                 
                                 # Log order record
                                 save_order(product, price_jpy, price_vnd)
+                                
+                                notify_clients({
+                                    "id": f"notif_order_{int(time.time() * 1000)}_{product}",
+                                    "type": "ORDER",
+                                    "title": "Đơn hàng mới",
+                                    "message": f"Sản phẩm: {product}",
+                                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+                                })
 
                             save_missing_products(missing_products, user_input)
                         
@@ -225,5 +358,6 @@ def webhook():
             return "Not Found", 404
 
 if __name__ == "__main__":
+    sync_page_name_to_kb()
     app.run(port=8080, debug=True)
 

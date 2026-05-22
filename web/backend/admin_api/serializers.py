@@ -1,31 +1,51 @@
 from rest_framework import serializers
+from shop.models import Product, Order, OrderItem, Category, UserProfile, ProductImage
 from django.contrib.auth.models import User
-from shop.models import Product, Order, OrderItem, Category, UserProfile
+from .models import Setting
 
 class UserSerializer(serializers.ModelSerializer):
-    phone = serializers.CharField(source='profile.phone', read_only=True)
-    address = serializers.CharField(source='profile.address', read_only=True)
+    phone = serializers.CharField(source='profile.phone', required=False, allow_null=True, allow_blank=True)
+    address = serializers.CharField(source='profile.address', required=False, allow_null=True, allow_blank=True)
     password = serializers.CharField(write_only=True, required=False)
-    
+
     class Meta:
         model = User
         fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'password', 'phone', 'address', 'date_joined']
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)
+        profile_data = validated_data.pop('profile', {})
+
         user = User.objects.create(**validated_data)
         if password:
             user.set_password(password)
             user.save()
+
+        # Create user profile
+        if profile_data:
+            UserProfile.objects.create(user=user, **profile_data)
+
         return user
 
     def update(self, instance, validated_data):
         password = validated_data.pop('password', None)
-        user = super().update(instance, validated_data)
+        profile_data = validated_data.pop('profile', {})
+
+        # Update user fields
+        for attr, value in validated_data.items():
+            setattr(instance, attr, value)
         if password:
-            user.set_password(password)
-            user.save()
-        return user
+            instance.set_password(password)
+        instance.save()
+
+        # Update or create profile
+        if profile_data:
+            profile, created = UserProfile.objects.get_or_create(user=instance)
+            for attr, value in profile_data.items():
+                setattr(profile, attr, value)
+            profile.save()
+
+        return instance
 
 class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.IntegerField(source='products.count', read_only=True)
@@ -84,9 +104,28 @@ class OrderSerializer(serializers.ModelSerializer):
             return obj.payment_receipt.url
         return None
 
-class DashboardStatsSerializer(serializers.Serializer):
-    total_revenue = serializers.DecimalField(max_digits=12, decimal_places=2)
-    total_orders = serializers.IntegerField()
-    total_products = serializers.IntegerField()
-    total_customers = serializers.IntegerField()
-    recent_orders = OrderSerializer(many=True)
+class SettingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Setting
+        fields = ['id', 'key', 'value', 'description', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at']
+
+class ProductImageSerializer(serializers.ModelSerializer):
+    product = serializers.PrimaryKeyRelatedField(queryset=ProductImage._meta.get_field('product').related_model.objects.all())
+
+    class Meta:
+        model = ProductImage
+        fields = ['id', 'product', 'image', 'is_primary', 'display_order', 'created_at']
+        read_only_fields = ['id', 'created_at']
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if instance.image:
+            request = self.context.get('request')
+            if request:
+                ret['image'] = request.build_absolute_uri(instance.image.url)
+            else:
+                ret['image'] = instance.image.url
+        else:
+            ret['image'] = None
+        return ret

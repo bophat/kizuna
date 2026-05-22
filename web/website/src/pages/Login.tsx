@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Icons } from '@/components/Icons';
-import { Logo } from '@/components/Logo';
+import { Logo } from '@izuna/shared/components/Logo';
 import { ArrowRight, Check } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 

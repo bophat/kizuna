@@ -6,11 +6,17 @@ import { Icons } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
 import { apiFetch } from '@/lib/api';
+import { useFormatPrice } from '@/hooks/useFormatPrice';
+import { CHAT_API_BASE_URL } from '@/lib/env';
+import { fadeUp, slideX, tweenBase, tweenFast } from '@/lib/motion';
+import { ProductImage } from '@/components/products/ProductImage';
 
 const STEPS = ['Information', 'Shipping', 'Payment', 'Success'];
+const SHIPPING_USD = 75;
 
 export function CheckoutPage() {
   const { t } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');
@@ -78,6 +84,21 @@ export function CheckoutPage() {
       const data = await response.json();
       if (response.ok) {
         setOrderData(data);
+        
+        // Notify admin via local Flask SSE
+        try {
+          fetch(`${CHAT_API_BASE_URL}/order/new`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              order_id: data.order?.id || data.id,
+              total: data.order?.total_amount || data.total_amount
+            })
+          });
+        } catch (e) {
+          console.error("Failed to notify admin", e);
+        }
+
         await fetchCart(); // Refresh cart to empty
         nextStep(); // Go to Success step
       } else {
@@ -111,7 +132,7 @@ export function CheckoutPage() {
   }, [cart?.items]);
 
   const subtotal = parseFloat(cart?.total_amount || '0');
-  const shipping = 75;
+  const shipping = SHIPPING_USD;
   const total = subtotal > 0 ? subtotal + shipping : 0;
 
   const items = cart?.items.map(cartItem => {
@@ -137,16 +158,16 @@ export function CheckoutPage() {
     return (
       <div className=" md:py-10 px-4 flex items-center justify-center">
         <motion.div
-          initial={{ y: 20, opacity: 0 }}
-          animate={{ y: 0, opacity: 1 }}
+          {...fadeUp}
+          transition={tweenBase}
           className="w-full max-w-2xl bg-zinc-900 rounded-[2.5rem] border border-zinc-800 shadow-[0_40px_100px_-20px_rgba(0,0,0,0.4)] overflow-hidden text-white"
         >
           {/* Success Header */}
           <div className="p-1 md:p-1 text-center flex flex-col items-center border-b border-zinc-800">
             <motion.div
-              initial={{ scale: 0.1, opacity: 0 }}
-              animate={{ scale: 0.5, opacity: 1 }}
-              transition={{ delay: 0.1, type: "spring", stiffness: 100 }}
+              initial={{ scale: 0.85, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ ...tweenBase, delay: 0.08 }}
               className="w-15 h-15 md:w-20 md:h-20 bg-green-500 text-white rounded-full flex items-center justify-center mb-6 md:mb-8 shadow-2xl shadow-green-500/30"
             >
               <Icons.Check size={40} className="md:w-12 md:h-12" />
@@ -170,7 +191,7 @@ export function CheckoutPage() {
                     <Icons.Landmark size={18} />
                     <span className="text-[10px] md:label-sm uppercase tracking-widest font-bold">{t('checkout.bank_details_title')}</span>
                   </div>
-                  <p className="text-3xl md:text-4xl font-black text-black tracking-tighter">${orderTotal.toFixed(2)}</p>
+                  <p className="text-3xl md:text-4xl font-black text-black tracking-tighter">{formatPrice(orderTotal)}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -222,7 +243,7 @@ export function CheckoutPage() {
                 <div className="bg-zinc-800 rounded-xl md:rounded-xl p-3 md:p-4 border border-zinc-700 flex items-center justify-between">
                   <div>
                     <p className="text-xs md:label-sm text-zinc-500">{t('checkout.total_amount')}</p>
-                    <p className="text-base md:text-lg font-bold text-white">${orderTotal.toFixed(2)}</p>
+                    <p className="text-base md:text-lg font-bold text-white">{formatPrice(orderTotal)}</p>
                   </div>
                   <Icons.ShoppingBag size={28} className="text-primary md:w-8 md:h-8" />
                 </div>
@@ -266,13 +287,11 @@ export function CheckoutPage() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-24">
         {/* Main Form Area */}
         <div className="lg:col-span-8">
-          <AnimatePresence mode="wait">
+          <AnimatePresence mode="wait" initial={false}>
             <motion.div
               key={step}
-              initial={{ opacity: 0, x: 20 }}
-              animate={{ opacity: 1, x: 0 }}
-              exit={{ opacity: 0, x: -20 }}
-              transition={{ duration: 0.3 }}
+              {...slideX}
+              transition={tweenFast}
             >
               {step === 0 && (
                 <InformationForm
@@ -298,13 +317,18 @@ export function CheckoutPage() {
               {items.map((item, i) => (
                 <div key={i} className="flex gap-4 items-center">
                   <div className="relative h-20 w-16 bg-zinc-800 overflow-hidden rounded-xl shrink-0 border border-zinc-700">
-                    <img src={item.productDetail.image} alt={item.productDetail.name} className="h-full w-full object-cover" />
+                    <ProductImage
+                      src={item.productDetail.image}
+                      alt={item.productDetail.name}
+                      preset="cart"
+                      className="h-full w-full"
+                    />
                     <span className="absolute -top-1 -right-1 w-5 h-5 bg-primary text-white rounded-full flex items-center justify-center text-[10px] label-sm font-bold shadow-lg">{item.quantity}</span>
                   </div>
                   <div className="flex-grow">
                     <h4 className="label-md normal-case tracking-normal line-clamp-1 text-zinc-100">{item.productDetail.name}</h4>
                   </div>
-                  <span className="label-md shrink-0 text-white">${parseFloat(item.price).toFixed(2)}</span>
+                  <span className="label-md shrink-0 text-white">{formatPrice(item.price)}</span>
                 </div>
               ))}
             </div>
@@ -312,11 +336,11 @@ export function CheckoutPage() {
             <div className="border-t border-zinc-800 pt-6 flex flex-col gap-3 mb-8">
               <div className="flex justify-between body-md text-zinc-400">
                 <span>{t('cart.subtotal')}</span>
-                <span className="text-white">${subtotal.toFixed(2)}</span>
+                <span className="text-white">{formatPrice(subtotal)}</span>
               </div>
               <div className="flex justify-between body-md text-zinc-400">
                 <span>{t('cart.shipping')}</span>
-                <span className="text-white">${shipping.toFixed(2)}</span>
+                <span className="text-white">{formatPrice(shipping)}</span>
               </div>
             </div>
 
@@ -324,7 +348,7 @@ export function CheckoutPage() {
               <span className="headline-md text-white">{t('cart.total')}</span>
               <div className="text-right">
                 <span className="label-sm text-zinc-500 mr-2">USD</span>
-                <span className="headline-lg text-white">${total.toFixed(2)}</span>
+                <span className="headline-lg text-white">{formatPrice(total)}</span>
               </div>
             </div>
           </div>
@@ -439,6 +463,7 @@ function InformationForm({
 
 function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: () => void, onPrev: () => void }) {
   const { t } = useTranslation();
+  const { format: formatPrice } = useFormatPrice();
   return (
     <div className="flex flex-col gap-10">
       <h2 className="headline-lg">{t('checkout.steps.shipping')}</h2>
@@ -464,7 +489,7 @@ function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: 
                 <p className="label-sm text-tertiary mt-1 tracking-normal normal-case">{t('checkout.est_delivery')}</p>
               </div>
             </div>
-            <span className="label-md">$75.00</span>
+            <span className="label-md">{formatPrice(SHIPPING_USD)}</span>
           </label>
         </div>
       </section>

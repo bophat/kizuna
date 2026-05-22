@@ -1,0 +1,43 @@
+# Blueprint Render — import repo hoặc tạo thủ công theo file này
+# Docs: https://render.com/docs/blueprint-spec
+
+databases:
+  - name: kizuna-db
+    plan: free
+    databaseName: kizuna
+    user: kizuna
+
+services:
+  - type: web
+    name: kizuna-api
+    runtime: python
+    plan: free
+    rootDir: web/backend
+    buildCommand: chmod +x build.sh && ./build.sh
+    startCommand: gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2
+    healthCheckPath: /api/shop/exchange-rates/
+    envVars:
+      - key: PYTHON_VERSION
+        value: "3.11.11"
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DJANGO_DEBUG
+        value: "False"
+      - key: DJANGO_ALLOWED_HOSTS
+        value: kizuna-api.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: kizuna-db
+          property: connectionString
+      - key: CORS_ALLOWED_ORIGINS
+        sync: false
+      - key: CSRF_TRUSTED_ORIGINS
+        sync: false
+      - key: SECURE_SSL_REDIRECT
+        value: "True"
+      - key: MEDIA_ROOT
+        value: /var/data/media
+    disk:
+      name: kizuna-media
+      mountPath: /var/data/media
+      sizeGB: 1

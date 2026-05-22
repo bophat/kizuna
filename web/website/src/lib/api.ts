@@ -1,34 +1,32 @@
-export const API_BASE_URL = 'http://127.0.0.1:8000/api';
-const MEDIA_BASE_URL = 'http://127.0.0.1:8000';
+import { getMediaUrl as sharedGetMediaUrl } from '@izuna/shared/lib/media';
+import { API_BASE_URL, MEDIA_BASE_URL } from './env';
+
+export { API_BASE_URL };
 
 export function getMediaUrl(path: string | null | undefined) {
-  if (!path) return '';
-  if (path.startsWith('http')) return path;
-  return `${MEDIA_BASE_URL}${path.startsWith('/') ? path : `/${path}`}`;
+  return sharedGetMediaUrl(path, MEDIA_BASE_URL);
 }
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
-  
+
   const headers = {
     'Content-Type': 'application/json',
     ...(options.headers || {}),
   };
 
-  // Add auth token if available, but NOT for login/register/check-email
-  const isAuthEndpoint = endpoint.includes('/login/') || 
-                         endpoint.includes('/register/') || 
-                         endpoint.includes('/check-email/');
-  
+  const isAuthEndpoint =
+    endpoint.includes('/login/') ||
+    endpoint.includes('/register/') ||
+    endpoint.includes('/check-email/');
+
   const token = localStorage.getItem('access_token');
   if (token && !isAuthEndpoint) {
-    (headers as any)['Authorization'] = `Bearer ${token}`;
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
 
-  const response = await fetch(url, {
+  return fetch(url, {
     ...options,
     headers,
   });
-
-  return response;
 }

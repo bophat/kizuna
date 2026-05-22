@@ -1,97 +1,159 @@
-# =============================================
-# SENSITIVE FILES - NEVER COMMIT THESE
-# =============================================
+# =============================================================================
+# BẢO MẬT — KHÔNG BAO GIỜ COMMIT CÁC FILE NÀY
+# Chạy `git add .` an toàn; chỉ .env.example (mẫu) được phép lên Git
+# =============================================================================
 
-# Environment variables & secrets
+# --- Biến môi trường & secret ---
 .env
 .env.*
 !.env.example
+!**/.env.example
+
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.env.*.local
+
 *.key
 *.pem
 *.p12
+*.pfx
 *.cert
 *.cer
+*.secret
+secrets/
+**/secrets/
 
-# =============================================
-# BINARIES & LARGE FILES
-# =============================================
+# API keys / credentials (JSON, YAML)
+credentials.json
+credentials*.json
+service-account*.json
+serviceAccount*.json
+firebase-adminsdk*.json
+google-services.json
+**/local_settings.py
+**/settings_local.py
+
+# SSH / deploy tokens
+id_rsa
+id_rsa.*
+id_ed25519
+id_ed25519.*
+*.ppk
+.netrc
+.npmrc
+.pypirc
+
+# Vercel / Render (cấu hình local, không chứa secret nhưng không cần trên Git)
+.vercel/
+
+# Docker override thường chứa mật khẩu local
+docker-compose.override.yml
+docker-compose.*.local.yml
+
+# Ngrok / tunnel
 ngrok
 ngrok-*
-*.zip
-*.tar.gz
-*.tar
-*.gz
 
-# =============================================
-# DATABASES & LOCAL DATA
-# =============================================
+# =============================================================================
+# DATABASE & DỮ LIỆU LOCAL
+# =============================================================================
 *.sqlite
 *.sqlite3
+*.sqlite-journal
 *.db
+*.db-journal
 post_history.sqlite
 web/database/
+**/db.sqlite3
 
-# =============================================
-# PYTHON
-# =============================================
+# Dump / backup DB
+*.sql.gz
+*.dump
+pg_dump*
+backup/
+
+# =============================================================================
+# PYTHON / DJANGO
+# =============================================================================
 __pycache__/
-*.pyc
-*.pyo
-*.pyd
 *.py[cod]
 *$py.class
+*.pyo
+*.pyd
 *.egg
 *.egg-info/
+.eggs/
 dist/
 build/
-.eggs/
 .venv/
 venv/
 env/
 pip-log.txt
 pip-delete-this-directory.txt
 
-# =============================================
-# NODE / JAVASCRIPT
-# =============================================
+# Django collectstatic & upload
+web/backend/staticfiles/
+web/backend/media/
+**/staticfiles/
+
+# =============================================================================
+# NODE / FRONTEND BUILD
+# =============================================================================
 node_modules/
 .npm
 .yarn/
+.pnp.*
 *.tsbuildinfo
+dist/
+build/
+.cache/
+coverage/
+.parcel-cache/
+.turbo/
 
-# =============================================
-# MACOS
-# =============================================
-.DS_Store
-.AppleDouble
-.LSOverride
-Thumbs.db
+# =============================================================================
+# BINARIES & ARCHIVES
+# =============================================================================
+*.zip
+*.tar.gz
+*.tar
+*.gz
+*.7z
+*.rar
 
-# =============================================
-# LOGS & TEMPORARY FILES
-# =============================================
+# =============================================================================
+# LOGS & TEMP
+# =============================================================================
 *.log
 *.tmp
 *.bak
 *.swp
+*~
 server.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
 
-# =============================================
-# MEDIA / UPLOADS
-# =============================================
-web/backend/media/
+# =============================================================================
+# OS
+# =============================================================================
+.DS_Store
+.AppleDouble
+.LSOverride
+Thumbs.db
+ehthumbs.db
+Desktop.ini
 
-# =============================================
-# IDE & EDITORS
-# =============================================
+# =============================================================================
+# IDE (tuỳ chọn — không chứa secret nhưng tránh commit cấu hình cá nhân)
+# =============================================================================
 .vscode/
 .idea/
 *.suo
 *.user
+*.code-workspace
 
-# =============================================
-# BUILD OUTPUT
-# =============================================
-dist/
-build/
-.cache/
+# Cursor local index (không push)
+.cursor/

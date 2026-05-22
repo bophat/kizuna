@@ -6,7 +6,30 @@
     "orders": "注文管理",
     "users": "ユーザー",
     "staff": "スタッフと役割",
+    "profile": "プロフィール",
+    "chat": "ライブチャット",
     "settings": "設定"
+  },
+  "chat": {
+    "title": "ライブチャット",
+    "subtitle": "オンラインサポート",
+    "description": "ウェブサイトのコンシェルジュからのお客様メッセージを監視・返信します。",
+    "active_sessions": "進行中のセッション",
+    "sessions_title": "セッション一覧",
+    "loading": "チャットを読み込み中...",
+    "no_sessions": "チャットセッションがありません",
+    "no_messages": "メッセージなし",
+    "customer_label": "ゲスト #{{id}}",
+    "admin_badge": "ADMIN",
+    "session_title": "セッション: {{id}}",
+    "status_admin": "管理者が対応中",
+    "status_ai": "AIが自動返信中",
+    "ai_handling": "AI処理中",
+    "ai_reply": "AI返信",
+    "admin_reply": "管理者返信",
+    "input_admin": "返信を入力...",
+    "input_takeover": "AIから引き継ぐには入力...",
+    "select_session": "チャットセッションを選択してください"
   },
   "dashboard": {
     "title": "レジストリ分析",
@@ -105,6 +128,7 @@
         "cheap": "アクセシブル"
       },
       "price_label": "評価額 (USD)",
+      "price_preview": "{{localized}}（登録 {{usd}}）",
       "stock_label": "現在の在庫レベル",
       "brand_label": "職人 / ブランド",
       "location_label": "工房の所在地",
@@ -130,6 +154,49 @@
       "description_help": "このナラティブは、AIセールスコンシェルジュに不可欠なコンテキストを提供します。",
       "description_placeholder": "職人技、素材の選択、歴史的な系統、およびこの作品の文化的意義を詳細に記述してください..."
     }
+  },
+  "pricing": {
+    "title": "価格計算ツール",
+    "subtitle": "原価 → 販売価格（日本 → ベトナム）",
+    "section_costs": "コスト入力",
+    "section_result": "計算結果",
+    "fields": {
+      "origin_vnd": "原価（VND）",
+      "origin_jpy": "原価（JPY）",
+      "origin_jpy_hint": "為替レートで自動換算",
+      "jpy_rate": "¥ → ₫ レート",
+      "usd_rate": "$ → ₫ レート",
+      "tax_japan": "日本税（8–10%）",
+      "tax_vietnam": "ベトナム税・関税",
+      "ship_int": "国際送料",
+      "ship_japan": "日本国内送料",
+      "ship_vietnam": "ベトナム国内送料",
+      "hidden": "梱包・隠れコスト",
+      "hidden_hint": "段ボール、緩衝材、為替リスク",
+      "margin": "目標利益率"
+    },
+    "cost": {
+      "origin": "原価（換算後）",
+      "tax_japan": "日本税",
+      "tax_vietnam": "ベトナム税",
+      "ship_int": "国際送料",
+      "ship_japan": "国内送料（JP）",
+      "ship_vietnam": "国内送料（VN）",
+      "hidden": "隠れコスト"
+    },
+    "result": {
+      "total_cost": "総原価",
+      "break_even": "損益分岐点",
+      "selling": "販売価格（利益 {{margin}}%）",
+      "profit": "予想利益",
+      "usd_price": "登録価格（USD）"
+    },
+    "apply_price": "評価に適用",
+    "save_rates": "レート保存",
+    "fetch_live_rates": "リアルタイムレート取得",
+    "rates_synced": "レート同期済み ({{date}})",
+    "rates_sync_failed": "レートを取得できません。バックエンドとネットワークを確認してください。",
+    "formula_note": "販売価格 = 総原価 × (1 + 利益率%). 総原価 = 原価 + 税 + 送料 + 隠れコスト。"
   },
   "orders": {
     "title": "委託追跡",
@@ -256,6 +323,39 @@
       "confirm_button": "新しいキュレーターを確認"
     }
   },
+  "profile": {
+    "subtitle": "個人情報",
+    "title": "マイプロフィール",
+    "description": "個人情報とアカウント設定を管理します",
+    "avatar_section": "プロフィール写真",
+    "avatar_description": "プロフィール画像をアップロード",
+    "avatar_hint": "JPEG、PNG、WEBP。最大2MB。",
+    "avatar_alt": "プロフィール写真",
+    "fields": {
+      "username": "ユーザー名",
+      "email": "メール",
+      "first_name": "名",
+      "last_name": "姓",
+      "phone": "電話番号",
+      "address": "住所",
+      "role": "役割",
+      "member_since": "登録日"
+    },
+    "roles": {
+      "admin": "管理者",
+      "staff": "スタッフ"
+    },
+    "save_success": "変更を保存しました",
+    "save_error": "保存に失敗しました",
+    "error_load": "プロフィールを読み込めませんでした",
+    "logout": "サインアウト",
+    "logout_confirm": "サインアウトしてもよろしいですか？",
+    "logout_success": "サインアウトしました",
+    "errors": {
+      "update_failed": "プロフィールの更新に失敗しました",
+      "avatar_failed": "アバターのアップロードに失敗しました"
+    }
+  },
   "categories": {
     "title": "タクソノミー",
     "subtitle": "構造",
@@ -355,6 +455,15 @@
       "invalid_credentials": "資格情報が無効です。もう一度お試しください。"
     }
   },
+  "notifications": {
+    "title": "通知",
+    "mark_all_read": "すべて既読にする",
+    "empty": "通知はありません",
+    "new_order": "新規注文",
+    "new_order_message": "お客様 #{{id}} からの新規注文があります",
+    "new_chat": "新着メッセージ",
+    "new_chat_message": "管理者様、この商品はまだ在庫がありますか？"
+  },
   "common": {
     "search": "アーティファクト、注文、またはスタッフを検索...",
     "view_public": "サイトを表示",
@@ -365,6 +474,9 @@
     "authenticating": "KIZUNAシステムで認証中...",
     "edit": "編集",
     "delete": "削除",
-    "loading_logistics": "物流情報を同期中..."
+    "loading_logistics": "物流情報を同期中...",
+    "reset": "リセット",
+    "save": "保存",
+    "error_occurred": "エラーが発生しました"
   }
 }

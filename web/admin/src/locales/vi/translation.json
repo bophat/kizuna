@@ -6,7 +6,30 @@
     "orders": "Đơn hàng",
     "users": "Người dùng",
     "staff": "Nhân viên & Vai trò",
+    "profile": "Hồ sơ",
+    "chat": "Live Chat",
     "settings": "Cài đặt"
+  },
+  "chat": {
+    "title": "Live Chat",
+    "subtitle": "Hỗ trợ trực tuyến",
+    "description": "Theo dõi và trả lời tin nhắn khách hàng từ website concierge.",
+    "active_sessions": "Phiên đang mở",
+    "sessions_title": "Danh sách phiên",
+    "loading": "Đang tải phiên chat...",
+    "no_sessions": "Chưa có phiên chat nào",
+    "no_messages": "Chưa có tin nhắn",
+    "customer_label": "Khách #{{id}}",
+    "admin_badge": "ADMIN",
+    "session_title": "Phiên: {{id}}",
+    "status_admin": "Bạn đang trực tiếp hỗ trợ",
+    "status_ai": "AI đang tự động trả lời",
+    "ai_handling": "AI đang xử lý",
+    "ai_reply": "AI trả lời",
+    "admin_reply": "Admin trả lời",
+    "input_admin": "Nhập câu trả lời của bạn...",
+    "input_takeover": "Nhập để tiếp quản chat từ AI...",
+    "select_session": "Chọn một phiên chat để bắt đầu"
   },
   "dashboard": {
     "title": "Phân tích Đăng ký",
@@ -105,6 +128,7 @@
         "cheap": "Dễ tiếp cận"
       },
       "price_label": "Định giá (USD)",
+      "price_preview": "{{localized}} (lưu kho {{usd}})",
       "stock_label": "Mức tồn kho hiện tại",
       "brand_label": "Nghệ nhân / Thương hiệu",
       "location_label": "Vị trí xưởng",
@@ -130,6 +154,49 @@
       "description_help": "Mô tả này cung cấp bối cảnh thiết yếu cho Trợ lý Bán hàng AI.",
       "description_placeholder": "Chi tiết về tay nghề, lựa chọn vật liệu, dòng dõi lịch sử và ý nghĩa văn hóa của tác phẩm này..."
     }
+  },
+  "pricing": {
+    "title": "Công cụ tính giá",
+    "subtitle": "Giá vốn → giá bán (Nhật → Việt Nam)",
+    "section_costs": "Chi phí đầu vào",
+    "section_result": "Kết quả tính toán",
+    "fields": {
+      "origin_vnd": "Giá gốc tại Nhật (VND)",
+      "origin_jpy": "Giá gốc (JPY)",
+      "origin_jpy_hint": "Tự quy đổi theo tỷ giá ¥ → ₫",
+      "jpy_rate": "Tỷ giá ¥ → ₫",
+      "usd_rate": "Tỷ giá $ → ₫",
+      "tax_japan": "Thuế Nhật (8–10%)",
+      "tax_vietnam": "Thuế VN / hải quan",
+      "ship_int": "Phí ship Nhật → Việt Nam",
+      "ship_japan": "Ship nội địa Nhật",
+      "ship_vietnam": "Ship nội địa VN",
+      "hidden": "Đóng gói / hao hụt",
+      "hidden_hint": "Carton, xốp, rủi ro tỷ giá, hàng hư",
+      "margin": "Biên lợi nhuận mong muốn"
+    },
+    "cost": {
+      "origin": "Giá gốc (quy đổi)",
+      "tax_japan": "Thuế Nhật",
+      "tax_vietnam": "Thuế Việt Nam",
+      "ship_int": "Ship quốc tế",
+      "ship_japan": "Ship nội địa JP",
+      "ship_vietnam": "Ship nội địa VN",
+      "hidden": "Chi phí ẩn"
+    },
+    "result": {
+      "total_cost": "Giá vốn tổng",
+      "break_even": "Giá hòa vốn",
+      "selling": "Giá bán (lãi {{margin}}%)",
+      "profit": "Lợi nhuận dự kiến",
+      "usd_price": "Giá đăng ký (USD)"
+    },
+    "apply_price": "Áp dụng vào định giá",
+    "save_rates": "Lưu tỷ giá",
+    "fetch_live_rates": "Lấy tỷ giá realtime",
+    "rates_synced": "Đã đồng bộ tỷ giá ({{date}})",
+    "rates_sync_failed": "Không lấy được tỷ giá. Kiểm tra backend và mạng.",
+    "formula_note": "Giá bán = Giá vốn tổng × (1 + % lãi). Giá vốn = gốc + thuế + ship + chi phí ẩn."
   },
   "orders": {
     "title": "Theo dõi ký gửi",
@@ -256,6 +323,39 @@
       "confirm_button": "Xác nhận giám tuyển mới"
     }
   },
+  "profile": {
+    "subtitle": "Thông tin cá nhân",
+    "title": "Hồ sơ của tôi",
+    "description": "Quản lý thông tin cá nhân và cài đặt tài khoản",
+    "avatar_section": "Ảnh đại diện",
+    "avatar_description": "Tải lên ảnh đại diện của bạn",
+    "avatar_hint": "JPEG, PNG, WEBP. Tối đa 2MB.",
+    "avatar_alt": "Ảnh đại diện",
+    "fields": {
+      "username": "Tên đăng nhập",
+      "email": "Email",
+      "first_name": "Tên",
+      "last_name": "Họ",
+      "phone": "Số điện thoại",
+      "address": "Địa chỉ",
+      "role": "Vai trò",
+      "member_since": "Tham gia từ"
+    },
+    "roles": {
+      "admin": "Quản trị viên",
+      "staff": "Nhân viên"
+    },
+    "save_success": "Đã lưu thay đổi",
+    "save_error": "Lỗi khi lưu thay đổi",
+    "error_load": "Không thể tải thông tin",
+    "logout": "Đăng xuất",
+    "logout_confirm": "Bạn có chắc chắn muốn đăng xuất?",
+    "logout_success": "Đã đăng xuất",
+    "errors": {
+      "update_failed": "Cập nhật hồ sơ thất bại",
+      "avatar_failed": "Tải ảnh đại diện thất bại"
+    }
+  },
   "categories": {
     "title": "Phân loại",
     "subtitle": "Cấu trúc",
@@ -296,14 +396,25 @@
       "notifications": "Thông báo",
       "database": "Hệ thống & Dữ liệu"
     },
+    "content": {
+      "logo_upload": "Upload Logo",
+      "logo_current": "Logo hiện tại",
+      "upload_button": "Chọn ảnh",
+      "uploading": "Đang upload...",
+      "preview": "Xem trước"
+    },
     "general": {
+      "title": "Cài đặt Chung",
+      "description": "Tùy chỉnh các tham số cấu hình hệ thống",
       "gallery_name": "Tên bộ sưu tập",
       "primary_contact": "Liên hệ chính",
       "status": "Trạng thái vận hành",
       "active": "Hoạt động",
       "active_desc": "Chấp nhận đơn hàng và khách truy cập",
       "maintenance": "Bảo trì",
-      "maintenance_desc": "Chỉ chế độ triển lãm"
+      "maintenance_desc": "Chỉ chế độ triển lãm",
+      "add_setting": "Thêm Cài đặt Mới",
+      "add_button": "Thêm"
     },
     "gallery": {
       "theme": "Chủ đề hình ảnh",
@@ -355,6 +466,15 @@
       "invalid_credentials": "Thông tin xác thực không hợp lệ. Vui lòng thử lại."
     }
   },
+  "notifications": {
+    "title": "Thông báo",
+    "mark_all_read": "Đánh dấu đã đọc",
+    "empty": "Không có thông báo nào",
+    "new_order": "Đơn hàng mới",
+    "new_order_message": "Bạn có một đơn mua hàng mới từ khách hàng #{{id}}",
+    "new_chat": "Tin nhắn mới",
+    "new_chat_message": "Chào admin, tôi muốn hỏi về sản phẩm này có còn hàng không?"
+  },
   "common": {
     "search": "Tìm kiếm hiện vật, đơn hàng, hoặc nhân viên...",
     "view_public": "Xem trang công khai",
@@ -365,6 +485,9 @@
     "authenticating": "Đang xác thực với hệ thống KIZUNA...",
     "edit": "Sửa",
     "delete": "Xóa",
-    "loading_logistics": "Đang đồng bộ hóa hậu cần..."
+    "loading_logistics": "Đang đồng bộ hóa hậu cần...",
+    "reset": "Đặt lại",
+    "save": "Lưu",
+    "error_occurred": "Đã xảy ra lỗi"
   }
 }

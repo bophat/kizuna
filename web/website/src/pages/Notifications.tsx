@@ -1,6 +1,7 @@
 import { Icons } from '@/components/Icons';
 import { NOTIFICATIONS } from '@/constants';
 import { motion } from 'motion/react';
+import { fadeUp, tweenFast } from '@/lib/motion';
 import { Link } from 'react-router-dom';
 
 export function NotificationsPage() {
@@ -14,9 +15,8 @@ export function NotificationsPage() {
         {NOTIFICATIONS.map((notif, idx) => (
           <motion.div
             key={notif.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: idx * 0.1 }}
+            {...fadeUp}
+            transition={{ ...tweenFast, delay: Math.min(idx * 0.04, 0.2) }}
             className={`
               relative p-8 rounded-sm border border-surface-variant flex flex-col md:flex-row gap-8 items-start
               ${notif.accent ? 'bg-surface shadow-xl shadow-black/5' : 'bg-surface-bright'}

@@ -2,8 +2,9 @@ import React, { useState, useRef, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
+import { scaleIn, tweenFast } from '@/lib/motion';
 import { Icons } from '../Icons';
-import { Logo } from '../Logo';
+import { Logo } from '@izuna/shared/components/Logo';
 import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Package, Headset } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
@@ -137,11 +138,9 @@ export function Header() {
               <AnimatePresence>
                 {isLangOpen && (
                   <motion.div
-                    initial={{ opacity: 0, y: 10, scale: 0.95 }}
-                    animate={{ opacity: 1, y: 0, scale: 1 }}
-                    exit={{ opacity: 0, y: 10, scale: 0.95 }}
-                    transition={{ duration: 0.2 }}
-                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-900 shadow-2xl border border-zinc-200 dark:border-zinc-800 rounded-sm py-2 overflow-hidden"
+                    {...scaleIn}
+                    transition={tweenFast}
+                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-900 shadow-2xl border border-zinc-200 dark:border-zinc-800 rounded-sm py-2 overflow-hidden gpu-transform"
                   >
                     {languages.map((lang) => (
                       <button
@@ -168,7 +167,7 @@ export function Header() {
 
           {/* Search Bar - Desktop - Visually Left */}
           {showSearch && (
-            <div className="hidden md:block w-72 focus-within:w-[500px] transition-all duration-500 ease-in-out mr-2" ref={searchRef}>
+            <div className="hidden md:block w-[280px] focus-within:w-[400px] transition-[width] duration-300 ease-out mr-2 shrink-0" ref={searchRef}>
               <form onSubmit={handleSearch} className="w-full">
                 <div className="relative w-full group">
                   <input
@@ -192,13 +191,14 @@ export function Header() {
           {/* Mobile Search Toggle */}
           {showSearch && (
             <div className="md:hidden relative" ref={searchRef}>
-              <AnimatePresence mode="wait">
+              <AnimatePresence mode="wait" initial={false}>
                 {!isSearchOpen ? (
                   <motion.button
                     key="search-icon"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     exit={{ opacity: 0 }}
+                    transition={tweenFast}
                     onClick={() => setIsSearchOpen(true)}
                     className="p-2 text-secondary hover:text-primary transition-colors"
                   >
@@ -207,10 +207,11 @@ export function Header() {
                 ) : (
                   <motion.div
                     key="search-input"
-                    initial={{ width: 0, opacity: 0 }}
-                    animate={{ width: 280, opacity: 1 }}
-                    exit={{ width: 0, opacity: 0 }}
-                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10"
+                    initial={{ opacity: 0, x: 12 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 12 }}
+                    transition={tweenFast}
+                    className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-[min(280px,calc(100vw-2rem))]"
                   >
                     <form onSubmit={handleSearch} className="relative group">
                       <input

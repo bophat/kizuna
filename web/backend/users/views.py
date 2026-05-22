@@ -2,10 +2,12 @@ from rest_framework import generics, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
 from .models import Role
 from .serializers import UserSerializer, RegisterSerializer, RoleSerializer, EmailTokenObtainPairSerializer
 from rest_framework_simplejwt.views import TokenObtainPairView
+from shop.models import UserProfile
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
@@ -34,6 +36,44 @@ class UserDetailView(generics.RetrieveUpdateDestroyAPIView):
         if 'pk' not in self.kwargs:
             return self.request.user
         return super().get_object()
+
+class UserAvatarUploadView(APIView):
+    permission_classes = [IsAuthenticated]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        if 'avatar' not in request.FILES:
+            return Response(
+                {'error': 'No avatar file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        avatar_file = request.FILES['avatar']
+
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp']
+        if avatar_file.content_type not in allowed_types:
+            return Response(
+                {'error': 'Invalid file type. Only JPEG, PNG, WEBP allowed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        max_size = 2 * 1024 * 1024
+        if avatar_file.size > max_size:
+            return Response(
+                {'error': 'File too large. Max 2MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        user = request.user
+        profile, created = UserProfile.objects.get_or_create(user=user)
+
+        if profile.avatar:
+            profile.avatar.delete(save=False)
+
+        profile.avatar.save(avatar_file.name, avatar_file, save=True)
+
+        serializer = UserSerializer(user, context={'request': request})
+        return Response(serializer.data)
 
 class RoleListView(generics.ListCreateAPIView):
     queryset = Role.objects.all()

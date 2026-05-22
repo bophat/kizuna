@@ -1,15 +1,21 @@
-from rest_framework import viewsets, views, response, status, permissions
+from rest_framework import viewsets, permissions, status
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from rest_framework.decorators import action
+from rest_framework.parsers import MultiPartParser, FormParser
+from shop.models import Product, Order, Category, UserProfile
+from django.contrib.auth.models import User
 from django.db import transaction
 from django.db.models import Sum, Count
-from django.contrib.auth.models import User
 from django.utils import timezone
 from datetime import timedelta
-from django.db.models.functions import TruncDate
-from shop.models import Product, Order, Category
-from .serializers import (
-    ProductSerializer, OrderSerializer, UserSerializer, 
-    CategorySerializer
-)
+from django.db.models.functions import TruncDate, TruncMonth
+import os
+import uuid
+from django.core.files.storage import default_storage
+
+from .models import Setting
+from .serializers import SettingSerializer, ProductSerializer, OrderSerializer, UserSerializer, CategorySerializer
 
 import logging
 logger = logging.getLogger(__name__)
@@ -48,7 +54,6 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             logger.info(f"[ORDER_STATUS_CHANGE] Order ID: {instance.id} | {old_status} -> {new_status} | User: {self.request.user}")
             
             with transaction.atomic():
-                # If moving TO cancelled status, restore stock
                 if new_status == 'cancelled' and old_status != 'cancelled':
                     for item in instance.items.all():
                         if item.product:
@@ -56,18 +61,13 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                             product.stock += item.quantity
                             product.sales -= item.quantity
                             product.save()
-                
-                # If moving FROM cancelled status back to active, subtract stock again
                 elif old_status == 'cancelled' and new_status != 'cancelled':
                     for item in instance.items.all():
                         if item.product:
                             product = item.product
-                            # Optional: check stock here? If not enough, maybe we should raise error.
-                            # But usually admin knows what they are doing.
                             product.stock -= item.quantity
                             product.sales += item.quantity
                             product.save()
-
         serializer.save()
 
 class AdminUserViewSet(viewsets.ModelViewSet):
@@ -87,7 +87,7 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser]
 
-class DashboardStatsView(views.APIView):
+class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
@@ -108,14 +108,14 @@ class DashboardStatsView(views.APIView):
                 days_count = (end_date - start_date).days + 1
                 period = 'custom'
             except ValueError:
-                return response.Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
         elif specific_date:
             try:
                 start_date = end_date = timezone.datetime.strptime(specific_date, '%Y-%m-%d').date()
                 days_count = 1
                 period = 'day'
             except ValueError:
-                return response.Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid date format. Use YYYY-MM-DD'}, status=status.HTTP_400_BAD_REQUEST)
         elif specific_month and specific_year:
             try:
                 m = int(specific_month)
@@ -127,7 +127,7 @@ class DashboardStatsView(views.APIView):
                 days_count = last_day
                 period = 'month'
             except (ValueError, TypeError):
-                return response.Response({'error': 'Invalid month or year'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid month or year'}, status=status.HTTP_400_BAD_REQUEST)
         elif specific_year:
             try:
                 y = int(specific_year)
@@ -136,7 +136,7 @@ class DashboardStatsView(views.APIView):
                 days_count = 365
                 period = 'year'
             except (ValueError, TypeError):
-                return response.Response({'error': 'Invalid year'}, status=status.HTTP_400_BAD_REQUEST)
+                return Response({'error': 'Invalid year'}, status=status.HTTP_400_BAD_REQUEST)
         else:
             if period == 'day':
                 start_date = end_date
@@ -147,21 +147,17 @@ class DashboardStatsView(views.APIView):
             elif period == 'year':
                 start_date = end_date - timedelta(days=364)
                 days_count = 365
-            else: # week
+            else:  # week
                 start_date = end_date - timedelta(days=6)
                 days_count = 7
 
-        # Total Revenue (within period)
         period_orders = Order.objects.filter(created_at__date__range=[start_date, end_date])
         total_revenue = period_orders.aggregate(total=Sum('total_amount'))['total'] or 0
         total_orders = period_orders.count()
         total_products = Product.objects.count()
         total_customers = User.objects.filter(is_staff=False, date_joined__date__range=[start_date, end_date]).count()
         
-        # Chart Data
-        # For year, we group by month
         if period == 'year':
-            from django.db.models.functions import TruncMonth
             monthly_stats = period_orders.annotate(
                 month=TruncMonth('created_at')
             ).values('month').annotate(
@@ -207,14 +203,9 @@ class DashboardStatsView(views.APIView):
                     'orders': day_stat['orders']
                 })
 
-        # Top selling products (within period)
-        # Assuming we want top selling products of ALL TIME or just this period?
-        # Usually dashboard "Top Products" is all time or relative to period.
-        # Let's keep it all time for simplicity unless specified.
         top_selling = Product.objects.all().order_by('-sales')[:5]
         top_selling_serializer = ProductSerializer(top_selling, many=True, context={'request': request})
 
-        # Revenue by category (within period)
         categories = Category.objects.filter(
             products__orderitem__order__created_at__date__range=[start_date, end_date]
         ).annotate(
@@ -229,7 +220,7 @@ class DashboardStatsView(views.APIView):
         recent_orders = Order.objects.all().order_by('-created_at')[:5]
         recent_orders_serializer = OrderSerializer(recent_orders, many=True)
         
-        return response.Response({
+        return Response({
             'total_revenue': float(total_revenue),
             'total_orders': total_orders,
             'total_products': total_products,
@@ -239,3 +230,95 @@ class DashboardStatsView(views.APIView):
             'revenue_by_category': revenue_by_category,
             'recent_orders': recent_orders_serializer.data
         })
+
+class SettingViewSet(viewsets.ModelViewSet):
+    queryset = Setting.objects.all()
+    serializer_class = SettingSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def create(self, request, *args, **kwargs):
+        key = request.data.get('key')
+        if Setting.objects.filter(key=key).exists():
+            return Response(
+                {'error': f'Setting with key "{key}" already exists'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        return super().create(request, *args, **kwargs)
+
+    def update(self, request, *args, **kwargs):
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        if 'key' in request.data:
+            return Response(
+                {'error': 'Key cannot be changed'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        serializer = self.get_serializer(instance, data=request.data, partial=partial)
+        serializer.is_valid(raise_exception=True)
+        self.perform_update(serializer)
+        return Response(serializer.data)
+
+    def perform_update(self, serializer):
+        serializer.save()
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        protected_keys = ['SYSTEM_CONFIG', 'MAINTENANCE_MODE']
+        if instance.key in protected_keys:
+            return Response(
+                {'error': f'Cannot delete protected setting: {instance.key}'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        self.perform_destroy(instance)
+        return Response(status=status.HTTP_204_NO_CONTENT)
+
+    @action(detail=False, methods=['post'], url_path='upload-logo')
+    def upload_logo(self, request):
+        if 'logo' not in request.FILES:
+            return Response(
+                {'error': 'No logo file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        logo_file = request.FILES['logo']
+
+        # Validate file type - only SVG allowed
+        allowed_types = ['image/svg+xml']
+        if logo_file.content_type not in allowed_types:
+            return Response(
+                {'error': f'Invalid file type. Only SVG files are allowed.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate file size (max 1MB for SVG)
+        max_size = 1 * 1024 * 1024
+        if logo_file.size > max_size:
+            return Response(
+                {'error': 'File too large. Max 1MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Generate unique filename
+        ext = os.path.splitext(logo_file.name)[1]
+        filename = f'logos/{uuid.uuid4().hex}{ext}'
+
+        # Save file
+        try:
+            path = default_storage.save(filename, logo_file)
+            logo_url = default_storage.url(path)
+
+            # Update setting with logo URL
+            setting, created = Setting.objects.get_or_create(
+                key='site_logo',
+                defaults={'value': logo_url}
+            )
+            if not created:
+                setting.value = logo_url
+                setting.save()
+
+            return Response({'url': logo_url, 'path': path})
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to save file: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

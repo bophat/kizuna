@@ -1,18 +1,19 @@
 import React from 'react';
 import { NavLink, Link } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  Package, 
-  ShoppingBag, 
-  Users, 
-  UserSquare, 
-  Settings,
+import {
+  LayoutDashboard,
+  Package,
+  ShoppingBag,
+  Users,
+  UserSquare,
+  User,
   Menu,
+  MessageCircle,
   X
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
-import { Logo } from './Logo';
+import { Logo } from '@izuna/shared/components/Logo';
 import { useTranslation } from 'react-i18next';
 
 export function Sidebar() {
@@ -21,12 +22,13 @@ export function Sidebar() {
 
   const navItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
+    { icon: MessageCircle, label: t('nav.chat'), path: '/chat' },
     { icon: Package, label: t('nav.inventory'), path: '/inventory' },
     { icon: Menu, label: t('nav.categories'), path: '/categories' },
     { icon: ShoppingBag, label: t('nav.orders'), path: '/orders' },
     { icon: Users, label: t('nav.users'), path: '/users' },
     { icon: UserSquare, label: t('nav.staff'), path: '/staff' },
-    { icon: Settings, label: t('nav.settings'), path: '/settings' },
+    { icon: User, label: t('nav.profile'), path: '/profile' },
   ];
 
   return (
@@ -55,6 +57,7 @@ export function Sidebar() {
               <Logo 
                 className="transition-transform group-hover:scale-105" 
                 isCollapsed={!isOpen}
+                forceBlack
               />
             </Link>
 
@@ -87,25 +90,6 @@ export function Sidebar() {
                 </NavLink>
               ))}
             </nav>
-
-            <div className="p-6 border-t border-brand-clay">
-              <div className="flex items-center gap-3 p-2">
-                <div className="w-10 h-10 rounded-full bg-brand-clay flex items-center justify-center overflow-hidden">
-                  <img 
-                    src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=100&auto=format&fit=crop" 
-                    alt="Admin" 
-                    className="w-full h-full object-cover"
-                    referrerPolicy="no-referrer"
-                  />
-                </div>
-                {isOpen && (
-                  <div className="overflow-hidden">
-                    <p className="text-xs font-semibold text-brand-ink truncate">Akira Tanaka</p>
-                    <p className="text-[10px] text-brand-ink/50 uppercase tracking-tighter">{t('staff.roles.head_curator')}</p>
-                  </div>
-                )}
-              </div>
-            </div>
           </motion.aside>
         )}
       </AnimatePresence>
