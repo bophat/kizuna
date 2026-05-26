@@ -9,7 +9,8 @@ import {
   User,
   Menu,
   MessageCircle,
-  X
+  X,
+  Settings as SettingsIcon
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,6 +30,7 @@ export function Sidebar() {
     { icon: Users, label: t('nav.users'), path: '/users' },
     { icon: UserSquare, label: t('nav.staff'), path: '/staff' },
     { icon: User, label: t('nav.profile'), path: '/profile' },
+    { icon: SettingsIcon, label: t('nav.settings'), path: '/settings' },
   ];
 
   return (

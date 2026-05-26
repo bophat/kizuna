@@ -5,13 +5,17 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../contexts/NotificationContext';
+import { useSettings } from '../hooks/useSettings';
 
 export function TopBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotification();
+  const { settings } = useSettings();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
+
+  const publicSiteUrl = settings['PUBLIC_SITE_URL'] || 'http://localhost:3000';
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -38,7 +42,7 @@ export function TopBar() {
 
       <div className="flex items-center gap-6">
         <a 
-          href="http://localhost:3000" 
+          href={publicSiteUrl}
           target="_blank" 
           rel="noopener noreferrer"
           className="hidden lg:flex items-center gap-2 text-xs font-semibold text-brand-ink/60 hover:text-brand-red transition-colors uppercase tracking-wider"

@@ -14,6 +14,7 @@ import Staff from './pages/Staff';
 import Categories from './pages/Categories';
 import Chat from './pages/Chat';
 import Profile from './pages/Profile';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { apiFetch } from './lib/api';
 import { Loader2 } from 'lucide-react';
@@ -82,6 +83,7 @@ function App() {
                   <Route path="/staff" element={<Staff />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/chat" element={<Chat />} />
+                  <Route path="/settings" element={<Settings />} />
                 </Routes>
               </Layout>
             ) : (
