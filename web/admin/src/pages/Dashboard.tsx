@@ -116,22 +116,22 @@ export default function Dashboard() {
           title={t('dashboard.stats.total_acquisitions')} 
           value={stats?.total_revenue || 0} 
           icon={TrendingUp} 
-          trend="+12.5%" 
+          trend={stats?.revenue_trend || "0.0%"} 
           isCurrency 
           delay={0.1}
         />
         <StatCard 
           title={t('dashboard.stats.active_collectors')} 
-          value={stats?.total_users || 0} 
+          value={stats?.total_customers || 0} 
           icon={Users} 
-          trend="+5.2%" 
+          trend={stats?.customers_trend || "0.0%"} 
           delay={0.2}
         />
         <StatCard 
           title={t('dashboard.stats.total_trades')} 
           value={stats?.total_orders || 0} 
           icon={ShoppingBag} 
-          trend="+8.1%" 
+          trend={stats?.orders_trend || "0.0%"} 
           delay={0.3}
         />
         <StatCard 

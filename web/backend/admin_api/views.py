@@ -157,6 +157,27 @@ class DashboardStatsView(APIView):
         total_products = Product.objects.count()
         total_customers = User.objects.filter(is_staff=False, date_joined__date__range=[start_date, end_date]).count()
         
+        prev_start_date = start_date - timedelta(days=days_count)
+        prev_end_date = end_date - timedelta(days=days_count)
+        
+        prev_period_orders = Order.objects.filter(created_at__date__range=[prev_start_date, prev_end_date])
+        prev_total_revenue = prev_period_orders.aggregate(total=Sum('total_amount'))['total'] or 0
+        prev_total_orders = prev_period_orders.count()
+        prev_total_customers = User.objects.filter(is_staff=False, date_joined__date__range=[prev_start_date, prev_end_date]).count()
+        
+        def calculate_trend(current, previous):
+            if previous == 0:
+                if current > 0:
+                    return "+100.0%"
+                return "0.0%"
+            change = ((current - previous) / previous) * 100
+            sign = "+" if change > 0 else ""
+            return f"{sign}{change:.1f}%"
+            
+        revenue_trend = calculate_trend(float(total_revenue), float(prev_total_revenue))
+        orders_trend = calculate_trend(total_orders, prev_total_orders)
+        customers_trend = calculate_trend(total_customers, prev_total_customers)
+        
         if period == 'year':
             monthly_stats = period_orders.annotate(
                 month=TruncMonth('created_at')
@@ -222,9 +243,12 @@ class DashboardStatsView(APIView):
         
         return Response({
             'total_revenue': float(total_revenue),
+            'revenue_trend': revenue_trend,
             'total_orders': total_orders,
+            'orders_trend': orders_trend,
             'total_products': total_products,
             'total_customers': total_customers,
+            'customers_trend': customers_trend,
             'chart_data': chart_data,
             'top_selling_products': top_selling_serializer.data,
             'revenue_by_category': revenue_by_category,
