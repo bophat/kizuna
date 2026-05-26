@@ -13,6 +13,7 @@ import { CollectionPage } from '@/pages/Collection';
 import { ConciergePage } from '@/pages/Concierge';
 import { WishlistPage } from '@/pages/Wishlist';
 import { ProductDetail } from '@/pages/ProductDetail';
+import { NotFoundPage } from '@/pages/NotFound';
 
 function wrap(page: ReactNode) {
   return <AnimatedPage>{page}</AnimatedPage>;
@@ -37,7 +38,7 @@ export function AnimatedRoutes() {
         <Route path="/login" element={wrap(<LoginPage />)} />
         <Route path="/register" element={wrap(<RegisterPage />)} />
         <Route path="/concierge" element={wrap(<ConciergePage />)} />
-        <Route path="*" element={wrap(<HomePage />)} />
+        <Route path="*" element={wrap(<NotFoundPage />)} />
       </Routes>
     </AnimatePresence>
   );
