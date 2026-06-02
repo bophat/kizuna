@@ -4,7 +4,7 @@
     "builder": "NIXPACKS"
   },
   "deploy": {
-    "startCommand": "gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2",
+    "startCommand": "python manage.py migrate && gunicorn core.wsgi:application --bind 0.0.0.0:$PORT --workers 2",
     "healthcheckPath": "/api/shop/exchange-rates/",
     "restartPolicyType": "ON_FAILURE"
   }
