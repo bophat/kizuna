@@ -29,6 +29,7 @@ class Product(models.Model):
     likes = models.PositiveIntegerField(default=0)
     sales = models.PositiveIntegerField(default=0)
     stock = models.PositiveIntegerField(default=0)
+    weight = models.DecimalField(max_digits=6, decimal_places=2, null=True, blank=True, help_text="Weight in kg")
     
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)

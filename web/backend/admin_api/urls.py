@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import SettingViewSet, AdminProductViewSet, AdminOrderViewSet, AdminUserViewSet, AdminCategoryViewSet, DashboardStatsView
+from .views import SettingViewSet, AdminProductViewSet, AdminOrderViewSet, AdminUserViewSet, AdminCategoryViewSet, DashboardStatsView, BulkImportProductsView
 from .views_product_images import ProductImageViewSet
 
 router = DefaultRouter()
@@ -12,6 +12,7 @@ router.register(r'settings', SettingViewSet)
 router.register(r'product-images', ProductImageViewSet)
 
 urlpatterns = [
+    path('products/import-csv/', BulkImportProductsView.as_view(), name='admin-import-csv'),
     path('', include(router.urls)),
     path('stats/', DashboardStatsView.as_view(), name='admin-stats'),
 ]

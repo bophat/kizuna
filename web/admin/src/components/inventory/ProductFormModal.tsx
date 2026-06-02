@@ -270,6 +270,23 @@ export function ProductFormModal({
                         />
                       </div>
                     </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
+                        {t('inventory.modal.weight_label', 'Weight (kg)')}
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          step="0.01"
+                          min="0"
+                          placeholder="0.30"
+                          className="w-full px-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all pr-12"
+                          value={formData.weight}
+                          onChange={(e) => setFormData({ ...formData, weight: e.target.value })}
+                        />
+                        <span className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-ink/40 text-xs font-bold">kg</span>
+                      </div>
+                    </div>
                   </motion.div>
                 )}
 

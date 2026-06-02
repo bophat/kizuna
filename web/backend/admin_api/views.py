@@ -346,3 +346,212 @@ class SettingViewSet(viewsets.ModelViewSet):
                 {'error': f'Failed to save file: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+
+import csv
+import io
+import re
+from decimal import Decimal, InvalidOperation
+from shop.models import ProductImage
+from shop.exchange_rates import get_exchange_rates
+from django.utils.text import slugify
+
+
+class BulkImportProductsView(APIView):
+    """
+    Import products from Qoo10 scraper CSV.
+    
+    Pricing formula:
+      import_price_vnd = (price_jpy + 1000) * 200
+      shipping_vnd = weight_kg * 180000 if weight > 0.5 else 20000
+      selling_price_vnd = import_price_vnd * 1.15 + shipping_vnd
+      price_usd = selling_price_vnd / usd_to_vnd_rate
+    """
+    permission_classes = [permissions.IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def _parse_jpy_price(self, price_str):
+        """Parse Japanese price string to numeric value."""
+        if not price_str:
+            return None
+        # Remove 円, ¥, commas, spaces
+        cleaned = re.sub(r'[円¥,\s\u3000]', '', str(price_str).strip())
+        # Extract first number
+        match = re.search(r'[\d]+(?:\.[\d]+)?', cleaned)
+        if match:
+            try:
+                return Decimal(match.group())
+            except InvalidOperation:
+                return None
+        return None
+
+    def _calculate_selling_price(self, price_jpy, weight_kg, usd_to_vnd):
+        """Calculate selling price using the pricing formula."""
+        if price_jpy is None:
+            return None
+        
+        # Import price (VND) = (price_jpy + 1000) * 200
+        import_price_vnd = (price_jpy + Decimal('1000')) * Decimal('200')
+        
+        # Shipping (VND)
+        if weight_kg and weight_kg > Decimal('0.5'):
+            shipping_vnd = weight_kg * Decimal('180000')
+        else:
+            shipping_vnd = Decimal('20000')
+        
+        # Selling price (VND) = import * 1.15 + shipping
+        selling_price_vnd = import_price_vnd * Decimal('1.15') + shipping_vnd
+        
+        # Convert to USD for DB storage
+        if usd_to_vnd and usd_to_vnd > 0:
+            price_usd = selling_price_vnd / Decimal(str(usd_to_vnd))
+        else:
+            price_usd = selling_price_vnd / Decimal('25000')
+        
+        return round(price_usd, 2)
+
+    def post(self, request):
+        csv_file = request.FILES.get('csv_file')
+        if not csv_file:
+            return Response(
+                {'error': 'No CSV file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Validate file type
+        if not csv_file.name.lower().endswith('.csv'):
+            return Response(
+                {'error': 'File must be a CSV file'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Get exchange rates
+        rates = get_exchange_rates()
+        usd_to_vnd = rates.get('usd_to_vnd', 25000)
+
+        try:
+            # Read and decode CSV (handle BOM)
+            content = csv_file.read().decode('utf-8-sig')
+            reader = csv.DictReader(io.StringIO(content))
+            
+            created = 0
+            skipped = 0
+            errors = []
+            
+            for row_num, row in enumerate(reader, start=2):
+                try:
+                    name = (row.get('Name') or '').strip()
+                    if not name:
+                        errors.append(f'Row {row_num}: Missing product name')
+                        continue
+                    
+                    # Generate product ID from SKU
+                    sku = (row.get('SKU') or '').strip()
+                    if sku:
+                        product_id = f'QOO-{sku}' if not sku.startswith('QOO-') else sku
+                    else:
+                        product_id = f'QOO-{uuid.uuid4().hex[:8].upper()}'
+                    
+                    # Check for duplicate
+                    if Product.objects.filter(id=product_id).exists():
+                        skipped += 1
+                        continue
+                    
+                    # Parse price
+                    price_jpy = self._parse_jpy_price(row.get('Price', ''))
+                    
+                    # Parse weight from request data (sent alongside CSV)
+                    weight_str = row.get('Weight', '').strip()
+                    try:
+                        weight_kg = Decimal(weight_str) if weight_str else Decimal('0.3')
+                    except InvalidOperation:
+                        weight_kg = Decimal('0.3')
+                    
+                    # Calculate selling price
+                    price_usd = self._calculate_selling_price(price_jpy, weight_kg, usd_to_vnd)
+                    if price_usd is None:
+                        price_usd = Decimal('0')
+                    
+                    # Handle category
+                    category = None
+                    category_name = (row.get('Category') or '').strip()
+                    if category_name:
+                        # Try to find by name, or create new
+                        category, _ = Category.objects.get_or_create(
+                            name=category_name,
+                            defaults={'slug': slugify(category_name) or f'cat-{uuid.uuid4().hex[:6]}'}
+                        )
+                    
+                    # Brand: use Brand field, fallback to Seller
+                    brand = (row.get('Brand') or row.get('Seller') or '').strip()
+                    
+                    # Location from Shipping
+                    location = (row.get('Shipping') or '').strip()
+                    
+                    # Main image URL
+                    main_image = (row.get('Main Image') or '').strip()
+                    
+                    # URL as description source
+                    source_url = (row.get('URL') or '').strip()
+                    description = f'Imported from Qoo10: {source_url}' if source_url else 'Imported from Qoo10'
+                    
+                    # Create product
+                    with transaction.atomic():
+                        product = Product.objects.create(
+                            id=product_id,
+                            name=name,
+                            price=price_usd,
+                            currency='USD',
+                            category=category,
+                            brand=brand[:100] if brand else '',
+                            location=location[:100] if location else '',
+                            description=description,
+                            stock=1,
+                            weight=weight_kg,
+                            is_new=True,
+                        )
+                        
+                        # Store main image URL directly
+                        if main_image and main_image.startswith('http'):
+                            product.image = main_image
+                            product.save(update_fields=['image'])
+                        
+                        # Create gallery images from All Images
+                        all_images_str = (row.get('All Images') or '').strip()
+                        if all_images_str:
+                            image_urls = [url.strip() for url in all_images_str.split('|') if url.strip().startswith('http')]
+                            for idx, img_url in enumerate(image_urls[:10]):  # Max 10 gallery images
+                                ProductImage.objects.create(
+                                    product=product,
+                                    image=img_url,
+                                    is_primary=(idx == 0 and not main_image),
+                                )
+                    
+                    created += 1
+                    
+                except Exception as e:
+                    errors.append(f'Row {row_num}: {str(e)}')
+                    continue
+            
+            logger.info(
+                f"[CSV_IMPORT] User: {request.user} | Created: {created} | Skipped: {skipped} | Errors: {len(errors)}"
+            )
+            
+            return Response({
+                'created': created,
+                'skipped': skipped,
+                'errors': errors[:50],  # Cap at 50 errors
+                'total_rows': created + skipped + len(errors),
+            })
+            
+        except UnicodeDecodeError:
+            return Response(
+                {'error': 'Invalid file encoding. Please use UTF-8.'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+        except Exception as e:
+            logger.error(f"[CSV_IMPORT_ERROR] {str(e)}")
+            return Response(
+                {'error': f'Import failed: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )

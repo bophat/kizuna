@@ -61,7 +61,7 @@ class ProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'price', 'currency', 'category', 'category_name',
             'brand', 'location', 'description', 'image',
             'is_limited', 'is_new', 'is_featured', 'is_cheap',
-            'likes', 'sales', 'stock', 'created_at', 'updated_at'
+            'likes', 'sales', 'stock', 'weight', 'created_at', 'updated_at'
         ]
 
     def to_representation(self, instance):

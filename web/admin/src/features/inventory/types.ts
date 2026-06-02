@@ -7,6 +7,7 @@ export interface ProductFormData {
   description: string;
   brand: string;
   location: string;
+  weight: string;
   is_featured: boolean;
   is_new: boolean;
   is_limited: boolean;
