@@ -99,12 +99,19 @@ function parseCsvContent(content: string): CsvRow[] {
       row[h.trim()] = (values[idx] || '').trim();
     });
 
+    // Qoo10 scraper exports the price value in 'Original Price' and literal label '販売価格' in 'Price'
+    const originalPrice = row['Original Price'] || '';
+    const rawPrice = row['Price'] || '';
+    const jpyPrice = (originalPrice.includes('円') || originalPrice.includes('¥') || /\d/.test(originalPrice)) 
+      ? originalPrice 
+      : (rawPrice.includes('円') || rawPrice.includes('¥') || /\d/.test(rawPrice)) ? rawPrice : '';
+
     rows.push({
       Name: row['Name'] || '',
       Brand: row['Brand'] || '',
       SKU: row['SKU'] || '',
-      Price: row['Price'] || '',
-      'Original Price': row['Original Price'] || '',
+      Price: jpyPrice,
+      'Original Price': originalPrice,
       Discount: row['Discount'] || '',
       Category: row['Category'] || '',
       Rating: row['Rating'] || '',

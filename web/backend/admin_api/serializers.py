@@ -121,11 +121,14 @@ class ProductImageSerializer(serializers.ModelSerializer):
     def to_representation(self, instance):
         ret = super().to_representation(instance)
         if instance.image:
-            request = self.context.get('request')
-            if request:
-                ret['image'] = request.build_absolute_uri(instance.image.url)
+            if instance.image.name.startswith('http'):
+                ret['image'] = instance.image.name
             else:
-                ret['image'] = instance.image.url
+                request = self.context.get('request')
+                if request:
+                    ret['image'] = request.build_absolute_uri(instance.image.url)
+                else:
+                    ret['image'] = instance.image.url
         else:
             ret['image'] = None
         return ret
