@@ -485,11 +485,17 @@ class BulkImportProductsView(APIView):
                     category = None
                     category_name = (row.get('Category') or '').strip()
                     if category_name:
-                        # Try to find by name, or create new
-                        category, _ = Category.objects.get_or_create(
-                            name=category_name,
-                            defaults={'slug': slugify(category_name) or f'cat-{uuid.uuid4().hex[:6]}'}
-                        )
+                        # Try to find by name (case-insensitive) first to prevent MultipleObjectsReturned
+                        category = Category.objects.filter(name__iexact=category_name).first()
+                        if not category:
+                            # Generate a guaranteed unique slug
+                            base_slug = slugify(category_name) or 'category'
+                            slug = base_slug
+                            counter = 1
+                            while Category.objects.filter(slug=slug).exists():
+                                slug = f"{base_slug}-{counter}"
+                                counter += 1
+                            category = Category.objects.create(name=category_name, slug=slug)
                     
                     # Brand: use Brand field, fallback to Seller
                     brand = (row.get('Brand') or row.get('Seller') or '').strip()
@@ -568,3 +574,17 @@ class BulkImportProductsView(APIView):
                 {'error': f'Import failed: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+    def delete(self, request):
+        delete_all = request.query_params.get('all') == 'true'
+        if delete_all:
+            deleted_count, _ = Product.objects.all().delete()
+            message = f'Deleted {deleted_count} products successfully.'
+        else:
+            deleted_count, _ = Product.objects.filter(id__startswith='QOO-').delete()
+            message = f'Deleted {deleted_count} Qoo10 products successfully.'
+            
+        return Response({
+            'message': message,
+            'deleted_count': deleted_count
+        })
