@@ -449,13 +449,13 @@ class BulkImportProductsView(APIView):
             
             for row_num, row in enumerate(reader, start=2):
                 try:
-                    name = (row.get('Name') or '').strip()
+                    name = (row.get('name') or row.get('Name') or '').strip()
                     if not name:
                         errors.append(f'Row {row_num}: Missing product name')
                         continue
                     
                     # Generate product ID from SKU
-                    sku = (row.get('SKU') or '').strip()
+                    sku = (row.get('sku') or row.get('SKU') or '').strip()
                     if sku:
                         product_id = f'QOO-{sku}' if not sku.startswith('QOO-') else sku
                     else:
@@ -466,11 +466,14 @@ class BulkImportProductsView(APIView):
                         skipped += 1
                         continue
                     
-                    # Parse price (Qoo10 scraper exports the price in 'Original Price' and literal label '販売価格' in 'Price')
-                    price_jpy = self._parse_jpy_price(row.get('Original Price') or row.get('Price', ''))
+                    # Parse price (Qoo10 scraper exports the price in 'originalPrice'/'Original Price' and literal label '販売価格' in 'price'/'Price')
+                    price_jpy = self._parse_jpy_price(
+                        row.get('originalPrice') or row.get('Original Price') or 
+                        row.get('price') or row.get('Price', '')
+                    )
                     
                     # Parse weight from request data (sent alongside CSV)
-                    weight_str = row.get('Weight', '').strip()
+                    weight_str = (row.get('weight') or row.get('Weight') or '').strip()
                     try:
                         weight_kg = Decimal(weight_str) if weight_str else Decimal('0.3')
                     except InvalidOperation:
@@ -483,7 +486,7 @@ class BulkImportProductsView(APIView):
                     
                     # Handle category
                     category = None
-                    category_name = (row.get('Category') or '').strip()
+                    category_name = (row.get('category') or row.get('Category') or '').strip()
                     if category_name:
                         # Try to find by name (case-insensitive) first to prevent MultipleObjectsReturned
                         category = Category.objects.filter(name__iexact=category_name).first()
@@ -498,16 +501,16 @@ class BulkImportProductsView(APIView):
                             category = Category.objects.create(name=category_name, slug=slug)
                     
                     # Brand: use Brand field, fallback to Seller
-                    brand = (row.get('Brand') or row.get('Seller') or '').strip()
+                    brand = (row.get('brand') or row.get('Brand') or row.get('seller') or row.get('Seller') or '').strip()
                     
                     # Location from Shipping
-                    location = (row.get('Shipping') or '').strip()
+                    location = (row.get('shipping') or row.get('Shipping') or '').strip()
                     
                     # Main image URL
-                    main_image = self._clean_image_url(row.get('Main Image') or '')
+                    main_image = self._clean_image_url(row.get('mainImage') or row.get('image') or row.get('Main Image') or '')
                     
                     # URL as description source
-                    source_url = (row.get('URL') or '').strip()
+                    source_url = (row.get('url') or row.get('URL') or '').strip()
                     description = f'Imported from Qoo10: {source_url}' if source_url else 'Imported from Qoo10'
                     
                     # Create product
@@ -532,7 +535,7 @@ class BulkImportProductsView(APIView):
                             product.save(update_fields=['image'])
                         
                         # Create gallery images from All Images
-                        all_images_str = (row.get('All Images') or '').strip()
+                        all_images_str = (row.get('All Images') or row.get('images') or '').strip()
                         if all_images_str:
                             image_urls = []
                             for url in all_images_str.split('|'):
