@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, Plus, Search, Filter, Loader2, AlertCircle, FileSpreadsheet } from 'lucide-react';
+import { Package, Plus, Search, Filter, Loader2, AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../lib/api';
 import { Pagination } from '../components/Pagination';
@@ -56,6 +56,16 @@ export default function InventoryPage() {
     }
   };
 
+  const handleDeleteAllQoo10 = async () => {
+    if (!window.confirm(t('inventory.csv_import.confirm_delete_all', 'Are you sure you want to delete all imported Qoo10 products?'))) return;
+    try {
+      const response = await apiFetch('/products/import-csv/', { method: 'DELETE' });
+      if (response.ok) fetchData();
+    } catch (err) {
+      console.error('Delete all error:', err);
+    }
+  };
+
   const filteredProducts = products.filter(
     (p) =>
       p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -86,6 +96,13 @@ export default function InventoryPage() {
           <p className="text-brand-ink/40 font-serif italic mt-2 text-lg">{t('inventory.description')}</p>
         </div>
         <div className="flex items-center gap-3">
+          <button
+            onClick={handleDeleteAllQoo10}
+            className="flex items-center gap-3 bg-red-50 text-brand-red border border-red-200 px-6 py-4 rounded-sm text-sm font-bold hover:bg-brand-red hover:text-white hover:border-brand-red transition-all shadow-md group"
+          >
+            <Trash2 size={18} className="group-hover:scale-110 transition-transform duration-500" />
+            <span className="tracking-widest uppercase">{t('inventory.csv_import.delete_all_button', 'Delete Imported')}</span>
+          </button>
           <button
             onClick={() => setCsvImportOpen(true)}
             className="flex items-center gap-3 bg-white text-brand-ink border border-brand-clay px-6 py-4 rounded-sm text-sm font-bold hover:bg-brand-red hover:text-white hover:border-brand-red transition-all shadow-md hover:shadow-brand-red/20 group"
