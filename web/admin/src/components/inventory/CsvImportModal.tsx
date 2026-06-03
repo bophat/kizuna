@@ -82,85 +82,111 @@ function formatVndFull(amount: number): string {
 
 // ===== CSV PARSER =====
 function parseCsvContent(content: string): CsvRow[] {
-  // Remove BOM
   const clean = content.replace(/^\uFEFF/, '');
-  const lines = clean.split('\n').filter((l) => l.trim());
-  if (lines.length < 2) return [];
-
-  const headers = parseCSVLine(lines[0]);
   const rows: CsvRow[] = [];
+  
+  let currentField = '';
+  let inQuotes = false;
+  let currentRow: string[] = [];
+  const allRows: string[][] = [];
+  
+  for (let i = 0; i < clean.length; i++) {
+    const char = clean[i];
+    if (inQuotes) {
+      if (char === '"') {
+        if (i + 1 < clean.length && clean[i + 1] === '"') {
+          currentField += '"';
+          i++; // Skip next quote
+        } else {
+          inQuotes = false;
+        }
+      } else {
+        currentField += char;
+      }
+    } else {
+      if (char === '"') {
+        inQuotes = true;
+      } else if (char === ',') {
+        currentRow.push(currentField);
+        currentField = '';
+      } else if (char === '\n' || char === '\r') {
+        // Handle CRLF
+        if (char === '\r' && i + 1 < clean.length && clean[i + 1] === '\n') {
+          i++;
+        }
+        currentRow.push(currentField);
+        currentField = '';
+        if (currentRow.length > 0 && currentRow.some(field => field.trim() !== '')) {
+          allRows.push(currentRow);
+        }
+        currentRow = [];
+      } else {
+        currentField += char;
+      }
+    }
+  }
+  
+  if (currentRow.length > 0 || currentField !== '') {
+    currentRow.push(currentField);
+    if (currentRow.some(field => field.trim() !== '')) {
+      allRows.push(currentRow);
+    }
+  }
 
-  for (let i = 1; i < lines.length; i++) {
-    const values = parseCSVLine(lines[i]);
-    if (values.length === 0) continue;
-
+  if (allRows.length < 2) return [];
+  const headers = allRows[0];
+  
+  for (let i = 1; i < allRows.length; i++) {
+    const values = allRows[i];
     const row: Record<string, string> = {};
     headers.forEach((h, idx) => {
       row[h.trim()] = (values[idx] || '').trim();
     });
 
+    // Support both new lowercase keys and old Capitalized keys!
+    const name = row['name'] || row['Name'] || '';
+    const brand = row['brand'] || row['Brand'] || row['Seller'] || '';
+    const sku = row['sku'] || row['SKU'] || '';
+    const originalPrice = row['originalPrice'] || row['Original Price'] || '';
+    const rawPrice = row['price'] || row['Price'] || '';
+    const discount = row['discount'] || row['Discount'] || '';
+    const category = row['category'] || row['Category'] || '';
+    const rating = row['rating'] || row['Rating'] || '';
+    const reviewCount = row['reviewCount'] || row['Review Count'] || '';
+    const shipping = row['shipping'] || row['Shipping'] || '';
+    const seller = row['seller'] || row['Seller'] || '';
+    const mainImage = row['mainImage'] || row['image'] || row['Main Image'] || '';
+    const allImages = row['images'] || row['All Images'] || '';
+    const url = row['url'] || row['URL'] || '';
+    const scrapedAt = row['scrapedAt'] || row['Scraped At'] || '';
+
     // Qoo10 scraper exports the price value in 'Original Price' and literal label '販売価格' in 'Price'
-    const originalPrice = row['Original Price'] || '';
-    const rawPrice = row['Price'] || '';
     const jpyPrice = (originalPrice.includes('円') || originalPrice.includes('¥') || /\d/.test(originalPrice)) 
       ? originalPrice 
       : (rawPrice.includes('円') || rawPrice.includes('¥') || /\d/.test(rawPrice)) ? rawPrice : '';
 
     rows.push({
-      Name: row['Name'] || '',
-      Brand: row['Brand'] || '',
-      SKU: row['SKU'] || '',
+      Name: name,
+      Brand: brand,
+      SKU: sku,
       Price: jpyPrice,
       'Original Price': originalPrice,
-      Discount: row['Discount'] || '',
-      Category: row['Category'] || '',
-      Rating: row['Rating'] || '',
-      'Review Count': row['Review Count'] || '',
-      Shipping: row['Shipping'] || '',
-      Seller: row['Seller'] || '',
-      'Main Image': row['Main Image'] || '',
-      'All Images': row['All Images'] || '',
-      URL: row['URL'] || '',
-      'Scraped At': row['Scraped At'] || '',
+      Discount: discount,
+      Category: category,
+      Rating: rating,
+      'Review Count': reviewCount,
+      Shipping: shipping,
+      Seller: seller,
+      'Main Image': mainImage,
+      'All Images': allImages,
+      URL: url,
+      'Scraped At': scrapedAt,
       Weight: '0.3',
       selected: true,
     });
   }
 
   return rows;
-}
-
-function parseCSVLine(line: string): string[] {
-  const result: string[] = [];
-  let current = '';
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i++) {
-    const char = line[i];
-    if (inQuotes) {
-      if (char === '"') {
-        if (i + 1 < line.length && line[i + 1] === '"') {
-          current += '"';
-          i++;
-        } else {
-          inQuotes = false;
-        }
-      } else {
-        current += char;
-      }
-    } else {
-      if (char === '"') {
-        inQuotes = true;
-      } else if (char === ',') {
-        result.push(current);
-        current = '';
-      } else if (char !== '\r') {
-        current += char;
-      }
-    }
-  }
-  result.push(current);
-  return result;
 }
 
 // ===== STEP INDICATORS =====

@@ -34,7 +34,9 @@ def _fallback_payload() -> dict:
 
 def _fetch_live_rates() -> dict:
     url = getattr(settings, 'EXCHANGE_RATE_API_URL', FRANKFURTER_URL)
-    with urlopen(url, timeout=10) as resp:
+    from urllib.request import Request
+    req = Request(url, headers={'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7)'})
+    with urlopen(req, timeout=10) as resp:
         data = json.loads(resp.read().decode())
     rates = data.get('rates', {})
     usd_to_vnd = float(rates['VND'])
