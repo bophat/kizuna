@@ -13,7 +13,7 @@ import { ProductImage } from '@/components/products/ProductImage';
 
 export function CartPage() {
   const { t } = useTranslation();
-  const { format: formatPrice } = useFormatPrice();
+  const { format: formatPrice, rates } = useFormatPrice();
   const { cart, removeFromCart, updateQuantity } = useCart();
   const navigate = useNavigate();
   const [productCache, setProductCache] = useState<Record<string, any>>({});
