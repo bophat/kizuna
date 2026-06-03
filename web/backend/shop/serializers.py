@@ -38,7 +38,7 @@ class PublicProductSerializer(serializers.ModelSerializer):
             'id', 'name', 'price', 'currency', 'category',
             'brand', 'location', 'description', 'image', 'gallery',
             'is_limited', 'is_new', 'is_featured', 'is_cheap',
-            'likes', 'sales', 'stock'
+            'likes', 'sales', 'stock', 'weight'
         ]
 
     def to_representation(self, instance):

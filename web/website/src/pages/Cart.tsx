@@ -63,7 +63,26 @@ export function CartPage() {
   }) || [];
 
   const subtotal = parseFloat(cart?.total_amount || '0');
-  const shipping = 75;
+  
+  const calculateShippingUsd = () => {
+    if (!items || items.length === 0) return 0;
+    const usdToVnd = rates?.usdToVnd || 25000;
+    let shippingVnd = 0;
+    items.forEach(item => {
+      const product = productCache[item.product_id];
+      const weight = product ? parseFloat(product.weight) || 0.3 : 0.3;
+      const qty = item.quantity;
+      if (weight > 0.5) {
+        const roundedWeight = Math.ceil(weight);
+        shippingVnd += 180000 * roundedWeight * qty;
+      } else {
+        shippingVnd += 50000 * qty;
+      }
+    });
+    return shippingVnd / usdToVnd;
+  };
+
+  const shipping = calculateShippingUsd();
   const total = subtotal > 0 ? subtotal + shipping : 0;
 
   return (

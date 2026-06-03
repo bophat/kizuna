@@ -16,7 +16,7 @@ const SHIPPING_USD = 75;
 
 export function CheckoutPage() {
   const { t } = useTranslation();
-  const { format: formatPrice } = useFormatPrice();
+  const { format: formatPrice, rates } = useFormatPrice();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [email, setEmail] = useState('');
@@ -132,8 +132,6 @@ export function CheckoutPage() {
   }, [cart?.items]);
 
   const subtotal = parseFloat(cart?.total_amount || '0');
-  const shipping = SHIPPING_USD;
-  const total = subtotal > 0 ? subtotal + shipping : 0;
 
   const items = cart?.items.map(cartItem => {
     const product = productCache[cartItem.product_id];
@@ -144,6 +142,27 @@ export function CheckoutPage() {
         : { name: `Product #${cartItem.product_id}`, image: '', location: '' }
     };
   }) || [];
+
+  const calculateShippingUsd = () => {
+    if (!items || items.length === 0) return 0;
+    const usdToVnd = rates?.usdToVnd || 25000;
+    let shippingVnd = 0;
+    items.forEach(item => {
+      const product = productCache[item.product_id];
+      const weight = product ? parseFloat(product.weight) || 0.3 : 0.3;
+      const qty = item.quantity;
+      if (weight > 0.5) {
+        const roundedWeight = Math.ceil(weight);
+        shippingVnd += 180000 * roundedWeight * qty;
+      } else {
+        shippingVnd += 50000 * qty;
+      }
+    });
+    return shippingVnd / usdToVnd;
+  };
+
+  const shipping = calculateShippingUsd();
+  const total = subtotal > 0 ? subtotal + shipping : 0;
 
   if (step === 0 && isLoadingUser) {
     return (
@@ -303,7 +322,7 @@ export function CheckoutPage() {
                   onNext={nextStep}
                 />
               )}
-              {step === 1 && <ShippingMethodForm email={email} onNext={nextStep} onPrev={prevStep} />}
+              {step === 1 && <ShippingMethodForm email={email} onNext={nextStep} onPrev={prevStep} shipping={shipping} />}
               {step === 2 && <PaymentMethodForm isSubmitting={isSubmitting} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} onPrev={prevStep} onSubmit={handleCheckout} />}
             </motion.div>
           </AnimatePresence>
@@ -461,7 +480,7 @@ function InformationForm({
   );
 }
 
-function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: () => void, onPrev: () => void }) {
+function ShippingMethodForm({ email, onNext, onPrev, shipping }: { email: string, onNext: () => void, onPrev: () => void, shipping: number }) {
   const { t } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
   return (
@@ -489,7 +508,7 @@ function ShippingMethodForm({ email, onNext, onPrev }: { email: string, onNext: 
                 <p className="label-sm text-tertiary mt-1 tracking-normal normal-case">{t('checkout.est_delivery')}</p>
               </div>
             </div>
-            <span className="label-md">{formatPrice(SHIPPING_USD)}</span>
+            <span className="label-md">{formatPrice(shipping)}</span>
           </label>
         </div>
       </section>
