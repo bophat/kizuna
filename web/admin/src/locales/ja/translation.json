@@ -7,7 +7,8 @@
     "users": "ユーザー",
     "staff": "スタッフと役割",
     "profile": "プロフィール",
-    "chat": "ライブチャット",
+    "chat": "チャット",
+    "pricing": "価格計算",
     "settings": "設定"
   },
   "chat": {
@@ -191,7 +192,9 @@
     }
   },
   "pricing": {
-    "title": "価格計算ツール",
+    "standalone_desc": "原価、経費、および予想販売価格を迅速に計算します。",
+    "copied_to_clipboard": "クリップボードにコピーしました: ",
+    "title": "原価＆利益率計算ツール",
     "subtitle": "原価 → 販売価格（日本 → ベトナム）",
     "section_costs": "コスト入力",
     "section_result": "計算結果",

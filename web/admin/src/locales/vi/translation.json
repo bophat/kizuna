@@ -7,7 +7,8 @@
     "users": "Người dùng",
     "staff": "Nhân viên & Vai trò",
     "profile": "Hồ sơ",
-    "chat": "Live Chat",
+    "chat": "Chat CSKH",
+    "pricing": "Tính giá",
     "settings": "Cài đặt"
   },
   "chat": {
@@ -191,7 +192,9 @@
     }
   },
   "pricing": {
-    "title": "Công cụ tính giá",
+    "standalone_desc": "Công cụ tính toán giá thành, chi phí và giá bán dự kiến một cách nhanh chóng.",
+    "copied_to_clipboard": "Đã copy giá USD vào bộ nhớ tạm: ",
+    "title": "Bảng tính giá vốn & tỷ suất lợi nhuận",
     "subtitle": "Giá vốn → giá bán (Nhật → Việt Nam)",
     "section_costs": "Chi phí đầu vào",
     "section_result": "Kết quả tính toán",

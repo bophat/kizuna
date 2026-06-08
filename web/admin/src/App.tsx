@@ -16,8 +16,10 @@ import Chat from './pages/Chat';
 import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import { Pricing } from './pages/Pricing';
 import { apiFetch } from './lib/api';
 import { Loader2 } from 'lucide-react';
+import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -83,6 +85,7 @@ function App() {
                   <Route path="/staff" element={<Staff />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/chat" element={<Chat />} />
+                  <Route path="/pricing" element={<Pricing />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>
               </Layout>

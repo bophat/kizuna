@@ -8,6 +8,7 @@
     "staff": "Staff & Roles",
     "profile": "Profile",
     "chat": "Live Chat",
+    "pricing": "Pricing",
     "settings": "Settings"
   },
   "chat": {
@@ -191,7 +192,9 @@
     }
   },
   "pricing": {
-    "title": "Pricing calculator",
+    "standalone_desc": "Quickly calculate costs, expenses, and expected selling price.",
+    "copied_to_clipboard": "Copied USD price to clipboard: ",
+    "title": "Cost & Profit Margin Calculator",
     "subtitle": "Land cost → selling price (Japan → Vietnam)",
     "section_costs": "Cost inputs",
     "section_result": "Calculation result",

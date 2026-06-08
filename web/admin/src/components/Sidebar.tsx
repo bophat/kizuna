@@ -10,7 +10,8 @@ import {
   Menu,
   MessageCircle,
   X,
-  Settings as SettingsIcon
+  Settings as SettingsIcon,
+  Calculator
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -29,6 +30,7 @@ export function Sidebar() {
     { icon: ShoppingBag, label: t('nav.orders'), path: '/orders' },
     { icon: Users, label: t('nav.users'), path: '/users' },
     { icon: UserSquare, label: t('nav.staff'), path: '/staff' },
+    { icon: Calculator, label: t('nav.pricing'), path: '/pricing' },
     { icon: User, label: t('nav.profile'), path: '/profile' },
     { icon: SettingsIcon, label: t('nav.settings'), path: '/settings' },
   ];
