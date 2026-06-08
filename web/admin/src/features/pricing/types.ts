@@ -10,7 +10,8 @@ export interface PricingInputs {
   /** Thuế Nhật tính theo phần trăm (8–10%) */
   taxJapanPercent: number;
   taxVietnamVnd: number;
-  shipInternationalVnd: number;
+  weight: number;
+  shipInternationalPerKgVnd: number;
   shipJapanLocalVnd: number;
   shipVietnamLocalVnd: number;
   hiddenCostVnd: number;
@@ -40,7 +41,8 @@ export const DEFAULT_PRICING_INPUTS: PricingInputs = {
   exchangeRate: 170,
   taxJapanPercent: 10,
   taxVietnamVnd: 0,
-  shipInternationalVnd: 0,
+  weight: 0,
+  shipInternationalPerKgVnd: 180000,
   shipJapanLocalVnd: 0,
   shipVietnamLocalVnd: 0,
   hiddenCostVnd: 0,

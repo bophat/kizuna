@@ -232,11 +232,20 @@ export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
             onChange={(v) => patch({ taxVietnamVnd: v })}
           />
 
-          <NumField
-            label={t('pricing.fields.ship_int')}
-            value={inputs.shipInternationalVnd}
-            onChange={(v) => patch({ shipInternationalVnd: v })}
-          />
+          <div className="grid grid-cols-2 gap-3">
+            <NumField
+              label={t('pricing.fields.weight', 'Cân nặng')}
+              value={inputs.weight}
+              onChange={(v) => patch({ weight: v })}
+              suffix="kg"
+            />
+            <NumField
+              label={t('pricing.fields.ship_int')}
+              value={inputs.shipInternationalPerKgVnd}
+              onChange={(v) => patch({ shipInternationalPerKgVnd: v })}
+              suffix="₫/kg"
+            />
+          </div>
 
           <div className="grid grid-cols-2 gap-3">
             <NumField

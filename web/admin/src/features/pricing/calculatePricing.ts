@@ -16,7 +16,7 @@ export function calculatePricing(inputs: PricingInputs): PricingBreakdown {
   const taxJapanVnd = originVnd * (taxJapanPercent / 100);
 
   const taxVietnamVnd = n(inputs.taxVietnamVnd);
-  const shipInternationalVnd = n(inputs.shipInternationalVnd);
+  const shipInternationalVnd = n(inputs.shipInternationalPerKgVnd) * n(inputs.weight);
   const shipJapanLocalVnd = n(inputs.shipJapanLocalVnd);
   const shipVietnamLocalVnd = n(inputs.shipVietnamLocalVnd);
   const hiddenCostVnd = n(inputs.hiddenCostVnd);
