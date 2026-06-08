@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import { Calculator, ArrowRight, RefreshCw } from 'lucide-react';
 import { shopApiFetch, type ExchangeRatesResponse } from '../../lib/shopApi';
 import { useTranslation } from 'react-i18next';
@@ -32,6 +32,14 @@ function NumField({
   onChange: (v: number) => void;
   suffix?: string;
 }) {
+  const [local, setLocal] = useState(value === 0 ? '' : String(value));
+
+  useEffect(() => {
+    if ((parseFloat(local) || 0) !== value) {
+      setLocal(value === 0 ? '' : String(value));
+    }
+  }, [value, local]);
+
   return (
     <div className="space-y-1">
       <label className="text-[10px] uppercase tracking-[0.15em] text-brand-ink/40 font-bold block">
@@ -43,8 +51,16 @@ function NumField({
           type="number"
           min={0}
           step="any"
-          value={value || ''}
-          onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+          value={local}
+          onChange={(e) => {
+            setLocal(e.target.value);
+            const num = parseFloat(e.target.value);
+            if (!isNaN(num)) {
+              onChange(num);
+            } else if (e.target.value === '') {
+              onChange(0);
+            }
+          }}
           className="w-full pr-10 px-3 py-2 bg-white border border-brand-clay rounded-sm text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red"
         />
         {suffix && (
@@ -70,6 +86,13 @@ export function PricingCalculator({ weight = 0, onApplyPrice }: PricingCalculato
   });
 
   const result = useMemo(() => calculatePricing(inputs, weight), [inputs, weight]);
+  const [localMargin, setLocalMargin] = useState(String(inputs.profitMarginPercent));
+
+  useEffect(() => {
+    if ((parseFloat(localMargin) || 0) !== inputs.profitMarginPercent) {
+      setLocalMargin(String(inputs.profitMarginPercent));
+    }
+  }, [inputs.profitMarginPercent, localMargin]);
   const [ratesSyncing, setRatesSyncing] = useState(false);
   const [ratesSyncedAt, setRatesSyncedAt] = useState<string | null>(null);
 
@@ -284,8 +307,16 @@ export function PricingCalculator({ weight = 0, onApplyPrice }: PricingCalculato
                 type="number"
                 min={0}
                 step="1"
-                value={inputs.profitMarginPercent}
-                onChange={(e) => patch({ profitMarginPercent: parseFloat(e.target.value) || 0 })}
+                value={localMargin}
+                onChange={(e) => {
+                  setLocalMargin(e.target.value);
+                  const num = parseFloat(e.target.value);
+                  if (!isNaN(num)) {
+                    patch({ profitMarginPercent: num });
+                  } else if (e.target.value === '') {
+                    patch({ profitMarginPercent: 0 });
+                  }
+                }}
                 className="w-16 px-2 py-1.5 border border-brand-clay rounded-sm text-sm text-center"
               />
             </div>

@@ -5,7 +5,7 @@ import { PricingCalculator } from '../components/inventory/PricingCalculator';
 
 export function Pricing() {
   const { t } = useTranslation();
-  const [weight, setWeight] = useState(0);
+  const [weight, setWeight] = useState<string>('');
 
   return (
     <div className="p-8 max-w-4xl mx-auto space-y-8 pb-20">
@@ -29,8 +29,8 @@ export function Pricing() {
               type="number"
               min={0}
               step="any"
-              value={weight || ''}
-              onChange={(e) => setWeight(parseFloat(e.target.value) || 0)}
+              value={weight}
+              onChange={(e) => setWeight(e.target.value)}
               className="w-full px-4 py-3 pr-10 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all"
               placeholder="0"
             />
@@ -39,7 +39,7 @@ export function Pricing() {
         </div>
 
         <PricingCalculator
-          weight={weight}
+          weight={parseFloat(weight) || 0}
           onApplyPrice={(usd) => {
              // In standalone mode, we can copy to clipboard
              navigator.clipboard.writeText(usd);
