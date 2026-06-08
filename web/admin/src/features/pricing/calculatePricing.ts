@@ -4,7 +4,7 @@ function n(value: number): number {
   return Number.isFinite(value) && value > 0 ? value : 0;
 }
 
-export function calculatePricing(inputs: PricingInputs): PricingBreakdown {
+export function calculatePricing(inputs: PricingInputs, weight: number): PricingBreakdown {
   // Quy đổi giá gốc sang VND dựa theo loại tiền tệ đã chọn
   const originVnd =
     n(inputs.originCost) > 0 && n(inputs.exchangeRate) > 0
@@ -16,7 +16,7 @@ export function calculatePricing(inputs: PricingInputs): PricingBreakdown {
   const taxJapanVnd = originVnd * (taxJapanPercent / 100);
 
   const taxVietnamVnd = n(inputs.taxVietnamVnd);
-  const shipInternationalVnd = n(inputs.shipInternationalPerKgVnd) * n(inputs.weight);
+  const shipInternationalVnd = n(inputs.shipInternationalPerKgVnd) * n(weight);
   const shipJapanLocalVnd = n(inputs.shipJapanLocalVnd);
   const shipVietnamLocalVnd = n(inputs.shipVietnamLocalVnd);
   const hiddenCostVnd = n(inputs.hiddenCostVnd);

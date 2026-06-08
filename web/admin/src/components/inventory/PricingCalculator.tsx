@@ -15,6 +15,7 @@ import {
 } from '../../features/pricing/types';
 
 interface PricingCalculatorProps {
+  weight?: number;
   onApplyPrice: (usdPrice: string) => void;
 }
 
@@ -56,7 +57,7 @@ function NumField({
   );
 }
 
-export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
+export function PricingCalculator({ weight = 0, onApplyPrice }: PricingCalculatorProps) {
   const { t } = useTranslation();
   const { format: formatPrice, formatUsd } = useFormatPrice();
   const [inputs, setInputs] = useState<PricingInputs>(() => {
@@ -68,7 +69,7 @@ export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
     }
   });
 
-  const result = useMemo(() => calculatePricing(inputs), [inputs]);
+  const result = useMemo(() => calculatePricing(inputs, weight), [inputs, weight]);
   const [ratesSyncing, setRatesSyncing] = useState(false);
   const [ratesSyncedAt, setRatesSyncedAt] = useState<string | null>(null);
 
@@ -232,20 +233,12 @@ export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
             onChange={(v) => patch({ taxVietnamVnd: v })}
           />
 
-          <div className="grid grid-cols-2 gap-3">
-            <NumField
-              label={t('pricing.fields.weight', 'Cân nặng')}
-              value={inputs.weight}
-              onChange={(v) => patch({ weight: v })}
-              suffix="kg"
-            />
-            <NumField
-              label={t('pricing.fields.ship_int')}
-              value={inputs.shipInternationalPerKgVnd}
-              onChange={(v) => patch({ shipInternationalPerKgVnd: v })}
-              suffix="₫/kg"
-            />
-          </div>
+          <NumField
+            label={t('pricing.fields.ship_int')}
+            value={inputs.shipInternationalPerKgVnd}
+            onChange={(v) => patch({ shipInternationalPerKgVnd: v })}
+            suffix="₫/kg"
+          />
 
           <div className="grid grid-cols-2 gap-3">
             <NumField

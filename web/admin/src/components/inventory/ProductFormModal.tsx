@@ -205,6 +205,7 @@ export function ProductFormModal({
                     className="space-y-6"
                   >
                     <PricingCalculator
+                      weight={parseFloat(formData.weight) || 0}
                       onApplyPrice={(usd) => setFormData({ ...formData, price: usd })}
                     />
 
