@@ -196,11 +196,11 @@
     "section_costs": "Chi phí đầu vào",
     "section_result": "Kết quả tính toán",
     "fields": {
-      "origin_vnd": "Giá gốc tại Nhật (VND)",
-      "origin_jpy": "Giá gốc (JPY)",
-      "origin_jpy_hint": "Tự quy đổi theo tỷ giá ¥ → ₫",
-      "jpy_rate": "Tỷ giá ¥ → ₫",
-      "usd_rate": "Tỷ giá $ → ₫",
+      "currency": "Loại tiền tệ đầu vào",
+      "origin_cost": "Giá gốc",
+      "origin_jpy_hint": "Nhập giá Yên Nhật, tự quy đổi sang VND",
+      "origin_usd_hint": "Nhập giá USD, tự quy đổi sang VND",
+      "exchange_rate": "Tỷ giá quy đổi",
       "tax_japan": "Thuế Nhật (8–10%)",
       "tax_vietnam": "Thuế VN / hải quan",
       "ship_int": "Phí ship Nhật → Việt Nam",
@@ -211,7 +211,7 @@
       "margin": "Biên lợi nhuận mong muốn"
     },
     "cost": {
-      "origin": "Giá gốc (quy đổi)",
+      "origin": "Giá gốc (quy đổi VND)",
       "tax_japan": "Thuế Nhật",
       "tax_vietnam": "Thuế Việt Nam",
       "ship_int": "Ship quốc tế",
@@ -231,7 +231,7 @@
     "fetch_live_rates": "Lấy tỷ giá realtime",
     "rates_synced": "Đã đồng bộ tỷ giá ({{date}})",
     "rates_sync_failed": "Không lấy được tỷ giá. Kiểm tra backend và mạng.",
-    "formula_note": "Giá bán = Giá vốn tổng × (1 + % lãi). Giá vốn = gốc + thuế + ship + chi phí ẩn."
+    "formula_note": "Giá bán = Giá vốn tổng × (1 + % lãi). Giá vốn = gốc + thuế Nhật (%) + thuế VN + ship + chi phí ẩn."
   },
   "orders": {
     "title": "Theo dõi ký gửi",
@@ -524,5 +524,18 @@
     "reset": "Đặt lại",
     "save": "Lưu",
     "error_occurred": "Đã xảy ra lỗi"
+  },
+  "validation": {
+    "required": "Trường này không được để trống",
+    "invalid_number": "Vui lòng nhập số hợp lệ",
+    "min_value": "Giá trị quá nhỏ",
+    "max_value": "Giá trị quá lớn",
+    "unique": "Giá trị này đã tồn tại",
+    "too_long": "Nội dung quá dài",
+    "too_short": "Nội dung quá ngắn",
+    "invalid_email": "Vui lòng nhập email hợp lệ",
+    "invalid_image": "Vui lòng tải lên ảnh hợp lệ",
+    "invalid_file": "File không hợp lệ",
+    "invalid_choice": "Lựa chọn không hợp lệ"
   }
 }

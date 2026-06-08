@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../lib/api';
+import { formatApiErrors } from '../lib/formatApiErrors';
 import { useTranslation } from 'react-i18next';
 
 export default function Categories() {
@@ -81,7 +82,7 @@ export default function Categories() {
         fetchCategories();
       } else {
         const errData = await response.json();
-        alert(`Error: ${JSON.stringify(errData)}`);
+        alert(formatApiErrors(errData));
       }
     } catch (err) {
       console.error('Submit error:', err);

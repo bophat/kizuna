@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { apiFetch } from '../lib/api';
+import { formatApiErrors } from '../lib/formatApiErrors';
 import { useTranslation } from 'react-i18next';
 import React from 'react';
 import { Pagination } from '../components/Pagination';
@@ -84,7 +85,7 @@ export default function Users() {
         fetchCustomers();
       } else {
         const errData = await response.json();
-        alert(`Error: ${JSON.stringify(errData)}`);
+        alert(formatApiErrors(errData));
       }
     } catch (err) {
       console.error('Submit error:', err);

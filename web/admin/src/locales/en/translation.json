@@ -196,11 +196,11 @@
     "section_costs": "Cost inputs",
     "section_result": "Calculation result",
     "fields": {
-      "origin_vnd": "Origin cost (VND)",
-      "origin_jpy": "Origin cost (JPY)",
-      "origin_jpy_hint": "Auto-converted via ¥ → ₫ rate",
-      "jpy_rate": "¥ → ₫ rate",
-      "usd_rate": "$ → ₫ rate",
+      "currency": "Input currency",
+      "origin_cost": "Origin cost",
+      "origin_jpy_hint": "Enter JPY price, auto-converted to VND",
+      "origin_usd_hint": "Enter USD price, auto-converted to VND",
+      "exchange_rate": "Exchange rate",
       "tax_japan": "Japan tax (8–10%)",
       "tax_vietnam": "VN tax / customs",
       "ship_int": "Japan → Vietnam shipping",
@@ -211,7 +211,7 @@
       "margin": "Target profit margin"
     },
     "cost": {
-      "origin": "Origin (converted)",
+      "origin": "Origin (converted to VND)",
       "tax_japan": "Japan tax",
       "tax_vietnam": "Vietnam tax",
       "ship_int": "International ship",
@@ -231,7 +231,7 @@
     "fetch_live_rates": "Fetch live rates",
     "rates_synced": "Rates synced ({{date}})",
     "rates_sync_failed": "Could not fetch rates. Check backend and network.",
-    "formula_note": "Selling = Total cost × (1 + margin%). Total cost = origin + tax + shipping + hidden."
+    "formula_note": "Selling = Total cost × (1 + margin%). Total cost = origin + Japan tax (%) + VN tax + shipping + hidden."
   },
   "orders": {
     "title": "Consignment Tracking",
@@ -513,5 +513,18 @@
     "reset": "Reset",
     "save": "Save",
     "error_occurred": "An error occurred"
+  },
+  "validation": {
+    "required": "This field is required",
+    "invalid_number": "Please enter a valid number",
+    "min_value": "Value is too small",
+    "max_value": "Value is too large",
+    "unique": "This value already exists",
+    "too_long": "Content is too long",
+    "too_short": "Content is too short",
+    "invalid_email": "Please enter a valid email",
+    "invalid_image": "Please upload a valid image",
+    "invalid_file": "Invalid file",
+    "invalid_choice": "Invalid choice"
   }
 }

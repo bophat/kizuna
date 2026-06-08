@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../../lib/api';
+import { formatApiErrors } from '../../lib/formatApiErrors';
 import type { ProductFormData } from './types';
 import { createEmptyProductForm, productToFormData } from './constants';
 
@@ -68,7 +69,7 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
         onSuccess();
       } else {
         const errorData = await response.json();
-        alert(`${t('common.error')}: ${JSON.stringify(errorData)}`);
+        alert(formatApiErrors(errorData));
       }
     } catch (err) {
       console.error('Submit error:', err);

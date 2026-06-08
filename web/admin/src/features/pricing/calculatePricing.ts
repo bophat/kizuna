@@ -5,13 +5,16 @@ function n(value: number): number {
 }
 
 export function calculatePricing(inputs: PricingInputs): PricingBreakdown {
-  const jpyConverted =
-    n(inputs.originCostJpy) > 0 && n(inputs.jpyToVndRate) > 0
-      ? inputs.originCostJpy * inputs.jpyToVndRate
+  // Quy đổi giá gốc sang VND dựa theo loại tiền tệ đã chọn
+  const originVnd =
+    n(inputs.originCost) > 0 && n(inputs.exchangeRate) > 0
+      ? inputs.originCost * inputs.exchangeRate
       : 0;
 
-  const originVnd = n(inputs.originCostVnd) + jpyConverted;
-  const taxJapanVnd = n(inputs.taxJapanVnd);
+  // Thuế Nhật tính theo % trên giá gốc (đã quy đổi VND)
+  const taxJapanPercent = n(inputs.taxJapanPercent);
+  const taxJapanVnd = originVnd * (taxJapanPercent / 100);
+
   const taxVietnamVnd = n(inputs.taxVietnamVnd);
   const shipInternationalVnd = n(inputs.shipInternationalVnd);
   const shipJapanLocalVnd = n(inputs.shipJapanLocalVnd);

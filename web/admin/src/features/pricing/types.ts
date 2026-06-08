@@ -1,15 +1,20 @@
+export type OriginCurrency = 'JPY' | 'USD';
+
 export interface PricingInputs {
-  originCostVnd: number;
-  taxJapanVnd: number;
+  /** Giá gốc (nhập bằng JPY hoặc USD tuỳ chọn) */
+  originCost: number;
+  /** Loại tiền tệ đầu vào */
+  originCurrency: OriginCurrency;
+  /** Tỷ giá đổi sang VND (tuỳ theo originCurrency) */
+  exchangeRate: number;
+  /** Thuế Nhật tính theo phần trăm (8–10%) */
+  taxJapanPercent: number;
   taxVietnamVnd: number;
   shipInternationalVnd: number;
   shipJapanLocalVnd: number;
   shipVietnamLocalVnd: number;
   hiddenCostVnd: number;
   profitMarginPercent: number;
-  /** Optional: giá JPY tại Nhật, quy đổi bằng tỷ giá */
-  originCostJpy: number;
-  jpyToVndRate: number;
   usdToVndRate: number;
 }
 
@@ -30,15 +35,15 @@ export interface PricingBreakdown {
 }
 
 export const DEFAULT_PRICING_INPUTS: PricingInputs = {
-  originCostVnd: 0,
-  taxJapanVnd: 0,
+  originCost: 0,
+  originCurrency: 'JPY',
+  exchangeRate: 170,
+  taxJapanPercent: 10,
   taxVietnamVnd: 0,
   shipInternationalVnd: 0,
   shipJapanLocalVnd: 0,
   shipVietnamLocalVnd: 0,
   hiddenCostVnd: 0,
   profitMarginPercent: 20,
-  originCostJpy: 0,
-  jpyToVndRate: 170,
   usdToVndRate: 25000,
 };

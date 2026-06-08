@@ -11,6 +11,7 @@ import { useFormatPrice } from '../../hooks/useFormatPrice';
 import {
   DEFAULT_PRICING_INPUTS,
   type PricingInputs,
+  type OriginCurrency,
 } from '../../features/pricing/types';
 
 interface PricingCalculatorProps {
@@ -74,15 +75,20 @@ export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
   const patch = (partial: Partial<PricingInputs>) =>
     setInputs((prev) => ({ ...prev, ...partial }));
 
+  const currencySuffix = inputs.originCurrency === 'JPY' ? '¥' : '$';
+  const rateSuffix = inputs.originCurrency === 'JPY' ? '₫/¥' : '₫/$';
+
   const fetchLiveRates = async () => {
     setRatesSyncing(true);
     try {
       const res = await shopApiFetch('/exchange-rates/?refresh=1');
       if (!res.ok) throw new Error('rates fetch failed');
       const data: ExchangeRatesResponse = await res.json();
+      // Cập nhật tỷ giá theo loại tiền tệ đang chọn
+      const newRate = inputs.originCurrency === 'JPY' ? data.jpy_to_vnd : data.usd_to_vnd;
       patch({
+        exchangeRate: newRate,
         usdToVndRate: data.usd_to_vnd,
-        jpyToVndRate: data.jpy_to_vnd,
       });
       setRatesSyncedAt(data.date || new Date().toISOString().slice(0, 10));
     } catch (err) {
@@ -97,16 +103,27 @@ export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
     localStorage.setItem(
       'izuna_pricing_defaults',
       JSON.stringify({
-        jpyToVndRate: inputs.jpyToVndRate,
+        originCurrency: inputs.originCurrency,
+        exchangeRate: inputs.exchangeRate,
         usdToVndRate: inputs.usdToVndRate,
         profitMarginPercent: inputs.profitMarginPercent,
+        taxJapanPercent: inputs.taxJapanPercent,
       })
     );
   };
 
+  const handleCurrencyChange = (currency: OriginCurrency) => {
+    // Khi đổi loại tiền, cập nhật tỷ giá mặc định phù hợp
+    const defaultRate = currency === 'JPY' ? 170 : 25000;
+    patch({
+      originCurrency: currency,
+      exchangeRate: defaultRate,
+    });
+  };
+
   const breakdownRows = [
     { label: t('pricing.cost.origin'), value: result.originVnd },
-    { label: t('pricing.cost.tax_japan'), value: result.taxJapanVnd },
+    { label: `${t('pricing.cost.tax_japan')} (${inputs.taxJapanPercent}%)`, value: result.taxJapanVnd },
     { label: t('pricing.cost.tax_vietnam'), value: result.taxVietnamVnd },
     { label: t('pricing.cost.ship_int'), value: result.shipInternationalVnd },
     { label: t('pricing.cost.ship_japan'), value: result.shipJapanLocalVnd },
@@ -132,48 +149,88 @@ export function PricingCalculator({ onApplyPrice }: PricingCalculatorProps) {
             {t('pricing.section_costs')}
           </p>
 
-          <div className="grid grid-cols-2 gap-3">
-            <NumField
-              label={t('pricing.fields.origin_vnd')}
-              value={inputs.originCostVnd}
-              onChange={(v) => patch({ originCostVnd: v })}
-            />
-            <NumField
-              label={t('pricing.fields.origin_jpy')}
-              hint={t('pricing.fields.origin_jpy_hint')}
-              value={inputs.originCostJpy}
-              onChange={(v) => patch({ originCostJpy: v })}
-              suffix="¥"
-            />
+          {/* Chọn loại tiền tệ + Giá gốc */}
+          <div className="space-y-2">
+            <label className="text-[10px] uppercase tracking-[0.15em] text-brand-ink/40 font-bold block">
+              {t('pricing.fields.currency')}
+            </label>
+            <div className="flex gap-2">
+              {(['JPY', 'USD'] as OriginCurrency[]).map((cur) => (
+                <button
+                  key={cur}
+                  type="button"
+                  onClick={() => handleCurrencyChange(cur)}
+                  className={cn(
+                    'flex-1 px-3 py-2 text-xs font-bold rounded-sm border transition-all',
+                    inputs.originCurrency === cur
+                      ? 'bg-brand-red text-white border-brand-red'
+                      : 'bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink'
+                  )}
+                >
+                  {cur === 'JPY' ? '¥ JPY (Yên Nhật)' : '$ USD (Đô la Mỹ)'}
+                </button>
+              ))}
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <NumField
-              label={t('pricing.fields.jpy_rate')}
-              value={inputs.jpyToVndRate}
-              onChange={(v) => patch({ jpyToVndRate: v })}
-              suffix="₫/¥"
-            />
-            <NumField
-              label={t('pricing.fields.usd_rate')}
-              value={inputs.usdToVndRate}
-              onChange={(v) => patch({ usdToVndRate: v })}
-              suffix="₫/$"
-            />
+          <NumField
+            label={t('pricing.fields.origin_cost')}
+            hint={inputs.originCurrency === 'JPY' ? t('pricing.fields.origin_jpy_hint') : t('pricing.fields.origin_usd_hint')}
+            value={inputs.originCost}
+            onChange={(v) => patch({ originCost: v })}
+            suffix={currencySuffix}
+          />
+
+          <NumField
+            label={t('pricing.fields.exchange_rate')}
+            value={inputs.exchangeRate}
+            onChange={(v) => patch({ exchangeRate: v })}
+            suffix={rateSuffix}
+          />
+
+          {/* Thuế Nhật - nhập % */}
+          <div className="space-y-1">
+            <label className="text-[10px] uppercase tracking-[0.15em] text-brand-ink/40 font-bold block">
+              {t('pricing.fields.tax_japan')}
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {[8, 10].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => patch({ taxJapanPercent: pct })}
+                  className={cn(
+                    'px-3 py-1.5 text-[10px] font-bold rounded-sm border transition-all',
+                    inputs.taxJapanPercent === pct
+                      ? 'bg-brand-red text-white border-brand-red'
+                      : 'bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink'
+                  )}
+                >
+                  {pct}%
+                </button>
+              ))}
+              <div className="relative">
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step="0.1"
+                  value={inputs.taxJapanPercent || ''}
+                  onChange={(e) => patch({ taxJapanPercent: parseFloat(e.target.value) || 0 })}
+                  className="w-20 px-2 py-1.5 pr-6 border border-brand-clay rounded-sm text-sm text-center"
+                />
+                <span className="absolute right-2 top-1/2 -translate-y-1/2 text-[10px] font-bold text-brand-ink/30">
+                  %
+                </span>
+              </div>
+            </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <NumField
-              label={t('pricing.fields.tax_japan')}
-              value={inputs.taxJapanVnd}
-              onChange={(v) => patch({ taxJapanVnd: v })}
-            />
-            <NumField
-              label={t('pricing.fields.tax_vietnam')}
-              value={inputs.taxVietnamVnd}
-              onChange={(v) => patch({ taxVietnamVnd: v })}
-            />
-          </div>
+          <NumField
+            label={t('pricing.fields.tax_vietnam')}
+            value={inputs.taxVietnamVnd}
+            onChange={(v) => patch({ taxVietnamVnd: v })}
+          />
 
           <NumField
             label={t('pricing.fields.ship_int')}
