@@ -10,8 +10,8 @@ from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
 from django.db.models.functions import TruncDate, TruncMonth
-import os
 import uuid
+import os
 from django.core.files.storage import default_storage
 
 from .models import Setting
@@ -259,6 +259,7 @@ class SettingViewSet(viewsets.ModelViewSet):
     queryset = Setting.objects.all()
     serializer_class = SettingSerializer
     permission_classes = [permissions.IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
         key = request.data.get('key')
@@ -296,56 +297,51 @@ class SettingViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['post'], url_path='upload-logo')
-    def upload_logo(self, request):
-        if 'logo' not in request.FILES:
+    @action(detail=False, methods=['post'], url_path='upload-login-background')
+    def upload_login_background(self, request):
+        if 'image' not in request.FILES:
             return Response(
-                {'error': 'No logo file provided'},
+                {'error': 'No image file provided'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        logo_file = request.FILES['logo']
-
-        # Validate file type - only SVG allowed
-        allowed_types = ['image/svg+xml']
-        if logo_file.content_type not in allowed_types:
+        image_file = request.FILES['image']
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        if image_file.content_type not in allowed_types:
             return Response(
-                {'error': f'Invalid file type. Only SVG files are allowed.'},
+                {'error': 'Invalid file type. Allowed: JPEG, PNG, WEBP, GIF'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Validate file size (max 1MB for SVG)
-        max_size = 1 * 1024 * 1024
-        if logo_file.size > max_size:
+        max_size = 5 * 1024 * 1024
+        if image_file.size > max_size:
             return Response(
-                {'error': 'File too large. Max 1MB'},
+                {'error': 'File too large. Max 5MB'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Generate unique filename
-        ext = os.path.splitext(logo_file.name)[1]
-        filename = f'logos/{uuid.uuid4().hex}{ext}'
+        ext = os.path.splitext(image_file.name)[1]
+        filename = f'system_images/login_background/{uuid.uuid4().hex}{ext}'
 
-        # Save file
         try:
-            path = default_storage.save(filename, logo_file)
-            logo_url = default_storage.url(path)
+            path = default_storage.save(filename, image_file)
+            image_url = default_storage.url(path)
 
-            # Update setting with logo URL
             setting, created = Setting.objects.get_or_create(
-                key='site_logo',
-                defaults={'value': logo_url}
+                key='login_background_image',
+                defaults={'value': image_url}
             )
             if not created:
-                setting.value = logo_url
+                setting.value = image_url
                 setting.save()
 
-            return Response({'url': logo_url, 'path': path})
+            return Response({'url': image_url})
         except Exception as e:
             return Response(
                 {'error': f'Failed to save file: {str(e)}'},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
 
 
 import csv

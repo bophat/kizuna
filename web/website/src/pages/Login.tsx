@@ -43,7 +43,11 @@ export function LoginPage() {
         // Navigate to home
         navigate('/');
       } else {
-        setError(data.detail || t('auth.invalid_credentials'));
+        if (response.status === 401) {
+          setError(t('auth.invalid_credentials'));
+        } else {
+          setError(data.message || data.detail || t('auth.invalid_credentials'));
+        }
       }
     } catch (err) {
       setError(t('common.error_connection'));

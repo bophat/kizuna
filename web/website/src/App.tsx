@@ -4,6 +4,7 @@ import { MobileNav } from '@/components/layout/MobileNav';
 import { Footer } from '@/components/layout/Footer';
 import { AnimatedRoutes } from '@/components/layout/AnimatedRoutes';
 import { ConciergeFAB } from '@/components/home/ConciergeFAB';
+import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
 import { useEffect } from 'react';
 
 function ScrollToTop() {
@@ -18,6 +19,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
+      <GlobalToaster />
       <div className="min-h-screen flex flex-col font-sans selection:bg-secondary/10 selection:text-secondary">
         <ConditionalHeader />
         <ConditionalMobileNav />

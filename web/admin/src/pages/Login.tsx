@@ -6,6 +6,8 @@ import { useTranslation, Trans } from 'react-i18next';
 import { Logo } from '@izuna/shared/components/Logo';
 import { apiFetch } from '../lib/api';
 
+const DEFAULT_BG = 'https://images.unsplash.com/photo-1531973819741-e27a5ae2cc7b?q=80&w=1200&auto=format&fit=crop';
+
 export default function Login() {
   const { t } = useTranslation();
   const [showPassword, setShowPassword] = React.useState(false);
@@ -13,7 +15,19 @@ export default function Login() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+  const [bgImage, setBgImage] = React.useState<string>(DEFAULT_BG);
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    apiFetch('/settings/?key=login_background_image')
+      .then(res => res.ok ? res.json() : null)
+      .then((data: any) => {
+        const results = data?.results || data;
+        const found = Array.isArray(results) ? results.find((s: any) => s.key === 'login_background_image') : null;
+        if (found?.value) setBgImage(found.value);
+      })
+      .catch(() => {});
+  }, []);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,8 +44,7 @@ export default function Login() {
         const data = await response.json();
         localStorage.setItem('access_token', data.access);
         localStorage.setItem('refresh_token', data.refresh);
-        
-        // Verify if user is staff/admin
+
         const meResponse = await apiFetch('/me/');
         if (meResponse.ok) {
           const userData = await meResponse.json();
@@ -46,7 +59,11 @@ export default function Login() {
         }
       } else {
         const errorData = await response.json();
-        setError(errorData.detail || t('login.errors.invalid_credentials'));
+        if (response.status === 401) {
+          setError(t('login.errors.invalid_credentials'));
+        } else {
+          setError(errorData.message || errorData.detail || t('login.errors.invalid_credentials'));
+        }
       }
     } catch (err) {
       setError(t('login.errors.connection_error'));
@@ -60,9 +77,9 @@ export default function Login() {
       {/* Visual Side */}
       <div className="hidden md:flex md:w-1/2 bg-brand-ink relative overflow-hidden items-center justify-center p-20">
         <div className="absolute inset-0 opacity-20">
-          <img 
-            src="https://images.unsplash.com/photo-1531973819741-e27a5ae2cc7b?q=80&w=1200&auto=format&fit=crop" 
-            alt="Craft background" 
+          <img
+            src={bgImage}
+            alt="Background"
             className="w-full h-full object-cover"
             referrerPolicy="no-referrer"
           />
@@ -73,13 +90,12 @@ export default function Login() {
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 0.8 }}
           >
-
             <p className="text-brand-clay/60 text-lg font-light leading-relaxed font-serif italic">
               {t('login.hero_text')}
             </p>
           </motion.div>
         </div>
-        
+
         <div className="absolute bottom-12 left-12 right-12 flex justify-between items-center text-[10px] uppercase tracking-[0.3em] text-white/30 font-bold">
           <span>Est. 1924</span>
           <span>{t('login.locations')}</span>
@@ -88,7 +104,7 @@ export default function Login() {
 
       {/* Form Side */}
       <div className="flex-1 bg-brand-paper flex items-center justify-center p-8">
-        <motion.div 
+        <motion.div
           initial={{ opacity: 0, x: 20 }}
           animate={{ opacity: 1, x: 0 }}
           className="w-full max-w-md"
@@ -100,7 +116,7 @@ export default function Login() {
           </div>
 
           {error && (
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               className="mb-6 p-4 bg-red-50 border border-brand-red/20 rounded-md flex items-center gap-3 text-brand-red text-xs font-bold uppercase tracking-wider"
@@ -115,8 +131,8 @@ export default function Login() {
               <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 ml-1">{t('login.email_label')}</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20 group-focus-within:text-brand-red transition-colors" size={18} />
-                <input 
-                  type="email" 
+                <input
+                  type="email"
                   required
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -133,15 +149,15 @@ export default function Login() {
               </div>
               <div className="relative group">
                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20 group-focus-within:text-brand-red transition-colors" size={18} />
-                <input 
-                  type={showPassword ? "text" : "password"} 
+                <input
+                  type={showPassword ? "text" : "password"}
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder={t('login.password_placeholder')}
                   className="w-full bg-white border border-brand-clay rounded-md px-12 py-4 text-sm focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/10 transition-all shadow-sm"
                 />
-                <button 
+                <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-4 top-1/2 -translate-y-1/2 text-brand-ink/20 hover:text-brand-ink transition-colors"
@@ -151,7 +167,7 @@ export default function Login() {
               </div>
             </div>
 
-            <button 
+            <button
               type="submit"
               disabled={isLoading}
               className="w-full bg-brand-ink text-white py-5 rounded-md font-bold text-sm uppercase tracking-[0.2em] hover:bg-brand-red transition-all shadow-xl hover:shadow-brand-red/20 flex items-center justify-center gap-3 disabled:opacity-50 disabled:cursor-not-allowed group"
@@ -180,4 +196,3 @@ export default function Login() {
     </div>
   );
 }
-

@@ -28,6 +28,9 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   if (!(options.body instanceof FormData) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
+  
+  const lang = localStorage.getItem('i18nextLng') || 'en';
+  headers['Accept-Language'] = lang;
 
   const token = localStorage.getItem('access_token');
   if (token) {

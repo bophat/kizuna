@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../lib/api';
+import { toast } from '@izuna/shared/lib/toast';
 
 export interface ProfileFormData {
   username: string;
@@ -16,8 +17,6 @@ export function useAdminProfile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -31,7 +30,6 @@ export function useAdminProfile() {
 
   const fetchProfile = async () => {
     setLoading(true);
-    setError(null);
     try {
       const response = await apiFetch('/me/');
       if (response.ok) {
@@ -47,10 +45,10 @@ export function useAdminProfile() {
         });
         if (data.avatar_url) setAvatarPreview(data.avatar_url);
       } else {
-        setError(t('profile.error_load'));
+        toast.error(t('profile.error_load'));
       }
     } catch {
-      setError(t('common.error_occurred'));
+      toast.error(t('common.error_occurred'));
     } finally {
       setLoading(false);
     }
@@ -72,8 +70,6 @@ export function useAdminProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       const response = await apiFetch('/me/', {
@@ -106,10 +102,10 @@ export function useAdminProfile() {
       }
 
       setUser(updatedUser);
-      setSuccess(t('profile.save_success'));
+      toast.success(t('profile.save_success'));
       setAvatarFile(null);
     } catch (err: any) {
-      setError(err.message || t('profile.save_error'));
+      toast.error(err.message || t('profile.save_error'));
     } finally {
       setSaving(false);
     }
@@ -126,8 +122,6 @@ export function useAdminProfile() {
     user,
     loading,
     saving,
-    error,
-    success,
     avatarPreview,
     formData,
     setFormData,

@@ -11,8 +11,6 @@ export default function Profile() {
     user,
     loading,
     saving,
-    error,
-    success,
     avatarPreview,
     formData,
     setFormData,
@@ -52,8 +50,6 @@ export default function Profile() {
         </div>
 
         <div className="px-8 py-4 bg-brand-paper/30 border-t border-brand-clay flex justify-between items-center">
-          {error && <p className="text-sm text-brand-red">{error}</p>}
-          {success && <p className="text-sm text-emerald-600">{success}</p>}
           <button
             type="button"
             onClick={handleLogout}

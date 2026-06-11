@@ -1,36 +1,60 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save } from 'lucide-react';
+import { Loader2, Save, Upload, Image as ImageIcon } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
+import { toast } from '@izuna/shared/lib/toast';
+import { apiFetch } from '../lib/api';
 
 export default function Settings() {
   const { t } = useTranslation();
   const { settings, loading, updateSetting } = useSettings();
   const [publicSiteUrl, setPublicSiteUrl] = useState('');
+  const [loginBg, setLoginBg] = useState<string | null>(null);
+  const [uploadingBg, setUploadingBg] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [success, setSuccess] = useState('');
-  const [error, setError] = useState('');
 
   useEffect(() => {
     if (settings['PUBLIC_SITE_URL']) {
       setPublicSiteUrl(settings['PUBLIC_SITE_URL']);
+    }
+    if (settings['login_background_image']) {
+      setLoginBg(settings['login_background_image']);
     }
   }, [settings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setSaving(true);
-    setError('');
-    setSuccess('');
     try {
       await updateSetting('PUBLIC_SITE_URL', publicSiteUrl);
-      setSuccess(t('common.success') || 'Settings saved successfully');
+      toast.success(t('common.success') || toast.messages.saveSuccess);
     } catch (err) {
-      setError(t('common.error_occurred') || 'Failed to save settings');
+      toast.error(t('common.error_occurred') || toast.messages.saveError);
     } finally {
       setSaving(false);
-      setTimeout(() => setSuccess(''), 3000);
+    }
+  };
+
+  const handleBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingBg(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await apiFetch('/settings/upload-login-background/', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setLoginBg(data.url);
+      toast.success('Background image updated');
+    } catch {
+      toast.error('Failed to upload background image');
+    } finally {
+      setUploadingBg(false);
     }
   };
 
@@ -79,10 +103,8 @@ export default function Settings() {
           </div>
         </div>
 
-        <div className="px-8 py-4 bg-brand-paper/30 border-t border-brand-clay flex justify-between items-center">
-          {error && <p className="text-sm text-brand-red">{error}</p>}
-          {success && <p className="text-sm text-emerald-600">{success}</p>}
-          <div className="flex items-center gap-4 ml-auto">
+        <div className="px-8 py-4 bg-brand-paper/30 border-t border-brand-clay flex justify-end items-center">
+          <div className="flex items-center gap-4">
             <button
               type="submit"
               className="flex items-center gap-2 px-6 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-all disabled:opacity-50"
@@ -94,6 +116,47 @@ export default function Settings() {
           </div>
         </div>
       </motion.form>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+        className="bg-white rounded-xl border border-brand-clay shadow-sm overflow-hidden"
+      >
+        <div className="p-8 space-y-6">
+          <div>
+            <h3 className="text-lg font-serif font-bold text-brand-ink mb-2">Login Background Image</h3>
+            <p className="text-xs text-brand-ink/50 italic font-serif">Upload a background image for the login page. Max 5MB. JPEG, PNG, WEBP, GIF.</p>
+          </div>
+
+          {loginBg && (
+            <div className="relative w-full h-48 rounded-md overflow-hidden border border-brand-clay">
+              <img src={loginBg} alt="Login background preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            </div>
+          )}
+
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <span className="flex items-center gap-2 px-5 py-2.5 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-all disabled:opacity-50">
+                {uploadingBg ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                {uploadingBg ? 'Uploading...' : 'Choose Image'}
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleBgUpload}
+                disabled={uploadingBg}
+              />
+              {!loginBg && (
+                <span className="text-xs text-brand-ink/40 italic font-serif flex items-center gap-1">
+                  <ImageIcon size={14} /> No image set — using default
+                </span>
+              )}
+            </label>
+          </div>
+        </div>
+      </motion.div>
     </div>
   );
 }

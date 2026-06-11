@@ -10,8 +10,10 @@ export function getMediaUrl(path: string | null | undefined) {
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const url = `${API_BASE_URL}${endpoint.startsWith('/') ? endpoint : `/${endpoint}`}`;
 
+  const lang = localStorage.getItem('i18nextLng') || 'en';
   const headers = {
     'Content-Type': 'application/json',
+    'Accept-Language': lang,
     ...(options.headers || {}),
   };
 
