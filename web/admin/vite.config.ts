@@ -25,6 +25,7 @@ export default defineConfig(({mode}) => {
         'react/jsx-runtime': path.resolve(__dirname, 'node_modules/react/jsx-runtime.js'),
         clsx: path.resolve(__dirname, 'node_modules/clsx'),
         'tailwind-merge': path.resolve(__dirname, 'node_modules/tailwind-merge'),
+        sonner: path.resolve(__dirname, 'node_modules/sonner'),
       },
     },
     server: {
