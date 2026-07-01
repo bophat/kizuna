@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiFetch } from '@/lib/api';
 import { Product } from '@/types';
+import { useAuth } from '@/context/AuthContext';
 
 interface WishlistContextType {
   wishlistItems: { id: number; product: Product; created_at: string }[];
@@ -16,6 +17,7 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated } = useAuth();
   const [wishlistItems, setWishlistItems] = useState<{ id: number; product: Product; created_at: string }[]>([]);
   const [likesMap, setLikesMap] = useState<Record<string, number>>({});
   const [isLoading, setIsLoading] = useState(true);
@@ -66,20 +68,19 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    const token = localStorage.getItem('access_token');
-    if (token) {
+    if (isAuthenticated) {
       fetchWishlist();
     } else {
+      setWishlistItems([]);
       setIsLoading(false);
     }
 
-    // Always fetch likes counts, even if not logged in
     fetchLikesCounts();
     
     // Polling every 5 seconds for "realtime" updates
     const interval = setInterval(fetchLikesCounts, 5000);
     return () => clearInterval(interval);
-  }, []);
+  }, [isAuthenticated]);
 
   const addToWishlist = async (productId: string | number) => {
     try {

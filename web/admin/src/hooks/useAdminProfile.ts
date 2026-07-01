@@ -111,9 +111,9 @@ export function useAdminProfile() {
     }
   };
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     if (window.confirm(t('profile.logout_confirm'))) {
-      localStorage.removeItem('access_token');
+      await apiFetch('/logout/', { method: 'POST' });
       window.location.href = '/login';
     }
   };

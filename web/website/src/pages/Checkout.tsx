@@ -5,9 +5,9 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Icons } from '@/components/Icons';
 import { cn } from '@/lib/utils';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { apiFetch } from '@/lib/api';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
-import { CHAT_API_BASE_URL } from '@/lib/env';
 import { fadeUp, slideX, tweenBase, tweenFast } from '@/lib/motion';
 import { ProductImage } from '@/components/products/ProductImage';
 
@@ -31,9 +31,10 @@ export function CheckoutPage() {
   const [productCache, setProductCache] = useState<Record<string, any>>({});
 
   const { cart, fetchCart } = useCart();
+  const { isAuthenticated, loading: authLoading } = useAuth();
 
   useEffect(() => {
-    if (!localStorage.getItem('access_token')) {
+    if (!authLoading && !isAuthenticated) {
       navigate('/login');
       return;
     }
@@ -55,8 +56,11 @@ export function CheckoutPage() {
         setIsLoadingUser(false);
       }
     };
-    fetchUserData();
-  }, []);
+
+    if (isAuthenticated) {
+      fetchUserData();
+    }
+  }, [authLoading, isAuthenticated, navigate]);
 
   const nextStep = () => {
     if (step < STEPS.length - 1) setStep(step + 1);
@@ -84,20 +88,6 @@ export function CheckoutPage() {
       const data = await response.json();
       if (response.ok) {
         setOrderData(data);
-        
-        // Notify admin via local Flask SSE
-        try {
-          fetch(`${CHAT_API_BASE_URL}/order/new`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              order_id: data.order?.id || data.id,
-              total: data.order?.total_amount || data.total_amount
-            })
-          });
-        } catch (e) {
-          console.error("Failed to notify admin", e);
-        }
 
         await fetchCart(); // Refresh cart to empty
         nextStep(); // Go to Success step

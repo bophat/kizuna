@@ -29,28 +29,18 @@ function App() {
 
   useEffect(() => {
     const checkAuth = async () => {
-      const token = localStorage.getItem('access_token');
-      if (!token) {
-        setIsAuthenticated(false);
-        setIsLoading(false);
-        return;
-      }
-
       try {
         const response = await apiFetch('/me/');
         if (response.ok) {
           const userData = await response.json();
-          if (userData.is_staff || userData.is_superuser) {
-            setIsAuthenticated(true);
-          } else {
-            setIsAuthenticated(false);
-            localStorage.clear();
+          setIsAuthenticated(!!(userData.is_staff || userData.is_superuser));
+          if (!(userData.is_staff || userData.is_superuser)) {
+            await apiFetch('/logout/', { method: 'POST' });
           }
         } else {
           setIsAuthenticated(false);
-          localStorage.clear();
         }
-      } catch (err) {
+      } catch {
         setIsAuthenticated(false);
       } finally {
         setIsLoading(false);

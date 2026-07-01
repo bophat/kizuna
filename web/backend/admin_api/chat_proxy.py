@@ -75,3 +75,18 @@ def notify_order_placed(order_id, total_amount):
         )
     except Exception as exc:
         print(f'[chat_notify] order notification failed: {exc}')
+
+
+def stream_concierge_session(session_id: str):
+    token = _bot_token()
+    url = f'{_chat_service_url()}/api/internal/chat/{session_id}/stream'
+    with requests.get(
+        url,
+        headers={'X-Bot-Token': token},
+        stream=True,
+        timeout=120,
+    ) as response:
+        response.raise_for_status()
+        for chunk in response.iter_content(chunk_size=None):
+            if chunk:
+                yield chunk

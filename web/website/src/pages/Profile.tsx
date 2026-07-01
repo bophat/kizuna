@@ -5,6 +5,7 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 import { ProductImage } from '@/components/products/ProductImage';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 
@@ -53,6 +54,7 @@ export function ProfilePage() {
   const [isUpdating, setIsUpdating] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const navigate = useNavigate();
+  const { logout } = useAuth();
 
   const [formData, setFormData] = useState({
     first_name: '',
@@ -126,9 +128,8 @@ export function ProfilePage() {
     }
   };
 
-  const handleLogout = () => {
-    localStorage.removeItem('access_token');
-    localStorage.removeItem('refresh_token');
+  const handleLogout = async () => {
+    await logout();
     navigate('/login');
   };
 

@@ -3,8 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { fade, fadeUp, tweenFast } from '@/lib/motion';
 import { MessageItem } from '@/components/concierge/MessageItem';
 import { ChatInput } from '@/components/concierge/ChatInput';
-import { apiFetch } from '@/lib/api';
-import { CHAT_API_BASE_URL } from '@/lib/env';
+import { apiFetch, API_BASE_URL } from '@/lib/api';
 
 interface Message {
   id: string;
@@ -35,8 +34,9 @@ export function ConciergePage() {
   const [adminTookOver, setAdminTookOver] = useState(false);
 
   useEffect(() => {
-    // Connect to SSE for admin replies
-    const eventSource = new EventSource(`${CHAT_API_BASE_URL}/chat/${sessionId}/stream`);
+    const eventSource = new EventSource(
+      `${API_BASE_URL}/shop/concierge/stream/${encodeURIComponent(sessionId)}/`
+    );
     eventSource.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
@@ -73,10 +73,9 @@ export function ConciergePage() {
 
     try {
       // Notify Admin Dashboard and get status
-      const res = await fetch(`${CHAT_API_BASE_URL}/concierge/message`, {
+      const res = await apiFetch('/shop/concierge/message/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: content, session_id: sessionId, sender: 'user' })
+        body: JSON.stringify({ message: content, session_id: sessionId, sender: 'user' }),
       });
       const data = await res.json();
 
@@ -115,10 +114,9 @@ export function ConciergePage() {
       }]);
 
       // Push AI reply to session as well so Admin sees it
-      await fetch(`${CHAT_API_BASE_URL}/concierge/message`, {
+      await apiFetch('/shop/concierge/message/', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: text, session_id: sessionId, sender: 'ai' })
+        body: JSON.stringify({ message: text, session_id: sessionId, sender: 'ai' }),
       });
 
     } catch (err) {

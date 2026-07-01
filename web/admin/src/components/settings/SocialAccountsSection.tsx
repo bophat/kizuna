@@ -7,6 +7,7 @@ import {
   type SocialPlatformId,
   newSocialAccount,
 } from '@izuna/shared/lib/integrationSettings';
+import { secretFieldPlaceholder } from '@izuna/shared/lib/secretMask';
 
 type Props = {
   accounts: SocialAccount[];
@@ -143,7 +144,12 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
                           type={field.type}
                           value={account.credentials[field.key] || ''}
                           onChange={(e) => updateCredential(account.id, field.key, e.target.value)}
-                          placeholder={field.placeholder}
+                          placeholder={
+                            field.type === 'password'
+                              ? secretFieldPlaceholder(account.credentials[field.key])
+                              : field.placeholder
+                          }
+                          autoComplete="off"
                           className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
                         />
                       )}

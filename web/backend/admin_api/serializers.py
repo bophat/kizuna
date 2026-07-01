@@ -2,6 +2,11 @@ from rest_framework import serializers
 from shop.models import Product, Order, OrderItem, Category, UserProfile, ProductImage
 from django.contrib.auth.models import User
 from .models import Setting, PendingReply, TrendingProductLead
+from .secrets import (
+    expose_setting_for_api,
+    is_secret_setting_key,
+    prepare_setting_for_storage,
+)
 
 class UserSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', required=False, allow_null=True, allow_blank=True)
@@ -105,10 +110,31 @@ class OrderSerializer(serializers.ModelSerializer):
         return None
 
 class SettingSerializer(serializers.ModelSerializer):
+    is_secret = serializers.SerializerMethodField()
+
     class Meta:
         model = Setting
-        fields = ['id', 'key', 'value', 'description', 'created_at', 'updated_at']
-        read_only_fields = ['id', 'created_at', 'updated_at']
+        fields = ['id', 'key', 'value', 'description', 'is_secret', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'created_at', 'updated_at', 'is_secret']
+
+    def get_is_secret(self, obj) -> bool:
+        return is_secret_setting_key(obj.key)
+
+    def to_representation(self, instance):
+        ret = super().to_representation(instance)
+        if is_secret_setting_key(instance.key):
+            ret['value'] = expose_setting_for_api(instance.key, instance.value)
+        return ret
+
+    def validate(self, attrs):
+        key = attrs.get('key') or getattr(self.instance, 'key', None)
+        value = attrs.get('value')
+        if key and value is not None and is_secret_setting_key(key):
+            existing = ''
+            if self.instance is not None:
+                existing = self.instance.value
+            attrs['value'] = prepare_setting_for_storage(key, value, existing)
+        return attrs
 
 class ProductImageSerializer(serializers.ModelSerializer):
     product = serializers.PrimaryKeyRelatedField(queryset=ProductImage._meta.get_field('product').related_model.objects.all())

@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { fade, tweenFast } from '@/lib/motion';
 import { Icons } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
+import { useAuth } from '@/context/AuthContext';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
@@ -15,6 +16,7 @@ export function CartPage() {
   const { t } = useTranslation();
   const { format: formatPrice, rates } = useFormatPrice();
   const { cart, removeFromCart, updateQuantity } = useCart();
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const [productCache, setProductCache] = useState<Record<string, any>>({});
 
@@ -28,10 +30,10 @@ export function CartPage() {
   };
 
   useEffect(() => {
-    if (!localStorage.getItem('access_token')) {
+    if (!authLoading && !isAuthenticated) {
       navigate('/login');
     }
-  }, [navigate]);
+  }, [authLoading, isAuthenticated, navigate]);
 
   // Fetch product details for cart items
   useEffect(() => {

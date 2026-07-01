@@ -51,9 +51,8 @@ export default function Login() {
       });
 
       if (response.ok) {
-        const data = await response.json();
-        localStorage.setItem('access_token', data.access);
-        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
 
         const meResponse = await apiFetch('/me/');
         if (meResponse.ok) {
@@ -62,7 +61,7 @@ export default function Login() {
             window.location.href = '/';
           } else {
             setError(t('login.errors.access_denied'));
-            localStorage.clear();
+            await apiFetch('/logout/', { method: 'POST' });
           }
         } else {
           setError(t('login.errors.verify_failed'));

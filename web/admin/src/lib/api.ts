@@ -7,6 +7,23 @@ export function getMediaUrl(path: string | null | undefined) {
   return sharedGetMediaUrl(path, MEDIA_BASE_URL, API_BASE_URL);
 }
 
+let refreshPromise: Promise<boolean> | null = null;
+
+async function refreshAccessToken(): Promise<boolean> {
+  if (!refreshPromise) {
+    refreshPromise = fetch(`${API_BASE_URL}/token/refresh/`, {
+      method: 'POST',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+    })
+      .then((res) => res.ok)
+      .finally(() => {
+        refreshPromise = null;
+      });
+  }
+  return refreshPromise;
+}
+
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   let path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
@@ -21,6 +38,11 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   }
 
   const url = `${API_BASE_URL}${path}`;
+  const isAuthEndpoint =
+    path.includes('/login/') ||
+    path.includes('/register/') ||
+    path.includes('/logout/') ||
+    path.includes('/token/refresh/');
 
   const headers: Record<string, string> = {
     ...(options.headers as Record<string, string>),
@@ -29,17 +51,24 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   if (!(options.body instanceof FormData) && !headers['Content-Type']) {
     headers['Content-Type'] = 'application/json';
   }
-  
+
   const lang = localStorage.getItem('i18nextLng') || 'en';
   headers['Accept-Language'] = lang;
 
-  const token = localStorage.getItem('access_token');
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
+  const doFetch = () =>
+    fetch(url, {
+      ...options,
+      headers,
+      credentials: 'include',
+    });
+
+  let response = await doFetch();
+  if (response.status === 401 && !isAuthEndpoint) {
+    const refreshed = await refreshAccessToken();
+    if (refreshed) {
+      response = await doFetch();
+    }
   }
 
-  return fetch(url, {
-    ...options,
-    headers,
-  });
+  return response;
 }

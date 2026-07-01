@@ -10,6 +10,8 @@ from .views import (
     FavoriteViewSet,
     ExchangeRatesView,
     ConciergeReplyView,
+    ConciergeMessageView,
+    ConciergeStreamView,
     PublicSettingsView,
     PublicMediaView,
 )
@@ -26,6 +28,8 @@ urlpatterns = [
     path('exchange-rates/', ExchangeRatesView.as_view(), name='exchange-rates'),
     path('settings/', PublicSettingsView.as_view(), name='public-settings'),
     path('concierge/reply/', ConciergeReplyView.as_view(), name='concierge-reply'),
+    path('concierge/message/', ConciergeMessageView.as_view(), name='concierge-message'),
+    path('concierge/stream/<str:session_id>/', ConciergeStreamView.as_view(), name='concierge-stream'),
     path('media/<path:path>', PublicMediaView.as_view(), name='public-media'),
     path('me/', MeView.as_view(), name='me'),
     path('', include(router.urls)),

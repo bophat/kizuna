@@ -6,13 +6,52 @@ from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
 from .models import Role
 from .serializers import UserSerializer, RegisterSerializer, RoleSerializer, EmailTokenObtainPairSerializer
-from rest_framework_simplejwt.views import TokenObtainPairView
+from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
+from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
+
+from .cookie_auth import REFRESH_COOKIE, clear_auth_cookies, set_auth_cookies
 from shop.models import UserProfile
 from .throttles import LoginRateThrottle, RegisterRateThrottle
 
 class EmailTokenObtainPairView(TokenObtainPairView):
     serializer_class = EmailTokenObtainPairSerializer
     throttle_classes = [LoginRateThrottle]
+
+    def post(self, request, *args, **kwargs):
+        response = super().post(request, *args, **kwargs)
+        if response.status_code == 200:
+            set_auth_cookies(response, response.data['access'], response.data['refresh'])
+            response.data = {'detail': 'ok'}
+        return response
+
+
+class CookieTokenRefreshView(TokenRefreshView):
+    def post(self, request, *args, **kwargs):
+        refresh = request.COOKIES.get(REFRESH_COOKIE) or request.data.get('refresh')
+        if not refresh:
+            return Response({'detail': 'Refresh token missing'}, status=status.HTTP_401_UNAUTHORIZED)
+
+        serializer = self.get_serializer(data={'refresh': refresh})
+        try:
+            serializer.is_valid(raise_exception=True)
+        except TokenError as exc:
+            raise InvalidToken(exc.args[0]) from exc
+
+        access = serializer.validated_data['access']
+        response = Response({'detail': 'ok'})
+        refresh_token = RefreshToken(refresh)
+        set_auth_cookies(response, access, str(refresh_token))
+        return response
+
+
+class LogoutView(APIView):
+    permission_classes = (AllowAny,)
+
+    def post(self, request):
+        response = Response({'detail': 'logged out'})
+        clear_auth_cookies(response)
+        return response
 
 class RegisterView(generics.CreateAPIView):
     queryset = User.objects.all()

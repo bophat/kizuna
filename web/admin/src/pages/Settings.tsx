@@ -6,6 +6,7 @@ import { useSettings } from '../hooks/useSettings';
 import { toast } from '@izuna/shared/lib/toast';
 import { PUBLIC_CONTENT_KEYS } from '@izuna/shared/lib/publicSettings';
 import { INTEGRATION_KEYS, migrateLegacySocialSettings, serializeSocialIntegrations, type SocialAccount } from '@izuna/shared/lib/integrationSettings';
+import { secretFieldPlaceholder } from '@izuna/shared/lib/secretMask';
 import { SocialAccountsSection } from '../components/settings/SocialAccountsSection';
 import { apiFetch, getMediaUrl } from '../lib/api';
 
@@ -391,13 +392,25 @@ export default function Settings() {
             </h4>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Gemini API Key</label>
-              <input type="password" value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)}
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+              <input
+                type="password"
+                value={geminiKey}
+                onChange={(e) => setGeminiKey(e.target.value)}
+                placeholder={secretFieldPlaceholder(geminiKey)}
+                autoComplete="off"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm"
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Serper API Key (web search)</label>
-              <input type="password" value={serperKey} onChange={(e) => setSerperKey(e.target.value)}
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+              <input
+                type="password"
+                value={serperKey}
+                onChange={(e) => setSerperKey(e.target.value)}
+                placeholder={secretFieldPlaceholder(serperKey)}
+                autoComplete="off"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm"
+              />
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Auto-repost enabled</label>
@@ -426,8 +439,14 @@ export default function Settings() {
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Internal bot token</label>
-              <input type="password" value={chatbotToken} onChange={(e) => setChatbotToken(e.target.value)}
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+              <input
+                type="password"
+                value={chatbotToken}
+                onChange={(e) => setChatbotToken(e.target.value)}
+                placeholder={secretFieldPlaceholder(chatbotToken)}
+                autoComplete="off"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm"
+              />
               <p className="text-xs text-brand-ink/40 mt-1 italic">Same value in Django + Flask + newfeed .env</p>
             </div>
           </div>

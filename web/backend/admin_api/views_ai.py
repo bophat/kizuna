@@ -94,11 +94,11 @@ def _all_facebook_group_ids():
     return ids
 
 
+from .secrets import get_setting_plaintext
+
+
 def _get_setting(key: str, default: str = '') -> str:
-    try:
-        return Setting.objects.get(key=key).value
-    except Setting.DoesNotExist:
-        return default
+    return get_setting_plaintext(key, default)
 
 
 def _products_to_kb():

@@ -48,10 +48,6 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   const addToCart = async (product_id: string, quantity: number, price: number) => {
-    const token = localStorage.getItem('access_token');
-    if (!token) {
-      return false;
-    }
     try {
       const response = await apiFetch('/shop/cart/add_item/', {
         method: 'POST',
@@ -61,6 +57,9 @@ export function CartProvider({ children }: { children: ReactNode }) {
         const data = await response.json();
         setCart(data);
         return true;
+      }
+      if (response.status === 401) {
+        return false;
       }
     } catch (error) {
       console.error('Failed to add to cart:', error);

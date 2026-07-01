@@ -4,12 +4,12 @@ import re
 
 
 def _get_gemini_key() -> str:
-    try:
-        from admin_api.models import Setting
+    from admin_api.secrets import get_setting_plaintext
 
-        return Setting.objects.get(key='gemini_api_key').value.strip()
-    except Exception:
-        return os.environ.get('GEMINI_API_KEY', '').strip()
+    value = get_setting_plaintext('gemini_api_key', '')
+    if value:
+        return value
+    return os.environ.get('GEMINI_API_KEY', '').strip()
 
 
 def generate_concierge_reply(message: str, history: list | None = None) -> str:

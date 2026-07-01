@@ -9,6 +9,7 @@ import { cn } from '@/lib/utils';
 import { ChevronDown, Globe, Package, Headset } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useAuth } from '@/context/AuthContext';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -22,6 +23,7 @@ export function Header() {
   const isAuthPage = ['/login', '/register'].includes(location.pathname);
   const { cart } = useCart();
   const { wishlistItems } = useWishlist();
+  const { isAuthenticated } = useAuth();
 
   const languages = [
     { code: 'en', label: 'English', short: 'EN' },
@@ -104,7 +106,7 @@ export function Header() {
                 )}
               </Link>
 
-              <Link to={localStorage.getItem('access_token') ? "/profile" : "/login"} className="text-secondary hover:text-primary transition-colors" title={t('auth.sign_in')}>
+              <Link to={isAuthenticated ? '/profile' : '/login'} className="text-secondary hover:text-primary transition-colors" title={t('auth.sign_in')}>
                 <Icons.User size={22} />
               </Link>
             </div>

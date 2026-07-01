@@ -40,9 +40,63 @@ class ConciergeReplyView(APIView):
         try:
             reply = generate_concierge_reply(message, history)
             return Response({'reply': reply})
-        except Exception as exc:
+        except Exception:
             return Response(
                 {'error': 'AI service unavailable'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+
+class ConciergeMessageView(APIView):
+    """Proxy website chat messages to Flask (token never exposed to browser)."""
+
+    permission_classes = [AllowAny]
+    throttle_classes = [ConciergeRateThrottle]
+
+    def post(self, request):
+        message = (request.data.get('message') or '')[:4000]
+        session_id = (request.data.get('session_id') or '').strip()[:128]
+        sender = (request.data.get('sender') or 'user').strip()[:16]
+        if not session_id:
+            return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            from admin_api.chat_proxy import forward_to_chatbot
+
+            res = forward_to_chatbot(
+                'POST',
+                '/api/internal/concierge/message',
+                json={'message': message, 'session_id': session_id, 'sender': sender},
+                timeout=15,
+            )
+            return Response(res.json(), status=res.status_code)
+        except Exception:
+            return Response(
+                {'error': 'Chat service unavailable'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+
+class ConciergeStreamView(APIView):
+    """SSE proxy for admin replies to website concierge sessions."""
+
+    permission_classes = [AllowAny]
+    authentication_classes = []
+
+    def get(self, request, session_id):
+        session_id = (session_id or '').strip()[:128]
+        if not session_id:
+            return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        try:
+            from admin_api.chat_proxy import stream_concierge_session
+            from django.http import StreamingHttpResponse
+
+            return StreamingHttpResponse(
+                stream_concierge_session(session_id),
+                content_type='text/event-stream',
+            )
+        except Exception:
+            return Response(
+                {'error': 'Chat stream unavailable'},
                 status=status.HTTP_503_SERVICE_UNAVAILABLE,
             )
 
