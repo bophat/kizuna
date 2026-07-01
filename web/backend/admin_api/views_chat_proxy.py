@@ -1,13 +1,13 @@
-from django.http import JsonResponse
+from django.http import HttpResponseForbidden
+from django.views import View
 from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from core.sse import SseView, sse_response
-
 from .chat_proxy import (
     create_sse_ticket,
     forward_to_chatbot,
+    sse_streaming_response,
     stream_chatbot_notifications,
     validate_sse_ticket,
 )
@@ -47,14 +47,14 @@ class ChatSseTicketView(APIView):
         return Response({'ticket': ticket})
 
 
-class ChatNotificationsStreamView(SseView):
-    """SSE proxy — EventSource cannot send Authorization; use one-time ticket."""
+class ChatNotificationsStreamView(View):
+    """SSE proxy — plain Django view (DRF returns 406 for text/event-stream)."""
 
     def get(self, request):
         ticket = request.GET.get('ticket', '')
         if not validate_sse_ticket(ticket):
-            return JsonResponse({'error': 'Invalid or expired ticket'}, status=403)
+            return HttpResponseForbidden('Invalid or expired ticket')
         try:
-            return sse_response(stream_chatbot_notifications())
-        except Exception as exc:
-            return JsonResponse({'error': str(exc)}, status=502)
+            return sse_streaming_response(stream_chatbot_notifications())
+        except Exception:
+            return HttpResponseForbidden('Stream unavailable')

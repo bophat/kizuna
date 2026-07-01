@@ -12,7 +12,7 @@ import { apiFetch, getMediaUrl } from '../lib/api';
 
 export default function Settings() {
   const { t } = useTranslation();
-  const { settings, loading, updateSetting, updateSettings } = useSettings();
+  const { settings, loading, updateSetting, updateSettingsBatch } = useSettings();
   const [publicSiteUrl, setPublicSiteUrl] = useState('');
   const [loginBg, setLoginBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
@@ -75,12 +75,12 @@ export default function Settings() {
     e.preventDefault();
     setSavingContent(true);
     try {
-      await updateSettings({
-        [PUBLIC_CONTENT_KEYS.homeHeroTitle]: homeHeroTitle,
-        [PUBLIC_CONTENT_KEYS.homeHeroSubtitle]: homeHeroSubtitle,
-        [PUBLIC_CONTENT_KEYS.homeHeroCta]: homeHeroCta,
-        [PUBLIC_CONTENT_KEYS.loginHeroText]: loginHeroText,
-      });
+      await Promise.all([
+        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroTitle, homeHeroTitle),
+        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroSubtitle, homeHeroSubtitle),
+        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroCta, homeHeroCta),
+        updateSetting(PUBLIC_CONTENT_KEYS.loginHeroText, loginHeroText),
+      ]);
       toast.success(t('common.success') || toast.messages.saveSuccess);
     } catch {
       toast.error(t('common.error_occurred') || toast.messages.saveError);
@@ -93,7 +93,7 @@ export default function Settings() {
     e.preventDefault();
     setSavingIntegrations(true);
     try {
-      await updateSettings({
+      await updateSettingsBatch({
         [INTEGRATION_KEYS.socialIntegrations]: serializeSocialIntegrations(socialAccounts),
         [INTEGRATION_KEYS.geminiApiKey]: geminiKey,
         [INTEGRATION_KEYS.serperApiKey]: serperKey,

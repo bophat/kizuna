@@ -1,74 +1,60 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect } from 'react';
 import { apiFetch } from '../lib/api';
 
 export function useSettings() {
   const [settings, setSettings] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
-  const settingsListRef = useRef<{ id: number; key: string; value: string }[]>([]);
 
-  const fetchSettings = useCallback(async () => {
+  const fetchSettings = async () => {
     setLoading(true);
     try {
       const response = await apiFetch('/settings/');
       if (response.ok) {
         const data = await response.json();
-        settingsListRef.current = data;
         const settingsMap: Record<string, string> = {};
         data.forEach((s: { key: string; value: string }) => {
           settingsMap[s.key] = s.value;
         });
         setSettings(settingsMap);
+        return data as { id: number; key: string; value: string }[];
       }
     } catch (error) {
       console.error('Error fetching settings:', error);
     } finally {
       setLoading(false);
     }
-  }, []);
+    return [];
+  };
 
-  const upsertSetting = async (key: string, value: string, list = settingsListRef.current) => {
-    let setting = list.find((s) => s.key === key);
+  const updateSetting = async (
+    key: string,
+    value: string,
+    existingList?: { id: number; key: string; value: string }[]
+  ) => {
+    try {
+      const data = existingList ?? (await (await apiFetch('/settings/')).json());
+      const setting = data.find((s: { key: string }) => s.key === key);
 
-    if (setting) {
-      const res = await apiFetch(`/settings/${setting.id}/`, {
-        method: 'PATCH',
-        body: JSON.stringify({ value }),
-      });
-      if (!res.ok) throw new Error(`Failed to update ${key}`);
-      return;
-    }
-
-    const createRes = await apiFetch('/settings/', {
-      method: 'POST',
-      body: JSON.stringify({ key, value }),
-    });
-
-    if (createRes.ok) return;
-
-    if (createRes.status === 400) {
-      const refresh = await apiFetch('/settings/');
-      if (!refresh.ok) throw new Error(`Failed to create ${key}`);
-      const refreshed = await refresh.json();
-      settingsListRef.current = refreshed;
-      setting = refreshed.find((s: { key: string }) => s.key === key);
       if (setting) {
-        const res = await apiFetch(`/settings/${setting.id}/`, {
+        await apiFetch(`/settings/${setting.id}/`, {
           method: 'PATCH',
           body: JSON.stringify({ value }),
         });
-        if (!res.ok) throw new Error(`Failed to update ${key}`);
-        return;
-      }
-    }
-
-    throw new Error(`Failed to save ${key}`);
-  };
-
-  const updateSetting = async (key: string, value: string, options?: { refresh?: boolean }) => {
-    try {
-      await upsertSetting(key, value);
-      if (options?.refresh !== false) {
-        await fetchSettings();
+      } else {
+        const createRes = await apiFetch('/settings/', {
+          method: 'POST',
+          body: JSON.stringify({ key, value }),
+        });
+        if (!createRes.ok) {
+          const fresh = await (await apiFetch('/settings/')).json();
+          const created = fresh.find((s: { key: string }) => s.key === key);
+          if (created) {
+            await apiFetch(`/settings/${created.id}/`, {
+              method: 'PATCH',
+              body: JSON.stringify({ value }),
+            });
+          }
+        }
       }
     } catch (error) {
       console.error('Error updating setting:', error);
@@ -76,32 +62,26 @@ export function useSettings() {
     }
   };
 
-  const updateSettings = async (entries: Record<string, string>) => {
-    let list = settingsListRef.current;
-    const refreshRes = await apiFetch('/settings/');
-    if (refreshRes.ok) {
-      list = await refreshRes.json();
-      settingsListRef.current = list;
+  const updateSettingsBatch = async (entries: Record<string, string>) => {
+    const list = await fetchSettings();
+    if (!list.length) {
+      list.push(...((await (await apiFetch('/settings/')).json()) as typeof list));
     }
-
     for (const [key, value] of Object.entries(entries)) {
-      await upsertSetting(key, value, list);
-      const item = list.find((s) => s.key === key);
-      if (!item) {
-        const r = await apiFetch('/settings/');
-        if (r.ok) {
-          list = await r.json();
-          settingsListRef.current = list;
-        }
+      await updateSetting(key, value, list);
+      const row = list.find((s) => s.key === key);
+      if (!row) {
+        const fresh = await (await apiFetch('/settings/')).json();
+        const created = fresh.find((s: { key: string }) => s.key === key);
+        if (created) list.push(created);
       }
     }
-
     await fetchSettings();
   };
 
   useEffect(() => {
     fetchSettings();
-  }, [fetchSettings]);
+  }, []);
 
-  return { settings, loading, updateSetting, updateSettings, refreshSettings: fetchSettings };
+  return { settings, loading, updateSetting, updateSettingsBatch, refreshSettings: fetchSettings };
 }

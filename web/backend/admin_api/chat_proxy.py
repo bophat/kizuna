@@ -1,10 +1,13 @@
 import os
-import secrets
 
 import requests
 from django.conf import settings
-from django.core.cache import cache
-from django.http import StreamingHttpResponse
+from django.core.signing import BadSignature, SignatureExpired, TimestampSigner
+
+SSE_TICKET_SALT = 'kizuna-chat-sse'
+SSE_TICKET_MAX_AGE = 120
+
+_sse_signer = TimestampSigner(salt=SSE_TICKET_SALT)
 
 
 def _chat_service_url() -> str:
@@ -34,20 +37,18 @@ def forward_to_chatbot(method: str, path: str, **kwargs):
 
 
 def create_sse_ticket(user_id: int) -> str:
-    ticket = secrets.token_urlsafe(32)
-    cache.set(f'chat_sse:{ticket}', user_id, timeout=60)
-    return ticket
+    """Stateless signed ticket — works across gunicorn workers (no shared cache)."""
+    return _sse_signer.sign(str(user_id))
 
 
 def validate_sse_ticket(ticket: str) -> bool:
     if not ticket:
         return False
-    key = f'chat_sse:{ticket}'
-    user_id = cache.get(key)
-    if user_id is None:
+    try:
+        _sse_signer.unsign(ticket, max_age=SSE_TICKET_MAX_AGE)
+        return True
+    except (BadSignature, SignatureExpired):
         return False
-    cache.delete(key)
-    return True
 
 
 def stream_chatbot_notifications():
@@ -57,7 +58,7 @@ def stream_chatbot_notifications():
         url,
         headers={'X-Bot-Token': token},
         stream=True,
-        timeout=120,
+        timeout=None,
     ) as response:
         response.raise_for_status()
         for chunk in response.iter_content(chunk_size=None):
@@ -84,9 +85,18 @@ def stream_concierge_session(session_id: str):
         url,
         headers={'X-Bot-Token': token},
         stream=True,
-        timeout=120,
+        timeout=None,
     ) as response:
         response.raise_for_status()
         for chunk in response.iter_content(chunk_size=None):
             if chunk:
                 yield chunk
+
+
+def sse_streaming_response(stream_iter):
+    from django.http import StreamingHttpResponse
+
+    response = StreamingHttpResponse(stream_iter, content_type='text/event-stream')
+    response['Cache-Control'] = 'no-cache'
+    response['X-Accel-Buffering'] = 'no'
+    return response

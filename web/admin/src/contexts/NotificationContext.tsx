@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
-import { useTranslation } from 'react-i18next';
 import { apiFetch, API_BASE_URL } from '../lib/api';
 
 export type NotificationType = 'ORDER' | 'CHAT';
@@ -24,17 +23,22 @@ interface NotificationContextType {
 
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
+const RETRY_MS = 8000;
+
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
-  const { t } = useTranslation();
   const lastErrorRef = useRef<number>(0);
+  const activeSourceRef = useRef<EventSource | null>(null);
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
     const saved = localStorage.getItem('kizuna_notifications');
     if (saved) {
       try {
         const parsed = JSON.parse(saved);
-        return parsed.map((n: any) => ({ ...n, timestamp: new Date(n.timestamp) }));
-      } catch (e) {
+        return parsed.map((n: AppNotification & { timestamp: string }) => ({
+          ...n,
+          timestamp: new Date(n.timestamp),
+        }));
+      } catch {
         return [];
       }
     }
@@ -46,62 +50,76 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [notifications]);
 
   useEffect(() => {
-    let eventSource: EventSource | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let cancelled = false;
 
     const connect = async () => {
+      if (cancelled) return;
+
+      activeSourceRef.current?.close();
+      activeSourceRef.current = null;
+
       try {
         const ticketRes = await apiFetch('/chat/sse-ticket/', { method: 'POST' });
-        if (!ticketRes.ok) {
-          retryTimer = setTimeout(connect, 5000);
+        if (!ticketRes.ok || cancelled) {
+          retryTimer = setTimeout(connect, RETRY_MS);
           return;
         }
         const { ticket } = await ticketRes.json();
-        eventSource = new EventSource(
-          `${API_BASE_URL}/admin/chat/notifications/stream/?ticket=${encodeURIComponent(ticket)}`
-        );
+        const url = `${API_BASE_URL}/admin/chat/notifications/stream/?ticket=${encodeURIComponent(ticket)}`;
+        const eventSource = new EventSource(url);
+        activeSourceRef.current = eventSource;
+
+        eventSource.onopen = () => {
+          lastErrorRef.current = 0;
+        };
+
+        eventSource.onmessage = (event) => {
+          try {
+            const data = JSON.parse(event.data);
+            const newNotification: AppNotification = {
+              id: data.id,
+              type: data.type,
+              title: data.title,
+              message: data.message,
+              read: false,
+              timestamp: new Date(data.timestamp || new Date()),
+            };
+            setNotifications((prev) => [newNotification, ...prev]);
+          } catch (error) {
+            console.error('Error parsing SSE data', error);
+          }
+        };
+
+        eventSource.onerror = () => {
+          eventSource.close();
+          if (activeSourceRef.current === eventSource) {
+            activeSourceRef.current = null;
+          }
+          if (cancelled) return;
+          const now = Date.now();
+          if (now - lastErrorRef.current < RETRY_MS) return;
+          lastErrorRef.current = now;
+          retryTimer = setTimeout(connect, RETRY_MS);
+        };
       } catch {
-        retryTimer = setTimeout(connect, 5000);
-        return;
-      }
-
-      if (!eventSource) return;
-
-      eventSource.onmessage = (event) => {
-        try {
-          const data = JSON.parse(event.data);
-          const newNotification: AppNotification = {
-            id: data.id,
-            type: data.type,
-            title: data.title,
-            message: data.message,
-            read: false,
-            timestamp: new Date(data.timestamp || new Date()),
-          };
-          setNotifications(prev => [newNotification, ...prev]);
-        } catch (error) {
-          console.error('Error parsing SSE data', error);
+        if (!cancelled) {
+          retryTimer = setTimeout(connect, RETRY_MS);
         }
-      };
-
-      eventSource.onerror = () => {
-        eventSource?.close();
-        const now = Date.now();
-        if (now - lastErrorRef.current < 5000) return;
-        lastErrorRef.current = now;
-        retryTimer = setTimeout(connect, 5000);
-      };
+      }
     };
 
     connect();
 
     return () => {
+      cancelled = true;
       if (retryTimer) clearTimeout(retryTimer);
-      eventSource?.close();
+      activeSourceRef.current?.close();
+      activeSourceRef.current = null;
     };
   }, []);
 
-  const unreadCount = notifications.filter(n => !n.read).length;
+  const unreadCount = notifications.filter((n) => !n.read).length;
 
   const addNotification = useCallback((notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => {
     const newNotification: AppNotification = {
@@ -110,30 +128,32 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       read: false,
       timestamp: new Date(),
     };
-    setNotifications(prev => [newNotification, ...prev]);
+    setNotifications((prev) => [newNotification, ...prev]);
   }, []);
 
   const markAsRead = useCallback((id: string) => {
-    setNotifications(prev => prev.map(n => n.id === id ? { ...n, read: true } : n));
+    setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
   }, []);
 
   const markAllAsRead = useCallback(() => {
-    setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
   }, []);
 
   const clearNotification = useCallback((id: string) => {
-    setNotifications(prev => prev.filter(n => n.id !== id));
+    setNotifications((prev) => prev.filter((n) => n.id !== id));
   }, []);
 
   return (
-    <NotificationContext.Provider value={{
-      notifications,
-      unreadCount,
-      addNotification,
-      markAsRead,
-      markAllAsRead,
-      clearNotification
-    }}>
+    <NotificationContext.Provider
+      value={{
+        notifications,
+        unreadCount,
+        addNotification,
+        markAsRead,
+        markAllAsRead,
+        clearNotification,
+      }}
+    >
       {children}
     </NotificationContext.Provider>
   );

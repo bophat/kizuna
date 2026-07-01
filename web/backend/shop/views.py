@@ -3,6 +3,7 @@ import os
 
 from django.conf import settings
 from django.http import FileResponse, Http404
+from django.views import View
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.views import APIView
@@ -76,29 +77,20 @@ class ConciergeMessageView(APIView):
             )
 
 
-class ConciergeStreamView(APIView):
+class ConciergeStreamView(View):
     """SSE proxy for admin replies to website concierge sessions."""
 
-    permission_classes = [AllowAny]
-    authentication_classes = []
-
     def get(self, request, session_id):
+        from admin_api.chat_proxy import sse_streaming_response, stream_concierge_session
+        from django.http import HttpResponseBadRequest, HttpResponseForbidden
+
         session_id = (session_id or '').strip()[:128]
         if not session_id:
-            return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+            return HttpResponseBadRequest('session_id is required')
         try:
-            from admin_api.chat_proxy import stream_concierge_session
-            from django.http import StreamingHttpResponse
-
-            return StreamingHttpResponse(
-                stream_concierge_session(session_id),
-                content_type='text/event-stream',
-            )
+            return sse_streaming_response(stream_concierge_session(session_id))
         except Exception:
-            return Response(
-                {'error': 'Chat stream unavailable'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+            return HttpResponseForbidden('Chat stream unavailable')
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
