@@ -17,7 +17,7 @@ export function HomePage() {
   const [heroImage, setHeroImage] = useState<string>(DEFAULT_HERO_IMAGE);
 
   useEffect(() => {
-    apiFetch('/settings/?key=home_hero_image')
+    apiFetch('/shop/settings/?key=home_hero_image')
       .then(res => res.ok ? res.json() : null)
       .then((data: any) => {
         const results = data?.results || data;

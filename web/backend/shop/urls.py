@@ -9,6 +9,7 @@ from .views import (
     OrderHistoryViewSet,
     FavoriteViewSet,
     ExchangeRatesView,
+    PublicSettingsView,
 )
 
 router = DefaultRouter()
@@ -21,6 +22,7 @@ router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
     path('exchange-rates/', ExchangeRatesView.as_view(), name='exchange-rates'),
+    path('settings/', PublicSettingsView.as_view(), name='public-settings'),
     path('me/', MeView.as_view(), name='me'),
     path('', include(router.urls)),
 ]

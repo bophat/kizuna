@@ -302,3 +302,23 @@ class FavoriteViewSet(viewsets.ViewSet):
                 product.save()
             return Response({"message": "Removed from favorites"}, status=status.HTTP_200_OK)
         return Response({"error": "Favorite not found"}, status=status.HTTP_404_NOT_FOUND)
+
+
+PUBLIC_SETTING_KEYS = frozenset({'login_background_image', 'home_hero_image'})
+
+
+class PublicSettingsView(APIView):
+    """Read-only access to public site settings (no auth required)."""
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        from admin_api.models import Setting
+
+        key = request.query_params.get('key')
+        qs = Setting.objects.filter(key__in=PUBLIC_SETTING_KEYS)
+        if key:
+            if key not in PUBLIC_SETTING_KEYS:
+                return Response([])
+            qs = qs.filter(key=key)
+
+        return Response([{'key': s.key, 'value': s.value} for s in qs])

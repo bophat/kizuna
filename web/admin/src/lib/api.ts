@@ -14,7 +14,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     !path.startsWith('/admin') &&
     !path.startsWith('/login') &&
     !path.startsWith('/register') &&
-    !path.startsWith('/me')
+    !path.startsWith('/me') &&
+    !path.startsWith('/shop')
   ) {
     path = `/admin${path}`;
   }

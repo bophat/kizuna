@@ -17,7 +17,7 @@ export function LoginPage() {
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    apiFetch('/settings/?key=login_background_image')
+    apiFetch('/shop/settings/?key=login_background_image')
       .then(res => res.ok ? res.json() : null)
       .then((data: any) => {
         const results = data?.results || data;
