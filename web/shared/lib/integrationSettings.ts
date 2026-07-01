@@ -9,6 +9,7 @@ export const INTEGRATION_KEYS = {
   repostDelayMinutes: 'repost_delay_minutes',
   chatbotServiceUrl: 'chatbot_service_url',
   chatbotInternalToken: 'chatbot_internal_token',
+  chatbotEnabled: 'chatbot_enabled',
   /** @deprecated use social_integrations */
   facebookPageAccessToken: 'facebook_page_access_token',
   facebookVerifyToken: 'facebook_verify_token',
@@ -140,6 +141,10 @@ export function parseSocialIntegrations(raw: string | undefined): SocialAccount[
 
 export function serializeSocialIntegrations(accounts: SocialAccount[]): string {
   return JSON.stringify(accounts, null, 0);
+}
+
+export function isChatbotEnabledSetting(value: string | undefined | null): boolean {
+  return String(value ?? '').trim().toLowerCase() === 'true';
 }
 
 /** Migrate legacy flat Facebook keys into social_integrations array. */

@@ -9,10 +9,12 @@ import { INTEGRATION_KEYS, migrateLegacySocialSettings, serializeSocialIntegrati
 import { secretFieldPlaceholder } from '@izuna/shared/lib/secretMask';
 import { SocialAccountsSection } from '../components/settings/SocialAccountsSection';
 import { apiFetch, getMediaUrl } from '../lib/api';
+import { useChatbot } from '../contexts/ChatbotContext';
 
 export default function Settings() {
   const { t } = useTranslation();
   const { settings, loading, updateSetting, updateSettingsBatch } = useSettings();
+  const { refresh: refreshChatbot } = useChatbot();
   const [publicSiteUrl, setPublicSiteUrl] = useState('');
   const [loginBg, setLoginBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
@@ -33,6 +35,7 @@ export default function Settings() {
   const [repostDelay, setRepostDelay] = useState('15');
   const [chatbotUrl, setChatbotUrl] = useState('');
   const [chatbotToken, setChatbotToken] = useState('');
+  const [chatbotEnabled, setChatbotEnabled] = useState('false');
 
   useEffect(() => {
     if (settings['PUBLIC_SITE_URL']) {
@@ -56,6 +59,7 @@ export default function Settings() {
     setRepostDelay(settings[INTEGRATION_KEYS.repostDelayMinutes] || '15');
     setChatbotUrl(settings[INTEGRATION_KEYS.chatbotServiceUrl] || '');
     setChatbotToken(settings[INTEGRATION_KEYS.chatbotInternalToken] || '');
+    setChatbotEnabled(settings[INTEGRATION_KEYS.chatbotEnabled] || 'false');
   }, [settings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -102,7 +106,9 @@ export default function Settings() {
         [INTEGRATION_KEYS.repostDelayMinutes]: repostDelay,
         [INTEGRATION_KEYS.chatbotServiceUrl]: chatbotUrl,
         [INTEGRATION_KEYS.chatbotInternalToken]: chatbotToken,
+        [INTEGRATION_KEYS.chatbotEnabled]: chatbotEnabled,
       });
+      await refreshChatbot();
       toast.success('Integration settings saved');
     } catch {
       toast.error('Failed to save integrations');
@@ -390,6 +396,25 @@ export default function Settings() {
             <h4 className="sm:col-span-2 text-sm font-semibold text-brand-ink uppercase tracking-wider">
               AI & Chatbot service
             </h4>
+            <div className="sm:col-span-2 rounded-lg border border-brand-clay bg-brand-paper/30 p-4 flex flex-wrap items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-semibold text-brand-ink">Enable chatbot service</p>
+                <p className="text-xs text-brand-ink/50 mt-1 italic font-serif">
+                  Turn off when Flask is not running — stops SSE errors and 502 in admin.
+                </p>
+              </div>
+              <label className="inline-flex items-center gap-3 cursor-pointer">
+                <span className="text-xs font-bold uppercase tracking-wider text-brand-ink/50">
+                  {chatbotEnabled === 'true' ? 'On' : 'Off'}
+                </span>
+                <input
+                  type="checkbox"
+                  checked={chatbotEnabled === 'true'}
+                  onChange={(e) => setChatbotEnabled(e.target.checked ? 'true' : 'false')}
+                  className="w-5 h-5 rounded border-brand-clay text-brand-red focus:ring-brand-red/30"
+                />
+              </label>
+            </div>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Gemini API Key</label>
               <input

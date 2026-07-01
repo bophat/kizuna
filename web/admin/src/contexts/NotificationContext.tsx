@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { apiFetch, API_BASE_URL } from '../lib/api';
+import { useChatbot } from './ChatbotContext';
 
 export type NotificationType = 'ORDER' | 'CHAT';
 
@@ -26,6 +27,7 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 const RETRY_MS = 8000;
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
+  const { enabled: chatbotEnabled } = useChatbot();
   const lastErrorRef = useRef<number>(0);
   const activeSourceRef = useRef<EventSource | null>(null);
 
@@ -50,6 +52,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [notifications]);
 
   useEffect(() => {
+    if (!chatbotEnabled) {
+      return;
+    }
+
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
     let cancelled = false;
 
@@ -65,7 +71,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           retryTimer = setTimeout(connect, RETRY_MS);
           return;
         }
-        const { ticket } = await ticketRes.json();
+        const { ticket, enabled } = await ticketRes.json();
+        if (enabled === false || !ticket) {
+          return;
+        }
         const url = `${API_BASE_URL}/admin/chat/notifications/stream/?ticket=${encodeURIComponent(ticket)}`;
         const eventSource = new EventSource(url);
         activeSourceRef.current = eventSource;
@@ -77,6 +86,10 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
+            if (data.type === 'ERROR') {
+              console.warn('[SSE]', data.code, data.message);
+              return;
+            }
             const newNotification: AppNotification = {
               id: data.id,
               type: data.type,
@@ -117,7 +130,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       activeSourceRef.current?.close();
       activeSourceRef.current = null;
     };
-  }, []);
+  }, [chatbotEnabled]);
 
   const unreadCount = notifications.filter((n) => !n.read).length;
 

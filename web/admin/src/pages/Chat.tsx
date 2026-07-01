@@ -3,6 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { Send, User, Bot, AlertCircle, MessageCircle, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { apiFetch } from '../lib/api';
+import { useChatbot } from '../contexts/ChatbotContext';
+import { Link } from 'react-router-dom';
+import { Settings as SettingsIcon } from 'lucide-react';
 
 interface ChatMessage {
   id: string;
@@ -20,6 +23,7 @@ interface ChatSession {
 
 export default function Chat() {
   const { t } = useTranslation();
+  const { enabled: chatbotEnabled } = useChatbot();
   const [sessions, setSessions] = useState<Record<string, ChatSession>>({});
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -42,16 +46,40 @@ export default function Chat() {
   };
 
   useEffect(() => {
+    if (!chatbotEnabled) {
+      setIsLoading(false);
+      return;
+    }
     fetchSessions();
     const interval = setInterval(fetchSessions, 3000);
     return () => clearInterval(interval);
-  }, []);
+  }, [chatbotEnabled]);
 
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [sessions, activeSessionId]);
+
+  if (!chatbotEnabled) {
+    return (
+      <div className="flex flex-col items-center justify-center h-[60vh] gap-4 p-8 text-center">
+        <MessageCircle className="w-12 h-12 text-brand-ink/20" />
+        <h2 className="text-xl font-serif font-bold text-brand-ink">Chatbot is turned off</h2>
+        <p className="text-sm text-brand-ink/50 max-w-md">
+          Enable the chatbot in Settings → Integrations when Flask service is running.
+          This avoids connection errors while the service is offline.
+        </p>
+        <Link
+          to="/settings"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-colors"
+        >
+          <SettingsIcon size={16} />
+          Open Settings
+        </Link>
+      </div>
+    );
+  }
 
   const activeSession = activeSessionId ? sessions[activeSessionId] : null;
   const sessionCount = Object.keys(sessions).length;

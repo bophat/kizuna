@@ -3,6 +3,7 @@ import { Sidebar } from './Sidebar';
 import { TopBar } from './TopBar';
 import { motion } from 'motion/react';
 import { NotificationProvider } from '../contexts/NotificationContext';
+import { ChatbotProvider } from '../contexts/ChatbotContext';
 
 interface LayoutProps {
   children?: React.ReactNode;
@@ -10,7 +11,8 @@ interface LayoutProps {
 
 export default function Layout({ children }: LayoutProps) {
   return (
-    <NotificationProvider>
+    <ChatbotProvider>
+      <NotificationProvider>
       <div className="flex h-screen bg-brand-paper overflow-hidden font-sans">
         <Sidebar />
         <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
@@ -28,5 +30,6 @@ export default function Layout({ children }: LayoutProps) {
         </div>
       </div>
     </NotificationProvider>
+    </ChatbotProvider>
   );
 }

@@ -5,11 +5,13 @@ import { motion, AnimatePresence } from 'motion/react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
 import { useNotification } from '../contexts/NotificationContext';
+import { useChatbot } from '../contexts/ChatbotContext';
 import { useSettings } from '../hooks/useSettings';
 
 export function TopBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
+  const { enabled: chatbotEnabled } = useChatbot();
   const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotification();
   const { settings } = useSettings();
   const [showNotifications, setShowNotifications] = useState(false);
@@ -55,6 +57,7 @@ export function TopBar() {
 
         <LanguageSwitcher />
 
+        {chatbotEnabled && (
         <div className="relative" ref={notificationRef}>
           <motion.button 
             whileHover={{ scale: 1.05 }}
@@ -143,6 +146,7 @@ export function TopBar() {
             )}
           </AnimatePresence>
         </div>
+        )}
       </div>
     </header>
   );

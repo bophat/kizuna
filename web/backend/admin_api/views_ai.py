@@ -33,6 +33,7 @@ INTEGRATION_SETTING_KEYS = frozenset({
     'repost_delay_minutes',
     'chatbot_service_url',
     'chatbot_internal_token',
+    'chatbot_enabled',
 })
 
 
@@ -170,6 +171,10 @@ def _gemini_summarize(prompt: str, gemini_key: str) -> str:
 
 def _dispatch_approved_reply(pending: PendingReply) -> bool:
     """Ask chatbot service to send an approved message."""
+    from .chat_proxy import is_chatbot_enabled
+
+    if not is_chatbot_enabled():
+        return False
     service_url = _get_setting('chatbot_service_url', os.environ.get('CHATBOT_SERVICE_URL', 'http://127.0.0.1:8080'))
     token = _get_setting('chatbot_internal_token', os.environ.get('CHATBOT_INTERNAL_TOKEN', ''))
     if not token:

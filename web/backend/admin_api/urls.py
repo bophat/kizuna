@@ -17,6 +17,7 @@ from .views_chat_proxy import (
     ChatReplyProxyView,
     ChatSessionsProxyView,
     ChatSseTicketView,
+    ChatStatusView,
 )
 
 router = DefaultRouter()
@@ -36,6 +37,7 @@ urlpatterns = [
     path('bot/products/', BotProductsView.as_view(), name='bot-products'),
     path('bot/config/', BotConfigView.as_view(), name='bot-config'),
     path('bot/pending-replies/', BotPendingReplyCreateView.as_view(), name='bot-pending-replies'),
+    path('chat/status/', ChatStatusView.as_view(), name='admin-chat-status'),
     path('chat/sessions/', ChatSessionsProxyView.as_view(), name='admin-chat-sessions'),
     path('chat/sse-ticket/', ChatSseTicketView.as_view(), name='admin-chat-sse-ticket'),
     path('chat/notifications/stream/', ChatNotificationsStreamView.as_view(), name='admin-chat-notifications-stream'),

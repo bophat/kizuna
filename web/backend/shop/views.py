@@ -60,9 +60,13 @@ class ConciergeMessageView(APIView):
         sender = (request.data.get('sender') or 'user').strip()[:16]
         if not session_id:
             return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
-        try:
-            from admin_api.chat_proxy import forward_to_chatbot
 
+        from admin_api.chat_proxy import ChatbotDisabledError, forward_to_chatbot, is_chatbot_enabled
+
+        if not is_chatbot_enabled():
+            return Response({'status': 'success', 'adminTookOver': False, 'chatbot_disabled': True})
+
+        try:
             res = forward_to_chatbot(
                 'POST',
                 '/api/internal/concierge/message',
@@ -70,6 +74,8 @@ class ConciergeMessageView(APIView):
                 timeout=15,
             )
             return Response(res.json(), status=res.status_code)
+        except ChatbotDisabledError:
+            return Response({'status': 'success', 'adminTookOver': False, 'chatbot_disabled': True})
         except Exception:
             return Response(
                 {'error': 'Chat service unavailable'},
@@ -81,16 +87,22 @@ class ConciergeStreamView(View):
     """SSE proxy for admin replies to website concierge sessions."""
 
     def get(self, request, session_id):
-        from admin_api.chat_proxy import sse_streaming_response, stream_concierge_session
-        from django.http import HttpResponseBadRequest, HttpResponseForbidden
+        from admin_api.chat_proxy import is_chatbot_enabled, sse_streaming_response, stream_concierge_session
+        from admin_api.sse_cors import apply_sse_cors
+        from django.http import HttpResponse, HttpResponseBadRequest
 
         session_id = (session_id or '').strip()[:128]
         if not session_id:
-            return HttpResponseBadRequest('session_id is required')
-        try:
-            return sse_streaming_response(stream_concierge_session(session_id))
-        except Exception:
-            return HttpResponseForbidden('Chat stream unavailable')
+            return apply_sse_cors(HttpResponseBadRequest('session_id is required'), request)
+        if not is_chatbot_enabled():
+            return sse_streaming_response(iter(()), request)
+        return sse_streaming_response(stream_concierge_session(session_id), request)
+
+    def options(self, request, session_id):
+        from admin_api.sse_cors import apply_sse_cors
+        from django.http import HttpResponse
+
+        return apply_sse_cors(HttpResponse(status=204), request)
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
