@@ -95,7 +95,7 @@ export function TopBar() {
 
                 {!chatbotEnabled && (
                   <p className="px-4 py-2 text-[10px] text-brand-ink/50 bg-amber-50 border-b border-amber-100 leading-relaxed">
-                    Đơn hàng &amp; duyệt tin: cập nhật ~20s. Bật Flask để chat live tức thì.
+                    Tin Concierge website &amp; đơn hàng: cập nhật ~20s. Bật AI/Flask trong Settings để bot tự trả lời.
                   </p>
                 )}
                 {chatbotEnabled && liveSync && (

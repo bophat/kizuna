@@ -23,7 +23,7 @@ interface ChatSession {
 
 export default function Chat() {
   const { t } = useTranslation();
-  const { enabled: chatbotEnabled } = useChatbot();
+  const { enabled: aiEnabled } = useChatbot();
   const [sessions, setSessions] = useState<Record<string, ChatSession>>({});
   const [activeSessionId, setActiveSessionId] = useState<string | null>(null);
   const [input, setInput] = useState('');
@@ -46,14 +46,10 @@ export default function Chat() {
   };
 
   useEffect(() => {
-    if (!chatbotEnabled) {
-      setIsLoading(false);
-      return;
-    }
     fetchSessions();
     const interval = setInterval(fetchSessions, 3000);
     return () => clearInterval(interval);
-  }, [chatbotEnabled]);
+  }, []);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -66,7 +62,7 @@ export default function Chat() {
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatbotEnabled || !input.trim() || !activeSessionId) return;
+    if (!input.trim() || !activeSessionId) return;
 
     setIsSending(true);
     try {
@@ -89,13 +85,13 @@ export default function Chat() {
 
   return (
     <div className="ma-spacing space-y-8">
-      {!chatbotEnabled && (
-        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+      {!aiEnabled && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg border border-blue-200 bg-blue-50 text-blue-900 text-sm">
           <div className="flex items-start gap-2">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <p>
-              <strong>Live chat service is off.</strong> Customers can still use AI Concierge on the website.
-              Turn on Flask in Settings when you want to see sessions and reply here.
+              <strong>Chế độ trả lời thủ công.</strong> AI Concierge đang tắt — khách nhắn từ website
+              sẽ chờ bạn trả lời tại đây. Bật AI trong Settings nếu muốn bot tự tư vấn.
             </p>
           </div>
           <Link
@@ -126,7 +122,6 @@ export default function Chat() {
       </div>
 
       <div className="bg-white rounded-lg border border-brand-clay shadow-sm overflow-hidden flex flex-col md:flex-row min-h-[560px] h-[calc(100vh-18rem)] max-h-[800px]">
-        {/* Session list */}
         <div className="w-full md:w-80 lg:w-96 border-b md:border-b-0 md:border-r border-brand-clay flex flex-col shrink-0">
           <div className="p-4 border-b border-brand-clay bg-brand-paper/30">
             <div className="flex items-center gap-2 text-brand-ink/50">
@@ -186,7 +181,6 @@ export default function Chat() {
           </div>
         </div>
 
-        {/* Chat panel */}
         <div className="flex-1 flex flex-col min-w-0 bg-brand-paper/20">
           {activeSessionId && activeSession ? (
             <>
@@ -202,11 +196,13 @@ export default function Chat() {
                     <p className="text-xs text-brand-ink/50 font-serif italic">
                       {activeSession.adminTookOver
                         ? t('chat.status_admin')
-                        : t('chat.status_ai')}
+                        : aiEnabled
+                          ? t('chat.status_ai')
+                          : 'Chờ admin trả lời'}
                     </p>
                   </div>
                 </div>
-                {!activeSession.adminTookOver && (
+                {!activeSession.adminTookOver && aiEnabled && (
                   <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-amber-700 bg-amber-50 border border-amber-100 px-3 py-1.5 rounded-sm shrink-0">
                     <Bot size={14} />
                     {t('chat.ai_handling')}
@@ -214,12 +210,10 @@ export default function Chat() {
                 )}
               </div>
 
-              <div
-                className="flex-1 overflow-y-auto p-6 flex flex-col gap-4"
-                ref={scrollRef}
-              >
+              <div className="flex-1 overflow-y-auto p-6 flex flex-col gap-4" ref={scrollRef}>
                 {activeSession.messages.map((msg, i) => {
                   const isUser = msg.role === 'user';
+                  const isAi = !isUser && !msg.is_admin;
                   return (
                     <div
                       key={msg.id || i}
@@ -243,7 +237,7 @@ export default function Chat() {
                               : 'bg-brand-red/10 text-brand-ink border border-brand-red/10'
                         )}
                       >
-                        {!isUser && !msg.is_admin && (
+                        {isAi && (
                           <div className="flex items-center gap-1.5 text-[10px] uppercase font-bold text-brand-red/70 mb-1 tracking-widest">
                             <Bot size={12} />
                             {t('chat.ai_reply')}
@@ -269,16 +263,16 @@ export default function Chat() {
                     value={input}
                     onChange={(e) => setInput(e.target.value)}
                     placeholder={
-                      activeSession.adminTookOver
+                      activeSession.adminTookOver || !aiEnabled
                         ? t('chat.input_admin')
                         : t('chat.input_takeover')
                     }
                     className="flex-1 bg-brand-paper border border-brand-clay rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
-                    disabled={!chatbotEnabled || isSending}
+                    disabled={isSending}
                   />
                   <button
                     type="submit"
-                    disabled={!chatbotEnabled || isSending || !input.trim()}
+                    disabled={isSending || !input.trim()}
                     className="bg-brand-ink text-white px-5 rounded-md flex items-center justify-center hover:bg-brand-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSending ? (

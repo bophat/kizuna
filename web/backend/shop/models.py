@@ -128,3 +128,34 @@ class Favorite(models.Model):
     def __str__(self):
         return f"{self.user.username} favorites {self.product.name}"
 
+
+class ConciergeSession(models.Model):
+    session_id = models.CharField(max_length=128, unique=True, db_index=True)
+    admin_took_over = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.session_id
+
+
+class ConciergeMessage(models.Model):
+    class Role(models.TextChoices):
+        USER = 'user', 'User'
+        ASSISTANT = 'assistant', 'Assistant'
+
+    session = models.ForeignKey(
+        ConciergeSession, on_delete=models.CASCADE, related_name='messages'
+    )
+    role = models.CharField(max_length=16, choices=Role.choices)
+    content = models.TextField()
+    is_admin = models.BooleanField(default=False)
+    is_ai = models.BooleanField(default=False)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f'{self.session.session_id}: {self.role}'
+

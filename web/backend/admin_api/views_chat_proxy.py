@@ -2,6 +2,8 @@ from rest_framework import permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
+from shop.concierge_store import admin_reply, is_ai_enabled, sessions_for_admin
+
 from .chat_proxy import (
     ChatbotDisabledError,
     create_sse_ticket,
@@ -20,47 +22,50 @@ class ChatStatusView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
-        return Response({'enabled': is_chatbot_enabled()})
+        return Response({
+            'enabled': True,
+            'aiEnabled': is_ai_enabled(),
+            'flaskBridge': is_chatbot_enabled(),
+        })
 
 
 class ChatSessionsProxyView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def get(self, request):
+        django_sessions = sessions_for_admin()
         if not is_chatbot_enabled():
-            return Response({})
+            return Response(django_sessions)
         try:
             res = forward_to_chatbot('GET', '/api/chat/sessions')
-            return Response(res.json(), status=res.status_code)
-        except ChatbotDisabledError:
-            return Response({})
-        except Exception as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+            flask_sessions = res.json() if res.ok else {}
+            merged = {**flask_sessions, **django_sessions}
+            return Response(merged)
+        except (ChatbotDisabledError, Exception):
+            return Response(django_sessions)
 
 
 class ChatReplyProxyView(APIView):
     permission_classes = [permissions.IsAdminUser]
 
     def post(self, request, session_id):
-        if not is_chatbot_enabled():
-            return Response(
-                {'error': 'Chatbot is disabled. Enable it in Settings → Integrations.'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-        try:
-            res = forward_to_chatbot(
-                'POST',
-                f'/api/chat/{session_id}/reply',
-                json=request.data,
-            )
-            return Response(res.json(), status=res.status_code)
-        except ChatbotDisabledError:
-            return Response(
-                {'error': 'Chatbot is disabled'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
-        except Exception as exc:
-            return Response({'error': str(exc)}, status=status.HTTP_503_SERVICE_UNAVAILABLE)
+        message = (request.data.get('message') or '').strip()[:4000]
+        if not message:
+            return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        result = admin_reply(session_id, message)
+
+        if is_chatbot_enabled():
+            try:
+                forward_to_chatbot(
+                    'POST',
+                    f'/api/chat/{session_id}/reply',
+                    json={'message': message},
+                )
+            except Exception:
+                pass
+
+        return Response(result)
 
 
 class ChatSseTicketView(APIView):

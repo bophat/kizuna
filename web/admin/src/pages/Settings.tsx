@@ -398,10 +398,10 @@ export default function Settings() {
             </h4>
             <div className="sm:col-span-2 rounded-lg border border-brand-clay bg-brand-paper/30 p-4 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-brand-ink">Flask live-chat service</p>
+                <p className="text-sm font-semibold text-brand-ink">AI Concierge (tự động trả lời)</p>
                 <p className="text-xs text-brand-ink/50 mt-1 italic font-serif">
-                  Bật khi chạy Flask (port 8080): đồng bộ tin website → admin, thông báo realtime, Facebook bot.
-                  Tắt khi không dùng — khách vẫn chat AI Concierge bình thường.
+                  Bật: bot AI tư vấn khách trên website. Tắt: admin trả lời thủ công trong Chat.
+                  URL Flask bên dưới chỉ cần khi dùng Facebook bot / thông báo realtime.
                 </p>
               </div>
               <label className="inline-flex items-center gap-3 cursor-pointer">

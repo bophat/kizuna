@@ -6,27 +6,52 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .concierge import generate_concierge_reply
+from .concierge_store import (
+    handle_user_message,
+    is_ai_enabled,
+    session_history,
+    stream_concierge_session_messages,
+)
 from .throttles import ConciergeRateThrottle
 
 
 class ConciergeLiveStatusView(APIView):
-    """Whether Flask live-chat bridge is active (admin reply / SSE)."""
+    """AI auto-reply vs manual admin mode."""
 
     permission_classes = [AllowAny]
 
     def get(self, request):
-        from admin_api.chat_proxy import is_chatbot_enabled
+        return Response({
+            'live': True,
+            'aiEnabled': is_ai_enabled(),
+        })
 
-        return Response({'live': is_chatbot_enabled()})
+
+class ConciergeHistoryView(APIView):
+    permission_classes = [AllowAny]
+
+    def get(self, request):
+        session_id = (request.query_params.get('session_id') or '').strip()[:128]
+        if not session_id:
+            return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        data = session_history(session_id)
+        if data is None:
+            return Response({'messages': [], 'adminTookOver': False, 'aiEnabled': is_ai_enabled()})
+        return Response(data)
 
 
 class ConciergeReplyView(APIView):
-    """Server-side Gemini proxy — API key never sent to browser."""
+    """Legacy AI-only endpoint — prefer POST /concierge/message/."""
 
     permission_classes = [AllowAny]
     throttle_classes = [ConciergeRateThrottle]
 
     def post(self, request):
+        if not is_ai_enabled():
+            return Response(
+                {'error': 'AI concierge is disabled — an admin will reply shortly.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
         message = (request.data.get('message') or '').strip()[:2000]
         if not message:
             return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
@@ -44,53 +69,34 @@ class ConciergeReplyView(APIView):
 
 
 class ConciergeMessageView(APIView):
-    """Proxy website chat messages to Flask (token never exposed to browser)."""
+    """Website concierge: always saves to Django; AI replies when enabled."""
 
     permission_classes = [AllowAny]
     throttle_classes = [ConciergeRateThrottle]
 
     def post(self, request):
-        message = (request.data.get('message') or '')[:4000]
+        message = (request.data.get('message') or '').strip()[:4000]
         session_id = (request.data.get('session_id') or '').strip()[:128]
-        sender = (request.data.get('sender') or 'user').strip()[:16]
+        if not message:
+            return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
         if not session_id:
             return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        from admin_api.chat_proxy import ChatbotDisabledError, forward_to_chatbot, is_chatbot_enabled
-
-        if not is_chatbot_enabled():
-            return Response({'status': 'success', 'adminTookOver': False, 'chatbot_disabled': True})
-
-        try:
-            res = forward_to_chatbot(
-                'POST',
-                '/api/internal/concierge/message',
-                json={'message': message, 'session_id': session_id, 'sender': sender},
-                timeout=15,
-            )
-            return Response(res.json(), status=res.status_code)
-        except ChatbotDisabledError:
-            return Response({'status': 'success', 'adminTookOver': False, 'chatbot_disabled': True})
-        except Exception:
-            return Response(
-                {'error': 'Chat service unavailable'},
-                status=status.HTTP_503_SERVICE_UNAVAILABLE,
-            )
+        result = handle_user_message(session_id, message)
+        return Response(result)
 
 
 class ConciergeStreamView(View):
-    """SSE proxy for admin replies to website concierge sessions."""
+    """SSE for admin replies to website concierge sessions (Django-backed)."""
 
     def get(self, request, session_id):
-        from admin_api.chat_proxy import is_chatbot_enabled, sse_streaming_response, stream_concierge_session
+        from admin_api.chat_proxy import sse_streaming_response
         from admin_api.sse_cors import apply_sse_cors
 
         session_id = (session_id or '').strip()[:128]
         if not session_id:
             return apply_sse_cors(HttpResponseBadRequest('session_id is required'), request)
-        if not is_chatbot_enabled():
-            return sse_streaming_response(iter(()), request)
-        return sse_streaming_response(stream_concierge_session(session_id), request)
+        return sse_streaming_response(stream_concierge_session_messages(session_id), request)
 
     def options(self, request, session_id):
         from admin_api.sse_cors import apply_sse_cors

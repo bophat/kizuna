@@ -3,7 +3,7 @@ from rest_framework import permissions
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from shop.models import Order
+from shop.models import ConciergeMessage, Order
 
 from .models import PendingReply
 
@@ -48,6 +48,24 @@ class AdminNotificationFeedView(APIView):
                 'title': 'Tin nhắn chờ duyệt',
                 'message': (pending.incoming_message or pending.draft_reply or '')[:200],
                 'timestamp': pending.created_at.isoformat(),
+            })
+
+        concierge_qs = ConciergeMessage.objects.filter(
+            role=ConciergeMessage.Role.USER,
+        ).select_related('session').order_by('-created_at')
+        if since_dt:
+            concierge_qs = concierge_qs.filter(created_at__gt=since_dt)
+        else:
+            concierge_qs = concierge_qs[:15]
+
+        for msg in concierge_qs:
+            items.append({
+                'id': f'concierge_{msg.id}',
+                'type': 'CHAT',
+                'title': 'Tin nhắn từ Website',
+                'message': msg.content[:200],
+                'timestamp': msg.created_at.isoformat(),
+                'session_id': msg.session.session_id,
             })
 
         items.sort(key=lambda x: x['timestamp'], reverse=True)

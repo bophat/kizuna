@@ -13,6 +13,7 @@ from .views import (
     PublicMediaView,
 )
 from .concierge_views import (
+    ConciergeHistoryView,
     ConciergeLiveStatusView,
     ConciergeReplyView,
     ConciergeMessageView,
@@ -32,6 +33,7 @@ urlpatterns = [
     path('settings/', PublicSettingsView.as_view(), name='public-settings'),
     path('concierge/reply/', ConciergeReplyView.as_view(), name='concierge-reply'),
     path('concierge/live-status/', ConciergeLiveStatusView.as_view(), name='concierge-live-status'),
+    path('concierge/history/', ConciergeHistoryView.as_view(), name='concierge-history'),
     path('concierge/message/', ConciergeMessageView.as_view(), name='concierge-message'),
     path('concierge/stream/<str:session_id>/', ConciergeStreamView.as_view(), name='concierge-stream'),
     path('media/<path:path>', PublicMediaView.as_view(), name='public-media'),
