@@ -4,18 +4,30 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Product } from '../types';
 import { ProductGrid } from '../components/products/ProductGrid';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, getMediaUrl } from '@/lib/api';
 import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
 
-const HERO_IMAGE =
+const DEFAULT_HERO_IMAGE =
   'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=2070&auto=format&fit=crop';
 
 export function HomePage() {
   const { t } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [heroImage, setHeroImage] = useState<string>(DEFAULT_HERO_IMAGE);
 
   useEffect(() => {
+    apiFetch('/settings/?key=home_hero_image')
+      .then(res => res.ok ? res.json() : null)
+      .then((data: any) => {
+        const results = data?.results || data;
+        const found = Array.isArray(results) ? results.find((s: any) => s.key === 'home_hero_image') : null;
+        if (found?.value) {
+          setHeroImage(getMediaUrl(found.value));
+        }
+      })
+      .catch(() => {});
+
     const fetchProducts = async () => {
       try {
         const response = await apiFetch('/shop/products/');
@@ -47,7 +59,7 @@ export function HomePage() {
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-surface-container-highest">
         <img
-          src={optimizeImageUrl(HERO_IMAGE, IMAGE_WIDTH.hero)}
+          src={optimizeImageUrl(heroImage, IMAGE_WIDTH.hero)}
           alt={t('hero.title')}
           width={IMAGE_WIDTH.hero}
           height={Math.round(IMAGE_WIDTH.hero * 0.6)}

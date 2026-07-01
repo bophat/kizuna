@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { CHAT_API_BASE_URL } from '../lib/env';
 
@@ -26,6 +26,8 @@ const NotificationContext = createContext<NotificationContextType | undefined>(u
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { t } = useTranslation();
+  const lastErrorRef = useRef<number>(0);
+
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
     const saved = localStorage.getItem('kizuna_notifications');
     if (saved) {
@@ -44,33 +46,43 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, [notifications]);
 
   useEffect(() => {
-    const eventSource = new EventSource(`${CHAT_API_BASE_URL}/notifications/stream`);
+    let eventSource: EventSource | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    eventSource.onmessage = (event) => {
-      try {
-        const data = JSON.parse(event.data);
-        const newNotification: AppNotification = {
-          id: data.id,
-          type: data.type,
-          title: data.title,
-          message: data.message,
-          read: false,
-          timestamp: new Date(data.timestamp || new Date()),
-        };
+    const connect = () => {
+      eventSource = new EventSource(`${CHAT_API_BASE_URL}/notifications/stream`);
 
-        setNotifications(prev => [newNotification, ...prev]);
-      } catch (error) {
-        console.error('Error parsing SSE data', error);
-      }
+      eventSource.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          const newNotification: AppNotification = {
+            id: data.id,
+            type: data.type,
+            title: data.title,
+            message: data.message,
+            read: false,
+            timestamp: new Date(data.timestamp || new Date()),
+          };
+          setNotifications(prev => [newNotification, ...prev]);
+        } catch (error) {
+          console.error('Error parsing SSE data', error);
+        }
+      };
+
+      eventSource.onerror = () => {
+        eventSource?.close();
+        const now = Date.now();
+        if (now - lastErrorRef.current < 5000) return;
+        lastErrorRef.current = now;
+        retryTimer = setTimeout(connect, 5000);
+      };
     };
 
-    eventSource.onerror = (error) => {
-      console.error('SSE Error:', error);
-      // It will auto-reconnect typically, but we can log it
-    };
+    connect();
 
     return () => {
-      eventSource.close();
+      if (retryTimer) clearTimeout(retryTimer);
+      eventSource?.close();
     };
   }, []);
 
@@ -97,7 +109,6 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const clearNotification = useCallback((id: string) => {
     setNotifications(prev => prev.filter(n => n.id !== id));
   }, []);
-
 
   return (
     <NotificationContext.Provider value={{

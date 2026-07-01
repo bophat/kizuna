@@ -4,7 +4,7 @@ import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
 import { toast } from '@izuna/shared/lib/toast';
-import { apiFetch } from '../lib/api';
+import { apiFetch, getMediaUrl } from '../lib/api';
 
 export default function Settings() {
   const { t } = useTranslation();
@@ -12,6 +12,8 @@ export default function Settings() {
   const [publicSiteUrl, setPublicSiteUrl] = useState('');
   const [loginBg, setLoginBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
+  const [heroBg, setHeroBg] = useState<string | null>(null);
+  const [uploadingHeroBg, setUploadingHeroBg] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -19,7 +21,10 @@ export default function Settings() {
       setPublicSiteUrl(settings['PUBLIC_SITE_URL']);
     }
     if (settings['login_background_image']) {
-      setLoginBg(settings['login_background_image']);
+      setLoginBg(getMediaUrl(settings['login_background_image']));
+    }
+    if (settings['home_hero_image']) {
+      setHeroBg(getMediaUrl(settings['home_hero_image']));
     }
   }, [settings]);
 
@@ -49,12 +54,34 @@ export default function Settings() {
       });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
-      setLoginBg(data.url);
+      setLoginBg(getMediaUrl(data.url));
       toast.success('Background image updated');
     } catch {
       toast.error('Failed to upload background image');
     } finally {
       setUploadingBg(false);
+    }
+  };
+
+  const handleHeroBgUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploadingHeroBg(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+      const res = await apiFetch('/settings/upload-home-hero-image/', {
+        method: 'POST',
+        body: formData,
+      });
+      if (!res.ok) throw new Error('Upload failed');
+      const data = await res.json();
+      setHeroBg(getMediaUrl(data.url));
+      toast.success('Hero image updated');
+    } catch {
+      toast.error('Failed to upload hero image');
+    } finally {
+      setUploadingHeroBg(false);
     }
   };
 
@@ -149,6 +176,38 @@ export default function Settings() {
                 disabled={uploadingBg}
               />
               {!loginBg && (
+                <span className="text-xs text-brand-ink/40 italic font-serif flex items-center gap-1">
+                  <ImageIcon size={14} /> No image set — using default
+                </span>
+              )}
+            </label>
+          </div>
+
+          <div className="pt-8 border-t border-brand-clay">
+            <h3 className="text-lg font-serif font-bold text-brand-ink mb-2">Home Hero Image</h3>
+            <p className="text-xs text-brand-ink/50 italic font-serif">Upload a background image for the website's home page hero section. Max 5MB.</p>
+          </div>
+
+          {heroBg && (
+            <div className="relative w-full h-48 rounded-md overflow-hidden border border-brand-clay">
+              <img src={heroBg} alt="Hero background preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+            </div>
+          )}
+
+          <div>
+            <label className="flex items-center gap-3 cursor-pointer">
+              <span className="flex items-center gap-2 px-5 py-2.5 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-all disabled:opacity-50">
+                {uploadingHeroBg ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
+                {uploadingHeroBg ? 'Uploading...' : 'Choose Image'}
+              </span>
+              <input
+                type="file"
+                accept="image/jpeg,image/png,image/webp,image/gif"
+                className="hidden"
+                onChange={handleHeroBgUpload}
+                disabled={uploadingHeroBg}
+              />
+              {!heroBg && (
                 <span className="text-xs text-brand-ink/40 italic font-serif flex items-center gap-1">
                   <ImageIcon size={14} /> No image set — using default
                 </span>

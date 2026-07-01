@@ -4,7 +4,7 @@ import { Lock, Mail, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { Logo } from '@izuna/shared/components/Logo';
-import { apiFetch } from '../lib/api';
+import { apiFetch, getMediaUrl } from '../lib/api';
 
 const DEFAULT_BG = 'https://images.unsplash.com/photo-1531973819741-e27a5ae2cc7b?q=80&w=1200&auto=format&fit=crop';
 
@@ -24,7 +24,7 @@ export default function Login() {
       .then((data: any) => {
         const results = data?.results || data;
         const found = Array.isArray(results) ? results.find((s: any) => s.key === 'login_background_image') : null;
-        if (found?.value) setBgImage(found.value);
+        if (found?.value) setBgImage(getMediaUrl(found.value));
       })
       .catch(() => {});
   }, []);

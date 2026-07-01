@@ -259,7 +259,6 @@ class SettingViewSet(viewsets.ModelViewSet):
     queryset = Setting.objects.all()
     serializer_class = SettingSerializer
     permission_classes = [permissions.IsAdminUser]
-    parser_classes = [MultiPartParser, FormParser]
 
     def create(self, request, *args, **kwargs):
         key = request.data.get('key')
@@ -297,7 +296,8 @@ class SettingViewSet(viewsets.ModelViewSet):
         self.perform_destroy(instance)
         return Response(status=status.HTTP_204_NO_CONTENT)
 
-    @action(detail=False, methods=['post'], url_path='upload-login-background')
+    @action(detail=False, methods=['post'], url_path='upload-login-background',
+            parser_classes=[MultiPartParser, FormParser])
     def upload_login_background(self, request):
         if 'image' not in request.FILES:
             return Response(
@@ -329,6 +329,52 @@ class SettingViewSet(viewsets.ModelViewSet):
 
             setting, created = Setting.objects.get_or_create(
                 key='login_background_image',
+                defaults={'value': image_url}
+            )
+            if not created:
+                setting.value = image_url
+                setting.save()
+
+            return Response({'url': image_url})
+        except Exception as e:
+            return Response(
+                {'error': f'Failed to save file: {str(e)}'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+
+    @action(detail=False, methods=['post'], url_path='upload-home-hero-image',
+            parser_classes=[MultiPartParser, FormParser])
+    def upload_home_hero_image(self, request):
+        if 'image' not in request.FILES:
+            return Response(
+                {'error': 'No image file provided'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        image_file = request.FILES['image']
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        if image_file.content_type not in allowed_types:
+            return Response(
+                {'error': 'Invalid file type. Allowed: JPEG, PNG, WEBP, GIF'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        max_size = 5 * 1024 * 1024
+        if image_file.size > max_size:
+            return Response(
+                {'error': 'File too large. Max 5MB'},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        ext = os.path.splitext(image_file.name)[1]
+        filename = f'system_images/home_hero/{uuid.uuid4().hex}{ext}'
+
+        try:
+            path = default_storage.save(filename, image_file)
+            image_url = default_storage.url(path)
+
+            setting, created = Setting.objects.get_or_create(
+                key='home_hero_image',
                 defaults={'value': image_url}
             )
             if not created:

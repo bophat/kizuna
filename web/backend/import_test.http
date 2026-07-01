@@ -1,0 +1,28 @@
+### 1. Login to get Admin token
+# @name login
+POST http://127.0.0.1:8000/api/login/
+Content-Type: application/json
+
+{
+    "email": "test_unique@example.com",
+    "password": "testpassword123"
+}
+
+### Store access token from login response
+@token = {{login.response.body.access}}
+
+### 2. Test import CSV file
+POST http://127.0.0.1:8000/api/admin/products/import-csv/
+Authorization: Bearer {{token}}
+Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
+
+------WebKitFormBoundary7MA4YWxkTrZu0gW
+Content-Disposition: form-data; name="csv_file"; filename="qoo10_2026-06-02 (3).csv"
+Content-Type: text/csv
+
+< ../../qoo10_2026-06-02 (3).csv
+------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+### 3. Clear all Qoo10 products (Optional delete)
+DELETE http://127.0.0.1:8000/api/admin/products/import-csv/?all=false
+Authorization: Bearer {{token}}
