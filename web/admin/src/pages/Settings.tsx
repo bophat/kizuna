@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Upload, Image as ImageIcon } from 'lucide-react';
+import { Loader2, Save, Upload, Image as ImageIcon, Type } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
 import { toast } from '@izuna/shared/lib/toast';
+import { PUBLIC_CONTENT_KEYS } from '@izuna/shared/lib/publicSettings';
 import { apiFetch, getMediaUrl } from '../lib/api';
 
 export default function Settings() {
@@ -15,6 +16,11 @@ export default function Settings() {
   const [heroBg, setHeroBg] = useState<string | null>(null);
   const [uploadingHeroBg, setUploadingHeroBg] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [savingContent, setSavingContent] = useState(false);
+  const [homeHeroTitle, setHomeHeroTitle] = useState('');
+  const [homeHeroSubtitle, setHomeHeroSubtitle] = useState('');
+  const [homeHeroCta, setHomeHeroCta] = useState('');
+  const [loginHeroText, setLoginHeroText] = useState('');
 
   useEffect(() => {
     if (settings['PUBLIC_SITE_URL']) {
@@ -26,6 +32,10 @@ export default function Settings() {
     if (settings['home_hero_image']) {
       setHeroBg(getMediaUrl(settings['home_hero_image']));
     }
+    setHomeHeroTitle(settings[PUBLIC_CONTENT_KEYS.homeHeroTitle] || '');
+    setHomeHeroSubtitle(settings[PUBLIC_CONTENT_KEYS.homeHeroSubtitle] || '');
+    setHomeHeroCta(settings[PUBLIC_CONTENT_KEYS.homeHeroCta] || '');
+    setLoginHeroText(settings[PUBLIC_CONTENT_KEYS.loginHeroText] || '');
   }, [settings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -38,6 +48,24 @@ export default function Settings() {
       toast.error(t('common.error_occurred') || toast.messages.saveError);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleContentSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingContent(true);
+    try {
+      await Promise.all([
+        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroTitle, homeHeroTitle),
+        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroSubtitle, homeHeroSubtitle),
+        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroCta, homeHeroCta),
+        updateSetting(PUBLIC_CONTENT_KEYS.loginHeroText, loginHeroText),
+      ]);
+      toast.success(t('common.success') || toast.messages.saveSuccess);
+    } catch {
+      toast.error(t('common.error_occurred') || toast.messages.saveError);
+    } finally {
+      setSavingContent(false);
     }
   };
 
@@ -141,6 +169,85 @@ export default function Settings() {
               {t('settings.save_button') || t('common.save')}
             </button>
           </div>
+        </div>
+      </motion.form>
+
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.15 }}
+        onSubmit={handleContentSave}
+        className="bg-white rounded-xl border border-brand-clay shadow-sm overflow-hidden"
+      >
+        <div className="p-8 space-y-8">
+          <div className="flex items-center gap-2">
+            <Type size={20} className="text-brand-red" />
+            <div>
+              <h3 className="text-lg font-serif font-bold text-brand-ink">Page Content</h3>
+              <p className="text-xs text-brand-ink/50 italic font-serif">
+                Custom text for the website home hero and admin login page. Leave blank to use default translations.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-2 border-t border-brand-clay">
+            <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">Website — Home Hero</h4>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Headline</label>
+              <input
+                type="text"
+                value={homeHeroTitle}
+                onChange={(e) => setHomeHeroTitle(e.target.value)}
+                placeholder="静寂の芸術"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Subtitle</label>
+              <textarea
+                value={homeHeroSubtitle}
+                onChange={(e) => setHomeHeroSubtitle(e.target.value)}
+                rows={3}
+                placeholder="日本全国の巨匠によって手作りされた…"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors resize-y"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Button label</label>
+              <input
+                type="text"
+                value={homeHeroCta}
+                onChange={(e) => setHomeHeroCta(e.target.value)}
+                placeholder="コレクションを見る"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-4 pt-6 border-t border-brand-clay">
+            <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">Admin — Login Side Panel</h4>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Hero quote</label>
+              <textarea
+                value={loginHeroText}
+                onChange={(e) => setLoginHeroText(e.target.value)}
+                rows={3}
+                placeholder="Curating the finest traditions of Japanese craftsmanship…"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors resize-y"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="px-8 py-4 bg-brand-paper/30 border-t border-brand-clay flex justify-end">
+          <button
+            type="submit"
+            className="flex items-center gap-2 px-6 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-all disabled:opacity-50"
+            disabled={savingContent}
+          >
+            {savingContent ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            {t('settings.save_button') || t('common.save')}
+          </button>
         </div>
       </motion.form>
 

@@ -6,6 +6,11 @@ import { Product } from '../types';
 import { ProductGrid } from '../components/products/ProductGrid';
 import { apiFetch, getMediaUrl } from '@/lib/api';
 import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
+import {
+  PUBLIC_CONTENT_KEYS,
+  contentOrFallback,
+  parsePublicSettings,
+} from '@izuna/shared/lib/publicSettings';
 
 const DEFAULT_HERO_IMAGE =
   'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=2070&auto=format&fit=crop';
@@ -15,15 +20,26 @@ export function HomePage() {
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [heroImage, setHeroImage] = useState<string>(DEFAULT_HERO_IMAGE);
+  const [heroTitle, setHeroTitle] = useState<string | null>(null);
+  const [heroSubtitle, setHeroSubtitle] = useState<string | null>(null);
+  const [heroCta, setHeroCta] = useState<string | null>(null);
 
   useEffect(() => {
-    apiFetch('/shop/settings/?key=home_hero_image')
-      .then(res => res.ok ? res.json() : null)
-      .then((data: any) => {
-        const results = data?.results || data;
-        const found = Array.isArray(results) ? results.find((s: any) => s.key === 'home_hero_image') : null;
-        if (found?.value) {
-          setHeroImage(getMediaUrl(found.value));
+    apiFetch('/shop/settings/')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: unknown) => {
+        const byKey = parsePublicSettings(data);
+        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroImage]) {
+          setHeroImage(getMediaUrl(byKey[PUBLIC_CONTENT_KEYS.homeHeroImage]));
+        }
+        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroTitle]) {
+          setHeroTitle(byKey[PUBLIC_CONTENT_KEYS.homeHeroTitle]);
+        }
+        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroSubtitle]) {
+          setHeroSubtitle(byKey[PUBLIC_CONTENT_KEYS.homeHeroSubtitle]);
+        }
+        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroCta]) {
+          setHeroCta(byKey[PUBLIC_CONTENT_KEYS.homeHeroCta]);
         }
       })
       .catch(() => {});
@@ -53,6 +69,9 @@ export function HomePage() {
 
   const newArrivals = products.filter(p => p.isNew).slice(0, 3);
   const featured = products.filter(p => p.isFeatured).slice(0, 4);
+  const displayTitle = contentOrFallback(heroTitle ?? undefined, t('hero.title'));
+  const displaySubtitle = contentOrFallback(heroSubtitle ?? undefined, t('hero.subtitle'));
+  const displayCta = contentOrFallback(heroCta ?? undefined, t('hero.cta'));
 
   return (
     <div className="flex flex-col gap-xl pb-20">
@@ -60,7 +79,7 @@ export function HomePage() {
       <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-surface-container-highest">
         <img
           src={optimizeImageUrl(heroImage, IMAGE_WIDTH.hero)}
-          alt={t('hero.title')}
+          alt={displayTitle}
           width={IMAGE_WIDTH.hero}
           height={Math.round(IMAGE_WIDTH.hero * 0.6)}
           loading="eager"
@@ -70,15 +89,15 @@ export function HomePage() {
         />
         <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center p-xl text-center">
           <div className="max-w-2xl animate-fade-up">
-            <h1 className="headline-xl text-white mb-4">{t('hero.title')}</h1>
+            <h1 className="headline-xl text-white mb-4">{displayTitle}</h1>
             <p className="body-lg text-white/90 mb-8">
-              {t('hero.subtitle')}
+              {displaySubtitle}
             </p>
             <Link
               to="/collections"
               className="inline-flex bg-primary-container text-white label-md px-10 py-4 rounded-sm hover:bg-primary transition-colors"
             >
-              {t('hero.cta')}
+              {displayCta}
             </Link>
           </div>
         </div>

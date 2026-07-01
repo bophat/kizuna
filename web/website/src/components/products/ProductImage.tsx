@@ -1,6 +1,6 @@
 import { cn } from '@/lib/utils';
 import { getMediaUrl } from '@/lib/api';
-import { MEDIA_BASE_URL } from '@/lib/env';
+import { API_BASE_URL, MEDIA_BASE_URL } from '@/lib/env';
 import {
   buildSrcSet,
   getProductImageUrl,
@@ -29,7 +29,7 @@ export function ProductImage({
   sizes,
 }: ProductImageProps) {
   const targetWidth = width ?? IMAGE_WIDTH[preset];
-  const resolved = getProductImageUrl(src, targetWidth, MEDIA_BASE_URL);
+  const resolved = getProductImageUrl(src, targetWidth, MEDIA_BASE_URL, API_BASE_URL);
 
   if (!resolved) {
     return (
@@ -44,7 +44,8 @@ export function ProductImage({
   const srcSet = buildSrcSet(
     src,
     [targetWidth, Math.round(targetWidth * 1.5)],
-    MEDIA_BASE_URL
+    MEDIA_BASE_URL,
+    API_BASE_URL
   );
 
   const defaultSizes =
@@ -77,5 +78,5 @@ export function getOptimizedProductImage(
   src: string | null | undefined,
   preset: ImageWidthPreset = 'card'
 ) {
-  return getProductImageUrl(src, IMAGE_WIDTH[preset], MEDIA_BASE_URL) || getMediaUrl(src);
+  return getProductImageUrl(src, IMAGE_WIDTH[preset], MEDIA_BASE_URL, API_BASE_URL) || getMediaUrl(src);
 }

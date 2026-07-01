@@ -309,7 +309,14 @@ class FavoriteViewSet(viewsets.ViewSet):
         return Response({"error": "Favorite not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-PUBLIC_SETTING_KEYS = frozenset({'login_background_image', 'home_hero_image'})
+PUBLIC_SETTING_KEYS = frozenset({
+    'login_background_image',
+    'home_hero_image',
+    'home_hero_title',
+    'home_hero_subtitle',
+    'home_hero_cta',
+    'login_hero_text',
+})
 
 
 class PublicMediaView(APIView):

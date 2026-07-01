@@ -5,6 +5,11 @@ import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { Logo } from '@izuna/shared/components/Logo';
 import { apiFetch, getMediaUrl } from '../lib/api';
+import {
+  PUBLIC_CONTENT_KEYS,
+  contentOrFallback,
+  parsePublicSettings,
+} from '@izuna/shared/lib/publicSettings';
 
 const DEFAULT_BG = 'https://images.unsplash.com/photo-1531973819741-e27a5ae2cc7b?q=80&w=1200&auto=format&fit=crop';
 
@@ -16,15 +21,20 @@ export default function Login() {
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
   const [bgImage, setBgImage] = React.useState<string>(DEFAULT_BG);
+  const [heroText, setHeroText] = React.useState<string | null>(null);
   const navigate = useNavigate();
 
   React.useEffect(() => {
-    apiFetch('/shop/settings/?key=login_background_image')
-      .then(res => res.ok ? res.json() : null)
-      .then((data: any) => {
-        const results = data?.results || data;
-        const found = Array.isArray(results) ? results.find((s: any) => s.key === 'login_background_image') : null;
-        if (found?.value) setBgImage(getMediaUrl(found.value));
+    apiFetch('/shop/settings/')
+      .then((res) => (res.ok ? res.json() : []))
+      .then((data: unknown) => {
+        const byKey = parsePublicSettings(data);
+        if (byKey[PUBLIC_CONTENT_KEYS.loginBackgroundImage]) {
+          setBgImage(getMediaUrl(byKey[PUBLIC_CONTENT_KEYS.loginBackgroundImage]));
+        }
+        if (byKey[PUBLIC_CONTENT_KEYS.loginHeroText]) {
+          setHeroText(byKey[PUBLIC_CONTENT_KEYS.loginHeroText]);
+        }
       })
       .catch(() => {});
   }, []);
@@ -91,7 +101,7 @@ export default function Login() {
             transition={{ duration: 0.8 }}
           >
             <p className="text-brand-clay/60 text-lg font-light leading-relaxed font-serif italic">
-              {t('login.hero_text')}
+              {contentOrFallback(heroText ?? undefined, t('login.hero_text'))}
             </p>
           </motion.div>
         </div>
