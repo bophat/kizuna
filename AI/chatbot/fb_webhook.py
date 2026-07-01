@@ -47,6 +47,7 @@ if _bot_config.get('facebook_page_access_token'):
     PAGE_ACCESS_TOKEN = _bot_config['facebook_page_access_token']
 if _bot_config.get('facebook_verify_token'):
     VERIFY_TOKEN = _bot_config['facebook_verify_token']
+# social_integrations available at _bot_config.get('social_integrations')
 
 # Khởi tạo DB khi khởi chạy app
 init_db()

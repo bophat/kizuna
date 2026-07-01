@@ -21,6 +21,7 @@ from .serializers import (
 )
 
 INTEGRATION_SETTING_KEYS = frozenset({
+    'social_integrations',
     'facebook_page_access_token',
     'facebook_verify_token',
     'facebook_page_id',
@@ -33,6 +34,64 @@ INTEGRATION_SETTING_KEYS = frozenset({
     'chatbot_service_url',
     'chatbot_internal_token',
 })
+
+
+def _parse_social_integrations():
+    raw = _get_setting('social_integrations', '[]')
+    try:
+        data = json.loads(raw)
+        return data if isinstance(data, list) else []
+    except json.JSONDecodeError:
+        return []
+
+
+def _resolve_facebook_credentials():
+    """First enabled Facebook account from social_integrations, else legacy flat keys."""
+    for acc in _parse_social_integrations():
+        if acc.get('platform') == 'facebook' and acc.get('enabled', True):
+            creds = acc.get('credentials') or {}
+            return {
+                'facebook_page_access_token': creds.get('access_token', ''),
+                'facebook_verify_token': creds.get('verify_token', ''),
+                'facebook_page_id': creds.get('page_id', ''),
+                'facebook_group_ids': creds.get('group_ids', ''),
+            }
+    return {
+        'facebook_page_access_token': _get_setting('facebook_page_access_token'),
+        'facebook_verify_token': _get_setting('facebook_verify_token'),
+        'facebook_page_id': _get_setting('facebook_page_id'),
+        'facebook_group_ids': _get_setting('facebook_group_ids'),
+    }
+
+
+def _all_facebook_group_ids():
+    """Collect group IDs from every enabled Facebook social account."""
+    ids = []
+    for acc in _parse_social_integrations():
+        if acc.get('platform') != 'facebook' or not acc.get('enabled', True):
+            continue
+        raw = (acc.get('credentials') or {}).get('group_ids', '')
+        if not raw:
+            continue
+        try:
+            parsed = json.loads(raw) if raw.strip().startswith('[') else None
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, list):
+            ids.extend(str(g).strip() for g in parsed if str(g).strip())
+        else:
+            ids.extend(g.strip() for g in raw.split(',') if g.strip())
+    if not ids:
+        legacy = _get_setting('facebook_group_ids', '')
+        try:
+            parsed = json.loads(legacy) if legacy.strip().startswith('[') else None
+        except json.JSONDecodeError:
+            parsed = None
+        if isinstance(parsed, list):
+            ids.extend(str(g).strip() for g in parsed if str(g).strip())
+        elif legacy:
+            ids.extend(g.strip() for g in legacy.split(',') if g.strip())
+    return ids
 
 
 def _get_setting(key: str, default: str = '') -> str:
@@ -145,6 +204,13 @@ class BotConfigView(APIView):
 
     def get(self, request):
         data = {key: _get_setting(key) for key in INTEGRATION_SETTING_KEYS}
+        integrations = _parse_social_integrations()
+        data['social_integrations'] = integrations
+        fb = _resolve_facebook_credentials()
+        for key, val in fb.items():
+            if val:
+                data[key] = val
+        data['facebook_group_ids_all'] = _all_facebook_group_ids()
         return Response(data)
 
 

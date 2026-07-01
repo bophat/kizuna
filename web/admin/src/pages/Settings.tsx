@@ -5,7 +5,8 @@ import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
 import { toast } from '@izuna/shared/lib/toast';
 import { PUBLIC_CONTENT_KEYS } from '@izuna/shared/lib/publicSettings';
-import { INTEGRATION_KEYS } from '@izuna/shared/lib/integrationSettings';
+import { INTEGRATION_KEYS, migrateLegacySocialSettings, serializeSocialIntegrations, type SocialAccount } from '@izuna/shared/lib/integrationSettings';
+import { SocialAccountsSection } from '../components/settings/SocialAccountsSection';
 import { apiFetch, getMediaUrl } from '../lib/api';
 
 export default function Settings() {
@@ -23,12 +24,9 @@ export default function Settings() {
   const [homeHeroCta, setHomeHeroCta] = useState('');
   const [loginHeroText, setLoginHeroText] = useState('');
   const [savingIntegrations, setSavingIntegrations] = useState(false);
-  const [fbPageToken, setFbPageToken] = useState('');
-  const [fbVerifyToken, setFbVerifyToken] = useState('');
-  const [fbPageId, setFbPageId] = useState('');
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
   const [geminiKey, setGeminiKey] = useState('');
   const [serperKey, setSerperKey] = useState('');
-  const [groupIds, setGroupIds] = useState('');
   const [repostEnabled, setRepostEnabled] = useState('true');
   const [repostPostsPerDay, setRepostPostsPerDay] = useState('20');
   const [repostDelay, setRepostDelay] = useState('15');
@@ -49,12 +47,9 @@ export default function Settings() {
     setHomeHeroSubtitle(settings[PUBLIC_CONTENT_KEYS.homeHeroSubtitle] || '');
     setHomeHeroCta(settings[PUBLIC_CONTENT_KEYS.homeHeroCta] || '');
     setLoginHeroText(settings[PUBLIC_CONTENT_KEYS.loginHeroText] || '');
-    setFbPageToken(settings[INTEGRATION_KEYS.facebookPageAccessToken] || '');
-    setFbVerifyToken(settings[INTEGRATION_KEYS.facebookVerifyToken] || '');
-    setFbPageId(settings[INTEGRATION_KEYS.facebookPageId] || '');
+    setSocialAccounts(migrateLegacySocialSettings(settings));
     setGeminiKey(settings[INTEGRATION_KEYS.geminiApiKey] || '');
     setSerperKey(settings[INTEGRATION_KEYS.serperApiKey] || '');
-    setGroupIds(settings[INTEGRATION_KEYS.facebookGroupIds] || '');
     setRepostEnabled(settings[INTEGRATION_KEYS.repostEnabled] || 'true');
     setRepostPostsPerDay(settings[INTEGRATION_KEYS.repostPostsPerDay] || '20');
     setRepostDelay(settings[INTEGRATION_KEYS.repostDelayMinutes] || '15');
@@ -98,12 +93,9 @@ export default function Settings() {
     setSavingIntegrations(true);
     try {
       await Promise.all([
-        updateSetting(INTEGRATION_KEYS.facebookPageAccessToken, fbPageToken),
-        updateSetting(INTEGRATION_KEYS.facebookVerifyToken, fbVerifyToken),
-        updateSetting(INTEGRATION_KEYS.facebookPageId, fbPageId),
+        updateSetting(INTEGRATION_KEYS.socialIntegrations, serializeSocialIntegrations(socialAccounts)),
         updateSetting(INTEGRATION_KEYS.geminiApiKey, geminiKey),
         updateSetting(INTEGRATION_KEYS.serperApiKey, serperKey),
-        updateSetting(INTEGRATION_KEYS.facebookGroupIds, groupIds),
         updateSetting(INTEGRATION_KEYS.repostEnabled, repostEnabled),
         updateSetting(INTEGRATION_KEYS.repostPostsPerDay, repostPostsPerDay),
         updateSetting(INTEGRATION_KEYS.repostDelayMinutes, repostDelay),
@@ -386,27 +378,17 @@ export default function Settings() {
             <div>
               <h3 className="text-lg font-serif font-bold text-brand-ink">AI & Social Integrations</h3>
               <p className="text-xs text-brand-ink/50 italic font-serif">
-                API keys for chatbot, Facebook Messenger, auto-repost to groups, and AI product discovery.
+                Connect social networks, AI keys, and chatbot service. Add multiple platforms below.
               </p>
             </div>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Facebook Page Access Token</label>
-              <input type="password" value={fbPageToken} onChange={(e) => setFbPageToken(e.target.value)}
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" placeholder="EAA..." />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Webhook Verify Token</label>
-              <input type="text" value={fbVerifyToken} onChange={(e) => setFbVerifyToken(e.target.value)}
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
-            </div>
-            <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Facebook Page ID</label>
-              <input type="text" value={fbPageId} onChange={(e) => setFbPageId(e.target.value)}
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
-            </div>
+          <SocialAccountsSection accounts={socialAccounts} onChange={setSocialAccounts} />
+
+          <div className="grid gap-4 sm:grid-cols-2 pt-6 border-t border-brand-clay">
+            <h4 className="sm:col-span-2 text-sm font-semibold text-brand-ink uppercase tracking-wider">
+              AI & Chatbot service
+            </h4>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Gemini API Key</label>
               <input type="password" value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)}
@@ -417,13 +399,6 @@ export default function Settings() {
               <input type="password" value={serperKey} onChange={(e) => setSerperKey(e.target.value)}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
             </div>
-            <div className="sm:col-span-2">
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Facebook Group IDs</label>
-              <textarea value={groupIds} onChange={(e) => setGroupIds(e.target.value)} rows={2}
-                placeholder='["123456","789012"] or comma-separated IDs'
-                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm resize-y" />
-              <p className="text-xs text-brand-ink/40 mt-1 italic">Groups where AI auto-reposts your fanpage content.</p>
-            </div>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Auto-repost enabled</label>
               <select value={repostEnabled} onChange={(e) => setRepostEnabled(e.target.value)}
@@ -431,6 +406,7 @@ export default function Settings() {
                 <option value="true">Yes</option>
                 <option value="false">No</option>
               </select>
+              <p className="text-xs text-brand-ink/40 mt-1 italic">Uses Group IDs from Facebook accounts above.</p>
             </div>
             <div>
               <label className="block text-sm font-semibold text-brand-ink mb-1">Posts per day</label>
