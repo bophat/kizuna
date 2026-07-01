@@ -9,12 +9,14 @@ from .views import (
     OrderHistoryViewSet,
     FavoriteViewSet,
     ExchangeRatesView,
+    PublicSettingsView,
+    PublicMediaView,
+)
+from .concierge_views import (
     ConciergeLiveStatusView,
     ConciergeReplyView,
     ConciergeMessageView,
     ConciergeStreamView,
-    PublicSettingsView,
-    PublicMediaView,
 )
 
 router = DefaultRouter()
