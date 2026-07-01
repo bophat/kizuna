@@ -154,6 +154,9 @@ EXCHANGE_RATE_API_URL = os.environ.get(
     'https://api.frankfurter.app/latest?from=USD&to=VND,JPY',
 )
 
+CHATBOT_INTERNAL_TOKEN = os.environ.get('CHATBOT_INTERNAL_TOKEN', '')
+CHATBOT_SERVICE_URL = os.environ.get('CHATBOT_SERVICE_URL', 'http://127.0.0.1:8080')
+
 if not DEBUG:
     SECURE_SSL_REDIRECT = os.environ.get('SECURE_SSL_REDIRECT', 'True').lower() in (
         '1',

@@ -1,7 +1,7 @@
 from rest_framework import serializers
 from shop.models import Product, Order, OrderItem, Category, UserProfile, ProductImage
 from django.contrib.auth.models import User
-from .models import Setting
+from .models import Setting, PendingReply, TrendingProductLead
 
 class UserSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', required=False, allow_null=True, allow_blank=True)
@@ -132,3 +132,24 @@ class ProductImageSerializer(serializers.ModelSerializer):
         else:
             ret['image'] = None
         return ret
+
+
+class PendingReplySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PendingReply
+        fields = [
+            'id', 'channel', 'customer_id', 'customer_name', 'incoming_message',
+            'draft_reply', 'status', 'is_greeting', 'metadata',
+            'created_at', 'reviewed_at', 'sent_at',
+        ]
+        read_only_fields = ['id', 'created_at', 'reviewed_at', 'sent_at', 'status']
+
+
+class TrendingProductLeadSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = TrendingProductLead
+        fields = [
+            'id', 'query', 'product_name', 'platform', 'source_url',
+            'price_info', 'status', 'raw_data', 'created_at',
+        ]
+        read_only_fields = ['id', 'created_at']

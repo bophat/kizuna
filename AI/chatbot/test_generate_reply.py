@@ -1,4 +1,4 @@
-from chatbot import generate_reply, search_product_japan
+from AI.chatbot.chatbot import generate_reply, search_product_japan
 
 user_input = "Tìm giúp mình giá iPhone 15 Pro Max tại Nhật"
 reply, missing_products = generate_reply(user_input)

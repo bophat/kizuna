@@ -17,6 +17,8 @@ import Profile from './pages/Profile';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { Pricing } from './pages/Pricing';
+import ApprovalQueue from './pages/ApprovalQueue';
+import AiDiscovery from './pages/AiDiscovery';
 import { apiFetch } from './lib/api';
 import { Loader2 } from 'lucide-react';
 import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
@@ -85,6 +87,8 @@ function App() {
                   <Route path="/staff" element={<Staff />} />
                   <Route path="/profile" element={<Profile />} />
                   <Route path="/chat" element={<Chat />} />
+                  <Route path="/approvals" element={<ApprovalQueue />} />
+                  <Route path="/ai-discovery" element={<AiDiscovery />} />
                   <Route path="/pricing" element={<Pricing />} />
                   <Route path="/settings" element={<Settings />} />
                 </Routes>

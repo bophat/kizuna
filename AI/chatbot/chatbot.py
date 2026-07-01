@@ -188,13 +188,41 @@ def add_product_to_local_db(product_name, temp_price_info):
     except Exception as e:
         print(f"[HỆ THỐNG]: Lỗi ghi JSON: {e}")
 
-def generate_reply(user_message):
-    """Hàm lõi tương tác với khách dựa trên Data Local (JSON)."""
-    try:
-        with open(DB_JSON, "r", encoding="utf-8") as f:
-            kb = json.load(f)
-    except FileNotFoundError:
-        kb = {"shop_info": {"name": "Cửa hàng của tôi", "style": "Thân thiện, dạ thưa, nhiệt tình chốt sale"}, "products": []}
+def is_greeting_only(text: str) -> bool:
+    """Pure greetings can be auto-sent without admin approval."""
+    if not text:
+        return False
+    t = text.strip().lower()
+    if len(t) > 50:
+        return False
+    greetings = (
+        'xin chào', 'chào bạn', 'chào', 'hello', 'hi', 'hey', 'yo',
+        'こんにちは', 'はじめまして', 'おはよう', 'こんばんは',
+        'good morning', 'good evening', 'good afternoon',
+    )
+    cleaned = re.sub(r'[^\w\s\u3040-\u30ff]', '', t).strip()
+    if len(cleaned.split()) > 6:
+        return False
+    return any(g in t for g in greetings) and not any(
+        kw in t for kw in ('giá', 'price', 'bao nhiêu', 'mua', 'ship', 'sản phẩm', '商品')
+    )
+
+
+def greeting_reply() -> str:
+    return (
+        "Dạ chào anh/chị! Em là nhân viên tư vấn của shop. "
+        "Anh/chị cần em hỗ trợ tìm hoặc báo giá sản phẩm nào ạ?"
+    )
+
+
+def generate_reply(user_message, kb=None):
+    """Hàm lõi tương tác với khách dựa trên catalog (Django DB hoặc JSON local)."""
+    if kb is None:
+        try:
+            with open(DB_JSON, "r", encoding="utf-8") as f:
+                kb = json.load(f)
+        except FileNotFoundError:
+            kb = {"shop_info": {"name": "Cửa hàng của tôi", "style": "Thân thiện, dạ thưa, nhiệt tình chốt sale"}, "products": []}
 
     kb_str = json.dumps(kb, ensure_ascii=False, indent=2)
 

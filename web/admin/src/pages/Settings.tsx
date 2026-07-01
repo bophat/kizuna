@@ -1,10 +1,11 @@
 import { useState, useEffect } from 'react';
-import { Loader2, Save, Upload, Image as ImageIcon, Type } from 'lucide-react';
+import { Loader2, Save, Upload, Image as ImageIcon, Type, Key } from 'lucide-react';
 import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
 import { toast } from '@izuna/shared/lib/toast';
 import { PUBLIC_CONTENT_KEYS } from '@izuna/shared/lib/publicSettings';
+import { INTEGRATION_KEYS } from '@izuna/shared/lib/integrationSettings';
 import { apiFetch, getMediaUrl } from '../lib/api';
 
 export default function Settings() {
@@ -21,6 +22,18 @@ export default function Settings() {
   const [homeHeroSubtitle, setHomeHeroSubtitle] = useState('');
   const [homeHeroCta, setHomeHeroCta] = useState('');
   const [loginHeroText, setLoginHeroText] = useState('');
+  const [savingIntegrations, setSavingIntegrations] = useState(false);
+  const [fbPageToken, setFbPageToken] = useState('');
+  const [fbVerifyToken, setFbVerifyToken] = useState('');
+  const [fbPageId, setFbPageId] = useState('');
+  const [geminiKey, setGeminiKey] = useState('');
+  const [serperKey, setSerperKey] = useState('');
+  const [groupIds, setGroupIds] = useState('');
+  const [repostEnabled, setRepostEnabled] = useState('true');
+  const [repostPostsPerDay, setRepostPostsPerDay] = useState('20');
+  const [repostDelay, setRepostDelay] = useState('15');
+  const [chatbotUrl, setChatbotUrl] = useState('');
+  const [chatbotToken, setChatbotToken] = useState('');
 
   useEffect(() => {
     if (settings['PUBLIC_SITE_URL']) {
@@ -36,6 +49,17 @@ export default function Settings() {
     setHomeHeroSubtitle(settings[PUBLIC_CONTENT_KEYS.homeHeroSubtitle] || '');
     setHomeHeroCta(settings[PUBLIC_CONTENT_KEYS.homeHeroCta] || '');
     setLoginHeroText(settings[PUBLIC_CONTENT_KEYS.loginHeroText] || '');
+    setFbPageToken(settings[INTEGRATION_KEYS.facebookPageAccessToken] || '');
+    setFbVerifyToken(settings[INTEGRATION_KEYS.facebookVerifyToken] || '');
+    setFbPageId(settings[INTEGRATION_KEYS.facebookPageId] || '');
+    setGeminiKey(settings[INTEGRATION_KEYS.geminiApiKey] || '');
+    setSerperKey(settings[INTEGRATION_KEYS.serperApiKey] || '');
+    setGroupIds(settings[INTEGRATION_KEYS.facebookGroupIds] || '');
+    setRepostEnabled(settings[INTEGRATION_KEYS.repostEnabled] || 'true');
+    setRepostPostsPerDay(settings[INTEGRATION_KEYS.repostPostsPerDay] || '20');
+    setRepostDelay(settings[INTEGRATION_KEYS.repostDelayMinutes] || '15');
+    setChatbotUrl(settings[INTEGRATION_KEYS.chatbotServiceUrl] || '');
+    setChatbotToken(settings[INTEGRATION_KEYS.chatbotInternalToken] || '');
   }, [settings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -66,6 +90,31 @@ export default function Settings() {
       toast.error(t('common.error_occurred') || toast.messages.saveError);
     } finally {
       setSavingContent(false);
+    }
+  };
+
+  const handleIntegrationsSave = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setSavingIntegrations(true);
+    try {
+      await Promise.all([
+        updateSetting(INTEGRATION_KEYS.facebookPageAccessToken, fbPageToken),
+        updateSetting(INTEGRATION_KEYS.facebookVerifyToken, fbVerifyToken),
+        updateSetting(INTEGRATION_KEYS.facebookPageId, fbPageId),
+        updateSetting(INTEGRATION_KEYS.geminiApiKey, geminiKey),
+        updateSetting(INTEGRATION_KEYS.serperApiKey, serperKey),
+        updateSetting(INTEGRATION_KEYS.facebookGroupIds, groupIds),
+        updateSetting(INTEGRATION_KEYS.repostEnabled, repostEnabled),
+        updateSetting(INTEGRATION_KEYS.repostPostsPerDay, repostPostsPerDay),
+        updateSetting(INTEGRATION_KEYS.repostDelayMinutes, repostDelay),
+        updateSetting(INTEGRATION_KEYS.chatbotServiceUrl, chatbotUrl),
+        updateSetting(INTEGRATION_KEYS.chatbotInternalToken, chatbotToken),
+      ]);
+      toast.success('Integration settings saved');
+    } catch {
+      toast.error('Failed to save integrations');
+    } finally {
+      setSavingIntegrations(false);
     }
   };
 
@@ -323,6 +372,98 @@ export default function Settings() {
           </div>
         </div>
       </motion.div>
+
+      <motion.form
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.25 }}
+        onSubmit={handleIntegrationsSave}
+        className="bg-white rounded-xl border border-brand-clay shadow-sm overflow-hidden"
+      >
+        <div className="p-8 space-y-6">
+          <div className="flex items-center gap-2">
+            <Key size={20} className="text-brand-red" />
+            <div>
+              <h3 className="text-lg font-serif font-bold text-brand-ink">AI & Social Integrations</h3>
+              <p className="text-xs text-brand-ink/50 italic font-serif">
+                API keys for chatbot, Facebook Messenger, auto-repost to groups, and AI product discovery.
+              </p>
+            </div>
+          </div>
+
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Facebook Page Access Token</label>
+              <input type="password" value={fbPageToken} onChange={(e) => setFbPageToken(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" placeholder="EAA..." />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Webhook Verify Token</label>
+              <input type="text" value={fbVerifyToken} onChange={(e) => setFbVerifyToken(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Facebook Page ID</label>
+              <input type="text" value={fbPageId} onChange={(e) => setFbPageId(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Gemini API Key</label>
+              <input type="password" value={geminiKey} onChange={(e) => setGeminiKey(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Serper API Key (web search)</label>
+              <input type="password" value={serperKey} onChange={(e) => setSerperKey(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div className="sm:col-span-2">
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Facebook Group IDs</label>
+              <textarea value={groupIds} onChange={(e) => setGroupIds(e.target.value)} rows={2}
+                placeholder='["123456","789012"] or comma-separated IDs'
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm resize-y" />
+              <p className="text-xs text-brand-ink/40 mt-1 italic">Groups where AI auto-reposts your fanpage content.</p>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Auto-repost enabled</label>
+              <select value={repostEnabled} onChange={(e) => setRepostEnabled(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm">
+                <option value="true">Yes</option>
+                <option value="false">No</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Posts per day</label>
+              <input type="number" value={repostPostsPerDay} onChange={(e) => setRepostPostsPerDay(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Delay between posts (min)</label>
+              <input type="number" value={repostDelay} onChange={(e) => setRepostDelay(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Chatbot service URL</label>
+              <input type="url" value={chatbotUrl} onChange={(e) => setChatbotUrl(e.target.value)}
+                placeholder="http://127.0.0.1:8080"
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+            </div>
+            <div>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">Internal bot token</label>
+              <input type="password" value={chatbotToken} onChange={(e) => setChatbotToken(e.target.value)}
+                className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
+              <p className="text-xs text-brand-ink/40 mt-1 italic">Same value in Django + Flask + newfeed .env</p>
+            </div>
+          </div>
+        </div>
+        <div className="px-8 py-4 bg-brand-paper/30 border-t border-brand-clay flex justify-end">
+          <button type="submit" disabled={savingIntegrations}
+            className="flex items-center gap-2 px-6 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red disabled:opacity-50">
+            {savingIntegrations ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
+            Save Integrations
+          </button>
+        </div>
+      </motion.form>
     </div>
   );
 }

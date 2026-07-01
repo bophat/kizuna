@@ -11,7 +11,9 @@ import {
   MessageCircle,
   X,
   Settings as SettingsIcon,
-  Calculator
+  Calculator,
+  Sparkles,
+  ShieldCheck,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -25,6 +27,8 @@ export function Sidebar() {
   const navItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
     { icon: MessageCircle, label: t('nav.chat'), path: '/chat' },
+    { icon: ShieldCheck, label: 'Approvals', path: '/approvals' },
+    { icon: Sparkles, label: 'AI Discovery', path: '/ai-discovery' },
     { icon: Package, label: t('nav.inventory'), path: '/inventory' },
     { icon: Menu, label: t('nav.categories'), path: '/categories' },
     { icon: ShoppingBag, label: t('nav.orders'), path: '/orders' },

@@ -8,7 +8,12 @@ from dotenv import load_dotenv
 from flask_cors import CORS
 
 # Import functions from chatbot
-from chatbot import init_db, generate_reply, search_product_japan, add_product_to_local_db, save_missing_products, save_order, get_today_orders
+from AI.chatbot.chatbot import (
+    init_db, generate_reply, search_product_japan, add_product_to_local_db,
+    save_missing_products, save_order, get_today_orders,
+    is_greeting_only, greeting_reply,
+)
+from AI.chatbot.django_bridge import fetch_product_catalog, fetch_bot_config, create_pending_reply
 
 load_dotenv()
 
@@ -33,7 +38,15 @@ def notify_clients(notification_data):
 
 VERIFY_TOKEN = os.getenv("VERIFY_TOKEN", "my_secure_verify_token")
 PAGE_ACCESS_TOKEN = os.getenv("FACEBOOK_ACCESS_TOKEN", "your_page_access_token")
+BOT_INTERNAL_TOKEN = os.getenv("CHATBOT_INTERNAL_TOKEN", "")
 KB_FILE = "knowledge_base.json"
+
+# Sync tokens from Django settings when available
+_bot_config = fetch_bot_config()
+if _bot_config.get('facebook_page_access_token'):
+    PAGE_ACCESS_TOKEN = _bot_config['facebook_page_access_token']
+if _bot_config.get('facebook_verify_token'):
+    VERIFY_TOKEN = _bot_config['facebook_verify_token']
 
 # Khởi tạo DB khi khởi chạy app
 init_db()
@@ -127,7 +140,7 @@ def send_message(recipient_id, message_text):
     """Gửi tin nhắn qua Facebook Graph API"""
     if PAGE_ACCESS_TOKEN == "your_page_access_token":
         print(f"⚠️ [MOCK DB] Sẽ gửi tới {recipient_id}: {message_text}")
-        return
+        return True
 
     headers = {"Content-Type": "application/json"}
     params = {"access_token": PAGE_ACCESS_TOKEN}
@@ -141,8 +154,69 @@ def send_message(recipient_id, message_text):
         response = requests.post(url, params=params, headers=headers, json=data)
         if response.status_code != 200:
             print("❌ Lỗi gửi tin nhắn:", response.json())
+            return False
+        return True
     except Exception as e:
         print("❌ Lỗi Call API FB:", str(e))
+        return False
+
+
+def queue_or_send_messenger(sender_id, user_input, final_reply, metadata=None):
+    """
+    Greetings → gửi ngay. Các tin khác → hàng đợi duyệt trên Admin.
+    """
+    if is_greeting_only(user_input):
+        send_message(sender_id, greeting_reply())
+        return
+
+    pending = create_pending_reply(
+        channel='messenger',
+        customer_id=sender_id,
+        incoming_message=user_input,
+        draft_reply=final_reply,
+        is_greeting=False,
+        metadata=metadata or {},
+    )
+    if pending:
+        notify_clients({
+            "id": f"notif_pending_{pending.get('id', int(time.time() * 1000))}",
+            "type": "APPROVAL",
+            "title": "Tin nhắn chờ duyệt",
+            "message": f"Khách: {user_input[:80]}",
+            "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "pending_id": pending.get('id'),
+        })
+    else:
+        print(f"⚠️ [QUEUE] Không lưu được hàng đợi — tin chưa gửi: {final_reply[:80]}...")
+
+
+def build_ai_reply(user_input, kb=None):
+    """Sinh câu trả lời AI từ catalog Django hoặc JSON local."""
+    if kb is None:
+        kb = fetch_product_catalog() or load_kb()
+    reply, missing_products = generate_reply(user_input, kb=kb)
+    final_reply = reply
+
+    if missing_products:
+        for product in missing_products:
+            temp_price_info, price_jpy, price_vnd = search_product_japan(product)
+            final_reply += (
+                f"\n\nDạ, riêng món '{product}', "
+                f"hiện bên Nhật đang có giá khoảng: {temp_price_info}. "
+                f"Bên em sẽ check thêm chính xác phí vận chuyển và báo lại nha!"
+            )
+            add_product_to_local_db(product, temp_price_info)
+            save_order(product, price_jpy, price_vnd)
+            notify_clients({
+                "id": f"notif_order_{int(time.time() * 1000)}_{product}",
+                "type": "ORDER",
+                "title": "Đơn hàng mới",
+                "message": f"Sản phẩm: {product}",
+                "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+            })
+        save_missing_products(missing_products, user_input)
+
+    return final_reply
 
 def process_image(image_url):
     """
@@ -236,6 +310,63 @@ def stream_session(session_id):
     return app.response_class(event_stream(), mimetype="text/event-stream")
 
 
+@app.route("/api/internal/dispatch", methods=["POST"])
+def internal_dispatch():
+    """Django gọi sau khi admin duyệt tin nhắn."""
+    token = request.headers.get("X-Bot-Token", "")
+    if not BOT_INTERNAL_TOKEN or token != BOT_INTERNAL_TOKEN:
+        return jsonify({"error": "Forbidden"}), 403
+
+    data = request.json or {}
+    channel = data.get("channel", "messenger")
+    customer_id = data.get("customer_id", "")
+    message = data.get("message", "")
+    metadata = data.get("metadata") or {}
+
+    if not message or not customer_id:
+        return jsonify({"error": "Missing fields"}), 400
+
+    if channel == "messenger":
+        ok = send_message(customer_id, message)
+    elif channel == "website":
+        msg_obj = {
+            "id": str(int(time.time() * 1000)),
+            "role": "assistant",
+            "content": message,
+            "is_admin": True,
+            "timestamp": time.time()
+        }
+        if customer_id in chat_sessions:
+            chat_sessions[customer_id]["messages"].append(msg_obj)
+            notify_session(customer_id, msg_obj)
+        ok = True
+    elif channel == "comment":
+        comment_id = metadata.get("comment_id")
+        ok = send_private_reply_to_comment(comment_id, message) if comment_id else False
+    else:
+        ok = False
+
+    return jsonify({"status": "sent" if ok else "failed"}), 200 if ok else 502
+
+
+def send_private_reply_to_comment(comment_id, message):
+    """Gửi inbox từ comment (cần quyền pages_messaging)."""
+    if not comment_id or PAGE_ACCESS_TOKEN == "your_page_access_token":
+        return False
+    url = f"https://graph.facebook.com/v21.0/{comment_id}/private_replies"
+    try:
+        res = requests.post(
+            url,
+            params={"access_token": PAGE_ACCESS_TOKEN},
+            json={"message": message},
+            timeout=15,
+        )
+        return res.status_code == 200
+    except Exception as e:
+        print(f"❌ private_replies error: {e}")
+        return False
+
+
 @app.route("/api/order/new", methods=["POST"])
 def new_order_notification():
     data = request.json or {}
@@ -270,6 +401,35 @@ def webhook():
         data = request.json
         if data.get("object") == "page":
             for entry in data.get("entry", []):
+                # --- Feed comments ---
+                for change in entry.get("changes", []):
+                    if change.get("field") == "feed":
+                        value = change.get("value", {})
+                        if value.get("item") == "comment" and value.get("verb") == "add":
+                            comment_id = value.get("comment_id")
+                            post_id = value.get("post_id")
+                            sender_id = value.get("from", {}).get("id", "")
+                            sender_name = value.get("from", {}).get("name", "")
+                            message = value.get("message", "")
+                            if message and sender_id:
+                                kb = fetch_product_catalog() or load_kb()
+                                final_reply = build_ai_reply(message, kb=kb)
+                                create_pending_reply(
+                                    channel='comment',
+                                    customer_id=sender_id,
+                                    customer_name=sender_name,
+                                    incoming_message=message,
+                                    draft_reply=final_reply,
+                                    metadata={'comment_id': comment_id, 'post_id': post_id},
+                                )
+                                notify_clients({
+                                    "id": f"notif_comment_{comment_id}",
+                                    "type": "APPROVAL",
+                                    "title": "Comment chờ duyệt",
+                                    "message": f"{sender_name}: {message[:60]}",
+                                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+                                })
+
                 for messaging_event in entry.get("messaging", []):
                     # Bỏ qua tin nhắn từ chính Bot
                     if messaging_event.get("message") and not messaging_event.get("message").get("is_echo"):
@@ -317,41 +477,18 @@ def webhook():
 
                         # Nếu có ảnh mà ko có text, nhắc khách
                         if has_image and not user_input:
-                            send_message(sender_id, "Dạ bạn vui lòng nhập thêm tên/thông tin sản phẩm đi kèm với ảnh để bên mình dễ tìm giá nhé!")
+                            queue_or_send_messenger(
+                                sender_id,
+                                "[Ảnh sản phẩm]",
+                                "Dạ bạn vui lòng nhập thêm tên/thông tin sản phẩm đi kèm với ảnh để bên mình dễ tìm giá nhé!",
+                            )
                             return "EVENT_RECEIVED", 200
                         elif not user_input:
                             return "EVENT_RECEIVED", 200
 
                         # 2. Sinh câu trả lời với AI flow
-                        reply, missing_products = generate_reply(user_input)
-                        final_reply = reply
-
-                        if missing_products:
-                            for product in missing_products:
-                                # AI Search
-                                temp_price_info, price_jpy, price_vnd = search_product_japan(product)
-                                
-                                final_reply += (f"\n\nDạ, riêng món '{product}', "
-                                                f"hiện bên Nhật đang có giá khoảng: {temp_price_info}. "
-                                                f"Bên em sẽ check thêm chính xác phí vận chuyển và báo lại nha!")
-                                
-                                # Auto-filling DB
-                                add_product_to_local_db(product, temp_price_info)
-                                
-                                # Log order record
-                                save_order(product, price_jpy, price_vnd)
-                                
-                                notify_clients({
-                                    "id": f"notif_order_{int(time.time() * 1000)}_{product}",
-                                    "type": "ORDER",
-                                    "title": "Đơn hàng mới",
-                                    "message": f"Sản phẩm: {product}",
-                                    "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
-                                })
-
-                            save_missing_products(missing_products, user_input)
-                        
-                        send_message(sender_id, final_reply)
+                        final_reply = build_ai_reply(user_input)
+                        queue_or_send_messenger(sender_id, user_input, final_reply)
                         
             return "EVENT_RECEIVED", 200
         else:

@@ -13,7 +13,7 @@ export const MEDIA_BASE_URL =
   import.meta.env.VITE_MEDIA_BASE_URL?.trim() || defaultMediaBaseUrl;
 
 export const CHAT_API_BASE_URL = trimSlash(
-  import.meta.env.VITE_CHAT_API_BASE_URL?.trim() || 'http://127.0.0.1:8000/api'
+  import.meta.env.VITE_CHAT_API_BASE_URL?.trim() || 'http://127.0.0.1:8080/api'
 );
 
 export const APP_URL = import.meta.env.VITE_APP_URL?.trim() || '';
