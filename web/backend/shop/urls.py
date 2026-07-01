@@ -10,6 +10,7 @@ from .views import (
     FavoriteViewSet,
     ExchangeRatesView,
     PublicSettingsView,
+    PublicMediaView,
 )
 
 router = DefaultRouter()
@@ -23,6 +24,7 @@ router.register(r'favorites', FavoriteViewSet, basename='favorite')
 urlpatterns = [
     path('exchange-rates/', ExchangeRatesView.as_view(), name='exchange-rates'),
     path('settings/', PublicSettingsView.as_view(), name='public-settings'),
+    path('media/<path:path>', PublicMediaView.as_view(), name='public-media'),
     path('me/', MeView.as_view(), name='me'),
     path('', include(router.urls)),
 ]

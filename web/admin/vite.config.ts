@@ -31,6 +31,16 @@ export default defineConfig(({mode}) => {
     server: {
       fs: { allow: ['..'] },
       hmr: process.env.DISABLE_HMR !== 'true',
+      proxy: {
+        '/api': {
+          target: process.env.BACKEND_URL || 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
+        '/media': {
+          target: process.env.BACKEND_URL || 'http://127.0.0.1:8000',
+          changeOrigin: true,
+        },
+      },
     },
   };
 });

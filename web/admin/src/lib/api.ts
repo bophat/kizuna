@@ -4,7 +4,7 @@ import { API_BASE_URL, MEDIA_BASE_URL } from './env';
 export { API_BASE_URL };
 
 export function getMediaUrl(path: string | null | undefined) {
-  return sharedGetMediaUrl(path, MEDIA_BASE_URL);
+  return sharedGetMediaUrl(path, MEDIA_BASE_URL, API_BASE_URL);
 }
 
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {

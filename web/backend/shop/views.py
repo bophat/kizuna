@@ -1,3 +1,8 @@
+import mimetypes
+import os
+
+from django.conf import settings
+from django.http import FileResponse, Http404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
 from rest_framework.views import APIView
@@ -305,6 +310,32 @@ class FavoriteViewSet(viewsets.ViewSet):
 
 
 PUBLIC_SETTING_KEYS = frozenset({'login_background_image', 'home_hero_image'})
+
+
+class PublicMediaView(APIView):
+    """Serve uploaded media via API (correct Content-Type + CORS for cross-origin <img>)."""
+    permission_classes = [AllowAny]
+
+    def get(self, request, path):
+        safe = os.path.normpath(path).replace('\\', '/').lstrip('/')
+        if not safe or '..' in safe.split('/'):
+            raise Http404
+
+        media_root = os.path.realpath(settings.MEDIA_ROOT)
+        full_path = os.path.realpath(os.path.join(media_root, safe))
+        if not full_path.startswith(media_root + os.sep):
+            raise Http404
+        if not os.path.isfile(full_path):
+            raise Http404
+
+        content_type, _ = mimetypes.guess_type(full_path)
+        response = FileResponse(
+            open(full_path, 'rb'),
+            content_type=content_type or 'application/octet-stream',
+        )
+        response['Cross-Origin-Resource-Policy'] = 'cross-origin'
+        response['Cache-Control'] = 'public, max-age=86400'
+        return response
 
 
 class PublicSettingsView(APIView):

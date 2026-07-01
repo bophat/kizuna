@@ -42,9 +42,12 @@ export function optimizeImageUrl(url: string, width: number): string {
 export function getProductImageUrl(
   path: string | null | undefined,
   width: number,
-  mediaBase?: string
+  mediaBase?: string,
+  apiBase?: string
 ): string {
-  const resolved = mediaBase ? getMediaUrl(path, mediaBase) : getMediaUrl(path);
+  const resolved = mediaBase
+    ? getMediaUrl(path, mediaBase, apiBase)
+    : getMediaUrl(path);
   if (!resolved) return '';
   return optimizeImageUrl(resolved, width);
 }
@@ -52,11 +55,12 @@ export function getProductImageUrl(
 export function buildSrcSet(
   path: string | null | undefined,
   widths: number[],
-  mediaBase?: string
+  mediaBase?: string,
+  apiBase?: string
 ): string {
   return widths
     .map((w) => {
-      const url = getProductImageUrl(path, w, mediaBase);
+      const url = getProductImageUrl(path, w, mediaBase, apiBase);
       return url ? `${url} ${w}w` : null;
     })
     .filter(Boolean)
