@@ -12,7 +12,7 @@ import { apiFetch, getMediaUrl } from '../lib/api';
 
 export default function Settings() {
   const { t } = useTranslation();
-  const { settings, loading, updateSetting } = useSettings();
+  const { settings, loading, updateSetting, updateSettings } = useSettings();
   const [publicSiteUrl, setPublicSiteUrl] = useState('');
   const [loginBg, setLoginBg] = useState<string | null>(null);
   const [uploadingBg, setUploadingBg] = useState(false);
@@ -75,12 +75,12 @@ export default function Settings() {
     e.preventDefault();
     setSavingContent(true);
     try {
-      await Promise.all([
-        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroTitle, homeHeroTitle),
-        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroSubtitle, homeHeroSubtitle),
-        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroCta, homeHeroCta),
-        updateSetting(PUBLIC_CONTENT_KEYS.loginHeroText, loginHeroText),
-      ]);
+      await updateSettings({
+        [PUBLIC_CONTENT_KEYS.homeHeroTitle]: homeHeroTitle,
+        [PUBLIC_CONTENT_KEYS.homeHeroSubtitle]: homeHeroSubtitle,
+        [PUBLIC_CONTENT_KEYS.homeHeroCta]: homeHeroCta,
+        [PUBLIC_CONTENT_KEYS.loginHeroText]: loginHeroText,
+      });
       toast.success(t('common.success') || toast.messages.saveSuccess);
     } catch {
       toast.error(t('common.error_occurred') || toast.messages.saveError);
@@ -93,16 +93,16 @@ export default function Settings() {
     e.preventDefault();
     setSavingIntegrations(true);
     try {
-      await Promise.all([
-        updateSetting(INTEGRATION_KEYS.socialIntegrations, serializeSocialIntegrations(socialAccounts)),
-        updateSetting(INTEGRATION_KEYS.geminiApiKey, geminiKey),
-        updateSetting(INTEGRATION_KEYS.serperApiKey, serperKey),
-        updateSetting(INTEGRATION_KEYS.repostEnabled, repostEnabled),
-        updateSetting(INTEGRATION_KEYS.repostPostsPerDay, repostPostsPerDay),
-        updateSetting(INTEGRATION_KEYS.repostDelayMinutes, repostDelay),
-        updateSetting(INTEGRATION_KEYS.chatbotServiceUrl, chatbotUrl),
-        updateSetting(INTEGRATION_KEYS.chatbotInternalToken, chatbotToken),
-      ]);
+      await updateSettings({
+        [INTEGRATION_KEYS.socialIntegrations]: serializeSocialIntegrations(socialAccounts),
+        [INTEGRATION_KEYS.geminiApiKey]: geminiKey,
+        [INTEGRATION_KEYS.serperApiKey]: serperKey,
+        [INTEGRATION_KEYS.repostEnabled]: repostEnabled,
+        [INTEGRATION_KEYS.repostPostsPerDay]: repostPostsPerDay,
+        [INTEGRATION_KEYS.repostDelayMinutes]: repostDelay,
+        [INTEGRATION_KEYS.chatbotServiceUrl]: chatbotUrl,
+        [INTEGRATION_KEYS.chatbotInternalToken]: chatbotToken,
+      });
       toast.success('Integration settings saved');
     } catch {
       toast.error('Failed to save integrations');

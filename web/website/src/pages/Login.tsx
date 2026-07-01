@@ -5,9 +5,11 @@ import { Icons } from '@/components/Icons';
 import { Logo } from '@izuna/shared/components/Logo';
 import { ArrowRight, Check } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export function LoginPage() {
   const { t } = useTranslation();
+  const { refreshUser } = useAuth();
   const [email, setEmail] = useState(localStorage.getItem('remembered_email') || '');
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('remembered_email'));
@@ -45,18 +47,16 @@ export function LoginPage() {
       const data = await response.json();
 
       if (response.ok) {
-        // Store tokens
-        localStorage.setItem('access_token', data.access);
-        localStorage.setItem('refresh_token', data.refresh);
+        localStorage.removeItem('access_token');
+        localStorage.removeItem('refresh_token');
 
-        // Handle Remember Me
         if (rememberMe) {
           localStorage.setItem('remembered_email', email);
         } else {
           localStorage.removeItem('remembered_email');
         }
 
-        // Navigate to home
+        await refreshUser();
         navigate('/');
       } else {
         if (response.status === 401) {
