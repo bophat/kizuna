@@ -1,10 +1,10 @@
 import { useState, useRef, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { fade, fadeUp, tweenFast } from '@/lib/motion';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { MessageItem } from '@/components/concierge/MessageItem';
 import { ChatInput } from '@/components/concierge/ChatInput';
-import { CHAT_API_BASE_URL, GEMINI_API_KEY } from '@/lib/env';
+import { apiFetch } from '@/lib/api';
+import { CHAT_API_BASE_URL } from '@/lib/env';
 
 interface Message {
   id: string;
@@ -90,31 +90,23 @@ export function ConciergePage() {
         return;
       }
 
-      // Note: In Vite, use import.meta.env.VITE_...
-      const apiKey = GEMINI_API_KEY;
+      const aiRes = await apiFetch('/shop/concierge/reply/', {
+        method: 'POST',
+        body: JSON.stringify({
+          message: content,
+          history: messages.map((m) => ({
+            role: m.role,
+            content: m.content,
+          })),
+        }),
+      });
 
-      if (!apiKey) {
-        throw new Error('Gemini API Key is not configured. Please add VITE_GEMINI_API_KEY to your .env file.');
+      if (!aiRes.ok) {
+        throw new Error('Concierge service unavailable');
       }
 
-      const genAI = new GoogleGenerativeAI(apiKey);
-      const model = genAI.getGenerativeModel({
-        model: "gemini-2.5-flash",
-        systemInstruction: "You are Kenji, an expert Japanese artisan concierge for 'KIZUNA'. You are sophisticated, polite, and deeply knowledgeable about Japanese traditional crafts like Kintsugi, Hinoki woodwork, Ceramics, and Textiles. You specialize in bespoke requests. Keep your tone serene and premium. Note: We are a shop, you can verify requests and tell the customer you will forward it to our human artisans."
-      });
-
-      const chatHistory = messages.map(m => ({
-        role: m.role === 'assistant' ? 'model' : 'user',
-        parts: [{ text: m.content }]
-      }));
-
-      const chat = model.startChat({
-        history: chatHistory,
-      });
-
-      const result = await chat.sendMessage(content);
-      const response = await result.response;
-      const text = response.text();
+      const aiData = await aiRes.json();
+      const text = aiData.reply;
 
       setMessages(prev => [...prev, {
         id: (Date.now() + 1).toString(),

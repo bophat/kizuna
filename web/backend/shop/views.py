@@ -9,6 +9,8 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
+from .throttles import ConciergeRateThrottle
+from .concierge import generate_concierge_reply
 from django.core.mail import send_mail
 from django.db import transaction
 from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, Category, Favorite
@@ -20,6 +22,29 @@ class ExchangeRatesView(APIView):
     def get(self, request):
         force = request.query_params.get('refresh') == '1'
         return Response(get_exchange_rates(force_refresh=force))
+
+
+class ConciergeReplyView(APIView):
+    """Server-side Gemini proxy — API key never sent to browser."""
+
+    permission_classes = [AllowAny]
+    throttle_classes = [ConciergeRateThrottle]
+
+    def post(self, request):
+        message = (request.data.get('message') or '').strip()[:2000]
+        if not message:
+            return Response({'error': 'message is required'}, status=status.HTTP_400_BAD_REQUEST)
+        history = request.data.get('history') or []
+        if not isinstance(history, list):
+            history = []
+        try:
+            reply = generate_concierge_reply(message, history)
+            return Response({'reply': reply})
+        except Exception as exc:
+            return Response(
+                {'error': 'AI service unavailable'},
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
@@ -237,7 +262,12 @@ class CheckoutViewSet(viewsets.ViewSet):
                 "qr_code_url": f"https://img.vietqr.io/image/vcb-0123456789-compact.png?amount={order.total_amount}&addInfo=ORDER{order.id}"
             }
 
+        from admin_api.chat_proxy import notify_order_placed
+        notify_order_placed(order.id, order.total_amount)
+
         return Response(response_data)
+
+
 class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -319,6 +349,9 @@ PUBLIC_SETTING_KEYS = frozenset({
 })
 
 
+PUBLIC_MEDIA_PREFIXES = ('system_images/', 'products/')
+
+
 class PublicMediaView(APIView):
     """Serve uploaded media via API (correct Content-Type + CORS for cross-origin <img>)."""
     permission_classes = [AllowAny]
@@ -326,6 +359,8 @@ class PublicMediaView(APIView):
     def get(self, request, path):
         safe = os.path.normpath(path).replace('\\', '/').lstrip('/')
         if not safe or '..' in safe.split('/'):
+            raise Http404
+        if not any(safe.startswith(prefix) for prefix in PUBLIC_MEDIA_PREFIXES):
             raise Http404
 
         media_root = os.path.realpath(settings.MEDIA_ROOT)

@@ -2,10 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Send, User, Bot, AlertCircle, MessageCircle, Loader2 } from 'lucide-react';
 import { cn } from '../lib/utils';
-
-import { CHAT_API_BASE_URL } from '../lib/env';
-
-const chatApi = (path: string) => `${CHAT_API_BASE_URL}/chat${path.startsWith('/') ? path : `/${path}`}`;
+import { apiFetch } from '../lib/api';
 
 interface ChatMessage {
   id: string;
@@ -32,7 +29,7 @@ export default function Chat() {
 
   const fetchSessions = async () => {
     try {
-      const res = await fetch(chatApi('/sessions'));
+      const res = await apiFetch('/chat/sessions/');
       if (res.ok) {
         const data = await res.json();
         setSessions(data);
@@ -65,9 +62,8 @@ export default function Chat() {
 
     setIsSending(true);
     try {
-      const res = await fetch(chatApi(`/${activeSessionId}/reply`), {
+      const res = await apiFetch(`/chat/${activeSessionId}/reply/`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: input.trim() }),
       });
       if (res.ok) {

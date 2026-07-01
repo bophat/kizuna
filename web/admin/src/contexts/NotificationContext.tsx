@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
-import { CHAT_API_BASE_URL } from '../lib/env';
+import { apiFetch, API_BASE_URL } from '../lib/api';
 
 export type NotificationType = 'ORDER' | 'CHAT';
 
@@ -49,8 +49,23 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     let eventSource: EventSource | null = null;
     let retryTimer: ReturnType<typeof setTimeout> | null = null;
 
-    const connect = () => {
-      eventSource = new EventSource(`${CHAT_API_BASE_URL}/notifications/stream`);
+    const connect = async () => {
+      try {
+        const ticketRes = await apiFetch('/chat/sse-ticket/', { method: 'POST' });
+        if (!ticketRes.ok) {
+          retryTimer = setTimeout(connect, 5000);
+          return;
+        }
+        const { ticket } = await ticketRes.json();
+        eventSource = new EventSource(
+          `${API_BASE_URL}/admin/chat/notifications/stream/?ticket=${encodeURIComponent(ticket)}`
+        );
+      } catch {
+        retryTimer = setTimeout(connect, 5000);
+        return;
+      }
+
+      if (!eventSource) return;
 
       eventSource.onmessage = (event) => {
         try {

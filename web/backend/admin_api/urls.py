@@ -12,6 +12,13 @@ from .views_ai import (
     TrendingProductLeadViewSet,
 )
 
+from .views_chat_proxy import (
+    ChatNotificationsStreamView,
+    ChatReplyProxyView,
+    ChatSessionsProxyView,
+    ChatSseTicketView,
+)
+
 router = DefaultRouter()
 router.register(r'products', AdminProductViewSet)
 router.register(r'orders', AdminOrderViewSet)
@@ -29,6 +36,10 @@ urlpatterns = [
     path('bot/products/', BotProductsView.as_view(), name='bot-products'),
     path('bot/config/', BotConfigView.as_view(), name='bot-config'),
     path('bot/pending-replies/', BotPendingReplyCreateView.as_view(), name='bot-pending-replies'),
+    path('chat/sessions/', ChatSessionsProxyView.as_view(), name='admin-chat-sessions'),
+    path('chat/sse-ticket/', ChatSseTicketView.as_view(), name='admin-chat-sse-ticket'),
+    path('chat/notifications/stream/', ChatNotificationsStreamView.as_view(), name='admin-chat-notifications-stream'),
+    path('chat/<str:session_id>/reply/', ChatReplyProxyView.as_view(), name='admin-chat-reply'),
     path('', include(router.urls)),
     path('stats/', DashboardStatsView.as_view(), name='admin-stats'),
 ]
