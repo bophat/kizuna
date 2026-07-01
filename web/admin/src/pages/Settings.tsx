@@ -398,9 +398,10 @@ export default function Settings() {
             </h4>
             <div className="sm:col-span-2 rounded-lg border border-brand-clay bg-brand-paper/30 p-4 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-brand-ink">Enable chatbot service</p>
+                <p className="text-sm font-semibold text-brand-ink">Flask live-chat service</p>
                 <p className="text-xs text-brand-ink/50 mt-1 italic font-serif">
-                  Turn off when Flask is not running — stops SSE errors and 502 in admin.
+                  Bật khi chạy Flask (port 8080): đồng bộ tin website → admin, thông báo realtime, Facebook bot.
+                  Tắt khi không dùng — khách vẫn chat AI Concierge bình thường.
                 </p>
               </div>
               <label className="inline-flex items-center gap-3 cursor-pointer">

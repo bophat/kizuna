@@ -20,9 +20,9 @@ export function ConciergePage() {
     }
   ]);
   const [isLoading, setIsLoading] = useState(false);
+  const [liveChatAvailable, setLiveChatAvailable] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  // Live Chat state
   const [sessionId] = useState(() => {
     let sid = localStorage.getItem('concierge_session_id');
     if (!sid) {
@@ -34,6 +34,15 @@ export function ConciergePage() {
   const [adminTookOver, setAdminTookOver] = useState(false);
 
   useEffect(() => {
+    apiFetch('/shop/concierge/live-status/')
+      .then((res) => (res.ok ? res.json() : { live: false }))
+      .then((data) => setLiveChatAvailable(!!data.live))
+      .catch(() => setLiveChatAvailable(false));
+  }, []);
+
+  useEffect(() => {
+    if (!liveChatAvailable) return;
+
     const eventSource = new EventSource(
       `${API_BASE_URL}/shop/concierge/stream/${encodeURIComponent(sessionId)}/`
     );
@@ -49,11 +58,11 @@ export function ConciergePage() {
           }]);
         }
       } catch (err) {
-        console.error("SSE parse error", err);
+        console.error('SSE parse error', err);
       }
     };
     return () => eventSource.close();
-  }, [sessionId]);
+  }, [sessionId, liveChatAvailable]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -72,19 +81,23 @@ export function ConciergePage() {
     setIsLoading(true);
 
     try {
-      // Notify Admin Dashboard and get status
-      const res = await apiFetch('/shop/concierge/message/', {
-        method: 'POST',
-        body: JSON.stringify({ message: content, session_id: sessionId, sender: 'user' }),
-      });
-      const data = await res.json();
+      let syncToAdmin = liveChatAvailable;
+      if (syncToAdmin) {
+        const res = await apiFetch('/shop/concierge/message/', {
+          method: 'POST',
+          body: JSON.stringify({ message: content, session_id: sessionId, sender: 'user' }),
+        });
+        const data = await res.json();
 
-      if (data.adminTookOver) {
-        setAdminTookOver(true);
+        if (data.chatbot_disabled) {
+          syncToAdmin = false;
+          setLiveChatAvailable(false);
+        } else if (data.adminTookOver) {
+          setAdminTookOver(true);
+        }
       }
 
-      // If admin took over, don't call Gemini
-      if (data.adminTookOver || adminTookOver) {
+      if (adminTookOver) {
         setIsLoading(false);
         return;
       }
@@ -113,11 +126,12 @@ export function ConciergePage() {
         content: text,
       }]);
 
-      // Push AI reply to session as well so Admin sees it
-      await apiFetch('/shop/concierge/message/', {
-        method: 'POST',
-        body: JSON.stringify({ message: text, session_id: sessionId, sender: 'ai' }),
-      });
+      if (syncToAdmin) {
+        await apiFetch('/shop/concierge/message/', {
+          method: 'POST',
+          body: JSON.stringify({ message: text, session_id: sessionId, sender: 'ai' }),
+        });
+      }
 
     } catch (err) {
       console.error('Concierge Error:', err);

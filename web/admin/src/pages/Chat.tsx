@@ -61,32 +61,12 @@ export default function Chat() {
     }
   }, [sessions, activeSessionId]);
 
-  if (!chatbotEnabled) {
-    return (
-      <div className="flex flex-col items-center justify-center h-[60vh] gap-4 p-8 text-center">
-        <MessageCircle className="w-12 h-12 text-brand-ink/20" />
-        <h2 className="text-xl font-serif font-bold text-brand-ink">Chatbot is turned off</h2>
-        <p className="text-sm text-brand-ink/50 max-w-md">
-          Enable the chatbot in Settings → Integrations when Flask service is running.
-          This avoids connection errors while the service is offline.
-        </p>
-        <Link
-          to="/settings"
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-colors"
-        >
-          <SettingsIcon size={16} />
-          Open Settings
-        </Link>
-      </div>
-    );
-  }
-
   const activeSession = activeSessionId ? sessions[activeSessionId] : null;
   const sessionCount = Object.keys(sessions).length;
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!input.trim() || !activeSessionId) return;
+    if (!chatbotEnabled || !input.trim() || !activeSessionId) return;
 
     setIsSending(true);
     try {
@@ -109,6 +89,24 @@ export default function Chat() {
 
   return (
     <div className="ma-spacing space-y-8">
+      {!chatbotEnabled && (
+        <div className="flex flex-wrap items-center justify-between gap-3 p-4 rounded-lg border border-amber-200 bg-amber-50 text-amber-900 text-sm">
+          <div className="flex items-start gap-2">
+            <AlertCircle size={18} className="shrink-0 mt-0.5" />
+            <p>
+              <strong>Live chat service is off.</strong> Customers can still use AI Concierge on the website.
+              Turn on Flask in Settings when you want to see sessions and reply here.
+            </p>
+          </div>
+          <Link
+            to="/settings"
+            className="inline-flex items-center gap-2 px-4 py-2 bg-brand-ink text-white rounded-md text-xs font-semibold hover:bg-brand-red transition-colors shrink-0"
+          >
+            <SettingsIcon size={14} />
+            Settings
+          </Link>
+        </div>
+      )}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4">
         <div>
           <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">
@@ -276,11 +274,11 @@ export default function Chat() {
                         : t('chat.input_takeover')
                     }
                     className="flex-1 bg-brand-paper border border-brand-clay rounded-md px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
-                    disabled={isSending}
+                    disabled={!chatbotEnabled || isSending}
                   />
                   <button
                     type="submit"
-                    disabled={isSending || !input.trim()}
+                    disabled={!chatbotEnabled || isSending || !input.trim()}
                     className="bg-brand-ink text-white px-5 rounded-md flex items-center justify-center hover:bg-brand-red transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {isSending ? (

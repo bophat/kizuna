@@ -19,6 +19,7 @@ from .views_chat_proxy import (
     ChatSseTicketView,
     ChatStatusView,
 )
+from .views_notifications import AdminNotificationFeedView
 
 router = DefaultRouter()
 router.register(r'products', AdminProductViewSet)
@@ -38,6 +39,7 @@ urlpatterns = [
     path('bot/config/', BotConfigView.as_view(), name='bot-config'),
     path('bot/pending-replies/', BotPendingReplyCreateView.as_view(), name='bot-pending-replies'),
     path('chat/status/', ChatStatusView.as_view(), name='admin-chat-status'),
+    path('notifications/feed/', AdminNotificationFeedView.as_view(), name='admin-notifications-feed'),
     path('chat/sessions/', ChatSessionsProxyView.as_view(), name='admin-chat-sessions'),
     path('chat/sse-ticket/', ChatSseTicketView.as_view(), name='admin-chat-sse-ticket'),
     path('chat/notifications/stream/', ChatNotificationsStreamView.as_view(), name='admin-chat-notifications-stream'),

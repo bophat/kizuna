@@ -12,7 +12,8 @@ export function TopBar() {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const { enabled: chatbotEnabled } = useChatbot();
-  const { notifications, unreadCount, markAsRead, markAllAsRead, clearNotification } = useNotification();
+  const { notifications, unreadCount, liveSync, markAsRead, markAllAsRead, clearNotification } =
+    useNotification();
   const { settings } = useSettings();
   const [showNotifications, setShowNotifications] = useState(false);
   const notificationRef = useRef<HTMLDivElement>(null);
@@ -57,7 +58,6 @@ export function TopBar() {
 
         <LanguageSwitcher />
 
-        {chatbotEnabled && (
         <div className="relative" ref={notificationRef}>
           <motion.button 
             whileHover={{ scale: 1.05 }}
@@ -92,6 +92,17 @@ export function TopBar() {
                     </button>
                   )}
                 </div>
+
+                {!chatbotEnabled && (
+                  <p className="px-4 py-2 text-[10px] text-brand-ink/50 bg-amber-50 border-b border-amber-100 leading-relaxed">
+                    Đơn hàng &amp; duyệt tin: cập nhật ~20s. Bật Flask để chat live tức thì.
+                  </p>
+                )}
+                {chatbotEnabled && liveSync && (
+                  <p className="px-4 py-1.5 text-[10px] text-green-700/80 bg-green-50 border-b border-green-100">
+                    Live sync đang bật
+                  </p>
+                )}
                 
                 <div className="max-h-[400px] overflow-y-auto">
                   {notifications.length === 0 ? (
@@ -110,7 +121,9 @@ export function TopBar() {
                             if (notification.type === 'ORDER') {
                               navigate('/orders');
                             } else if (notification.type === 'CHAT') {
-                              navigate('/chat');
+                              navigate(
+                                notification.id.startsWith('approval_') ? '/approvals' : '/chat'
+                              );
                             }
                           }}
                         >
@@ -146,7 +159,6 @@ export function TopBar() {
             )}
           </AnimatePresence>
         </div>
-        )}
       </div>
     </header>
   );

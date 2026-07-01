@@ -16,6 +16,7 @@ export interface AppNotification {
 interface NotificationContextType {
   notifications: AppNotification[];
   unreadCount: number;
+  liveSync: boolean;
   addNotification: (notification: Omit<AppNotification, 'id' | 'timestamp' | 'read'>) => void;
   markAsRead: (id: string) => void;
   markAllAsRead: () => void;
@@ -25,11 +26,43 @@ interface NotificationContextType {
 const NotificationContext = createContext<NotificationContextType | undefined>(undefined);
 
 const RETRY_MS = 8000;
+const POLL_MS = 20000;
+
+function mergeFeedItems(
+  prev: AppNotification[],
+  incoming: Array<{
+    id: string;
+    type: NotificationType;
+    title: string;
+    message: string;
+    timestamp: string;
+  }>
+): AppNotification[] {
+  if (!incoming.length) return prev;
+  const byId = new Map(prev.map((n) => [n.id, n]));
+  for (const item of incoming) {
+    if (byId.has(item.id)) continue;
+    byId.set(item.id, {
+      id: item.id,
+      type: item.type,
+      title: item.title,
+      message: item.message,
+      read: false,
+      timestamp: new Date(item.timestamp),
+    });
+  }
+  return Array.from(byId.values()).sort(
+    (a, b) => b.timestamp.getTime() - a.timestamp.getTime()
+  );
+}
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { enabled: chatbotEnabled } = useChatbot();
   const lastErrorRef = useRef<number>(0);
   const activeSourceRef = useRef<EventSource | null>(null);
+  const lastPollRef = useRef<string>(
+    new Date(Date.now() - 60 * 60 * 1000).toISOString()
+  );
 
   const [notifications, setNotifications] = useState<AppNotification[]>(() => {
     const saved = localStorage.getItem('kizuna_notifications');
@@ -51,8 +84,39 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     localStorage.setItem('kizuna_notifications', JSON.stringify(notifications));
   }, [notifications]);
 
+  // Django poll — orders & approvals (always on, no Flask needed)
+  useEffect(() => {
+    let cancelled = false;
+
+    const poll = async () => {
+      if (cancelled) return;
+      try {
+        const since = encodeURIComponent(lastPollRef.current);
+        const res = await apiFetch(`/notifications/feed/?since=${since}`);
+        if (!res.ok || cancelled) return;
+        const items = await res.json();
+        if (Array.isArray(items) && items.length) {
+          setNotifications((prev) => mergeFeedItems(prev, items));
+        }
+        lastPollRef.current = new Date().toISOString();
+      } catch {
+        /* ignore poll errors */
+      }
+    };
+
+    poll();
+    const interval = setInterval(poll, POLL_MS);
+    return () => {
+      cancelled = true;
+      clearInterval(interval);
+    };
+  }, []);
+
+  // Flask SSE — instant chat/order push when live service is on
   useEffect(() => {
     if (!chatbotEnabled) {
+      activeSourceRef.current?.close();
+      activeSourceRef.current = null;
       return;
     }
 
@@ -90,15 +154,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
               console.warn('[SSE]', data.code, data.message);
               return;
             }
-            const newNotification: AppNotification = {
-              id: data.id,
-              type: data.type,
-              title: data.title,
-              message: data.message,
-              read: false,
-              timestamp: new Date(data.timestamp || new Date()),
-            };
-            setNotifications((prev) => [newNotification, ...prev]);
+            setNotifications((prev) =>
+              mergeFeedItems(prev, [
+                {
+                  id: data.id,
+                  type: data.type,
+                  title: data.title,
+                  message: data.message,
+                  timestamp: data.timestamp || new Date().toISOString(),
+                },
+              ])
+            );
           } catch (error) {
             console.error('Error parsing SSE data', error);
           }
@@ -161,6 +227,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       value={{
         notifications,
         unreadCount,
+        liveSync: chatbotEnabled,
         addNotification,
         markAsRead,
         markAllAsRead,

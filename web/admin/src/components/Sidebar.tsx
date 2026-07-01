@@ -19,16 +19,14 @@ import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
 import { Logo } from '@izuna/shared/components/Logo';
 import { useTranslation } from 'react-i18next';
-import { useChatbot } from '../contexts/ChatbotContext';
 
 export function Sidebar() {
   const { t } = useTranslation();
-  const { enabled: chatbotEnabled } = useChatbot();
   const [isOpen, setIsOpen] = React.useState(true);
 
   const navItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
-    ...(chatbotEnabled ? [{ icon: MessageCircle, label: t('nav.chat'), path: '/chat' }] : []),
+    { icon: MessageCircle, label: t('nav.chat'), path: '/chat' },
     { icon: ShieldCheck, label: 'Approvals', path: '/approvals' },
     { icon: Sparkles, label: 'AI Discovery', path: '/ai-discovery' },
     { icon: Package, label: t('nav.inventory'), path: '/inventory' },
