@@ -196,6 +196,10 @@ CACHES = {
 }
 
 EXCHANGE_RATE_CACHE_SECONDS = int(os.environ.get('EXCHANGE_RATE_CACHE_SECONDS', '3600'))
+PUBLIC_API_CACHE_SECONDS = int(os.environ.get(
+    'PUBLIC_API_CACHE_SECONDS',
+    '0' if DEBUG else '60',
+))
 EXCHANGE_RATE_API_URL = os.environ.get(
     'EXCHANGE_RATE_API_URL',
     'https://api.frankfurter.app/latest?from=USD&to=VND,JPY',

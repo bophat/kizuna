@@ -1,5 +1,7 @@
 import mimetypes
 
+from django.conf import settings
+from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404
 from rest_framework import viewsets, status
@@ -10,8 +12,27 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
+from django.db.models import Case, IntegerField, Value, When
 from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, ProductStatus, Category, Favorite
 from .serializers import CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer, CategorySerializer, FavoriteSerializer
+
+
+PUBLIC_API_CACHE_SECONDS = getattr(settings, 'PUBLIC_API_CACHE_SECONDS', 60)
+
+
+def _language_code(request):
+    return getattr(request, 'LANGUAGE_CODE', 'en').split('-')[0]
+
+
+def _cache_get(key):
+    if PUBLIC_API_CACHE_SECONDS <= 0:
+        return None
+    return cache.get(key)
+
+
+def _cache_set(key, value):
+    if PUBLIC_API_CACHE_SECONDS > 0:
+        cache.set(key, value, PUBLIC_API_CACHE_SECONDS)
 
 class ExchangeRatesView(APIView):
     permission_classes = [AllowAny]
@@ -30,6 +51,75 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     )
     serializer_class = PublicProductSerializer
 
+    def list(self, request, *args, **kwargs):
+        cache_key = f'shop:products:list:{_language_code(request)}:{request.get_full_path()}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            queryset = self.filter_queryset(self.get_queryset())
+            payload = self.get_serializer(queryset, many=True).data
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
+    def retrieve(self, request, *args, **kwargs):
+        cache_key = f'shop:products:detail:{_language_code(request)}:{kwargs.get("pk", "")}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            payload = self.get_serializer(self.get_object()).data
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
+    @action(detail=False, methods=['get'])
+    def home(self, request):
+        cache_key = f'shop:products:home:{_language_code(request)}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            queryset = self.get_queryset()
+            candidates = list(queryset[:100])
+
+            new_arrivals = [product for product in candidates if product.is_new][:3]
+            new_ids = {product.id for product in new_arrivals}
+            new_arrivals.extend(
+                product for product in candidates
+                if product.id not in new_ids
+            )
+            new_arrivals = new_arrivals[:3]
+
+            featured = [product for product in candidates if product.is_featured][:4]
+            featured_ids = {product.id for product in featured}
+            featured.extend(
+                product for product in candidates
+                if product.id not in featured_ids
+            )
+            featured = featured[:4]
+
+            payload = {
+                'new_arrivals': self.get_serializer(new_arrivals, many=True).data,
+                'featured': self.get_serializer(featured, many=True).data,
+            }
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
+    @action(detail=True, methods=['get'])
+    def related(self, request, pk=None):
+        cache_key = f'shop:products:related:{_language_code(request)}:{pk}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            product = self.get_object()
+            queryset = self.get_queryset().exclude(pk=product.pk)
+            if product.category_id:
+                queryset = queryset.annotate(
+                    category_priority=Case(
+                        When(category_id=product.category_id, then=Value(0)),
+                        default=Value(1),
+                        output_field=IntegerField(),
+                    )
+                ).order_by('category_priority', '-created_at')
+            else:
+                queryset = queryset.order_by('-created_at')
+            payload = self.get_serializer(list(queryset[:4]), many=True).data
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
     @action(detail=False, methods=['get'])
     def likes_counts(self, request):
         products = Product.objects.filter(status=ProductStatus.PUBLISHED).values('id', 'likes')
@@ -39,12 +129,24 @@ class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
 
+    def list(self, request, *args, **kwargs):
+        cache_key = f'shop:categories:{_language_code(request)}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            payload = self.get_serializer(self.get_queryset(), many=True).data
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
 class OrderHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
 
     def get_queryset(self):
-        return Order.objects.filter(user=self.request.user).order_by('-created_at')
+        return (
+            Order.objects.filter(user=self.request.user)
+            .prefetch_related('items__product__category', 'items__product__source_info')
+            .order_by('-created_at')
+        )
 
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
@@ -284,10 +386,15 @@ class FavoriteViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        favorites = Favorite.objects.filter(
-            user=request.user,
-            product__status=ProductStatus.PUBLISHED,
-        ).order_by('-created_at')
+        favorites = (
+            Favorite.objects.filter(
+                user=request.user,
+                product__status=ProductStatus.PUBLISHED,
+            )
+            .select_related('product__category', 'product__source_info')
+            .prefetch_related('product__gallery')
+            .order_by('-created_at')
+        )
         serializer = FavoriteSerializer(favorites, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -384,10 +491,17 @@ class PublicSettingsView(APIView):
         from admin_api.models import Setting
 
         key = request.query_params.get('key')
+        cache_key = f'shop:public-settings:{key or "all"}'
+        payload = _cache_get(cache_key)
+        if payload is not None:
+            return Response(payload)
+
         qs = Setting.objects.filter(key__in=PUBLIC_SETTING_KEYS)
         if key:
             if key not in PUBLIC_SETTING_KEYS:
                 return Response([])
             qs = qs.filter(key=key)
 
-        return Response([{'key': s.key, 'value': s.value} for s in qs])
+        payload = [{'key': s.key, 'value': s.value} for s in qs]
+        _cache_set(cache_key, payload)
+        return Response(payload)

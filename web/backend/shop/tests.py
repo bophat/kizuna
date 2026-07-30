@@ -1,6 +1,7 @@
 from unittest.mock import patch
 
 from django.contrib.auth.models import User
+from django.core.cache import cache
 from django.test import TestCase
 from rest_framework.test import APIClient
 
@@ -72,6 +73,52 @@ class PublicCatalogLocalizationTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['detail'], '該当するデータが見つかりません。')
+
+    def test_home_endpoint_returns_small_localized_sections(self):
+        product = Product.objects.get(pk='I18N-001')
+        product.is_new = True
+        product.is_featured = True
+        product.save(update_fields=['is_new', 'is_featured'])
+
+        response = self.client.get(
+            '/api/shop/products/home/',
+            HTTP_ACCEPT_LANGUAGE='vi',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['new_arrivals'][0]['name'], 'Sản phẩm tiếng Việt')
+        self.assertEqual(response.data['featured'][0]['name'], 'Sản phẩm tiếng Việt')
+        self.assertLessEqual(len(response.data['new_arrivals']), 3)
+        self.assertLessEqual(len(response.data['featured']), 4)
+
+    def test_related_endpoint_excludes_current_product(self):
+        Product.objects.create(
+            id='I18N-002',
+            name='Related product',
+            description='Related description',
+            category=self.category,
+            price='12.00',
+        )
+
+        response = self.client.get('/api/shop/products/I18N-001/related/')
+
+        self.assertEqual(response.status_code, 200)
+        returned_ids = [item['id'] for item in response.data]
+        self.assertIn('I18N-002', returned_ids)
+        self.assertNotIn('I18N-001', returned_ids)
+
+    @patch('shop.views.PUBLIC_API_CACHE_SECONDS', 60)
+    def test_home_endpoint_uses_cache_after_first_request(self):
+        cache.clear()
+        first = self.client.get('/api/shop/products/home/')
+        self.assertEqual(first.status_code, 200)
+
+        with self.assertNumQueries(0):
+            second = self.client.get('/api/shop/products/home/')
+
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(second.data, first.data)
+        cache.clear()
 
 
 class ConciergeCustomerIdentityTests(TestCase):

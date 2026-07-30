@@ -54,10 +54,15 @@ class UserSerializer(serializers.ModelSerializer):
         return instance
 
 class CategorySerializer(serializers.ModelSerializer):
-    product_count = serializers.IntegerField(source='products.count', read_only=True)
+    product_count = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
         fields = ['id', 'name', 'name_en', 'name_ja', 'name_vi', 'slug', 'product_count']
+
+    def get_product_count(self, obj):
+        annotated_count = getattr(obj, 'product_count', None)
+        return annotated_count if annotated_count is not None else obj.products.count()
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')

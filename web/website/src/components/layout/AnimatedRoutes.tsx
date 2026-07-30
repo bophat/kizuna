@@ -1,19 +1,20 @@
-import type { ReactNode } from 'react';
+import { lazy, Suspense, type ReactNode } from 'react';
 import { AnimatePresence } from 'motion/react';
 import { Route, Routes, useLocation } from 'react-router-dom';
 import { AnimatedPage } from './AnimatedPage';
-import { HomePage } from '@/pages/Home';
-import { CartPage } from '@/pages/Cart';
-import { CheckoutPage } from '@/pages/Checkout';
-import { NotificationsPage } from '@/pages/Notifications';
-import { ProfilePage } from '@/pages/Profile';
-import { LoginPage } from '@/pages/Login';
-import { RegisterPage } from '@/pages/Register';
-import { CollectionPage } from '@/pages/Collection';
-import { ConciergePage } from '@/pages/Concierge';
-import { WishlistPage } from '@/pages/Wishlist';
-import { ProductDetail } from '@/pages/ProductDetail';
-import { NotFoundPage } from '@/pages/NotFound';
+
+const HomePage = lazy(() => import('@/pages/Home').then((module) => ({ default: module.HomePage })));
+const CartPage = lazy(() => import('@/pages/Cart').then((module) => ({ default: module.CartPage })));
+const CheckoutPage = lazy(() => import('@/pages/Checkout').then((module) => ({ default: module.CheckoutPage })));
+const NotificationsPage = lazy(() => import('@/pages/Notifications').then((module) => ({ default: module.NotificationsPage })));
+const ProfilePage = lazy(() => import('@/pages/Profile').then((module) => ({ default: module.ProfilePage })));
+const LoginPage = lazy(() => import('@/pages/Login').then((module) => ({ default: module.LoginPage })));
+const RegisterPage = lazy(() => import('@/pages/Register').then((module) => ({ default: module.RegisterPage })));
+const CollectionPage = lazy(() => import('@/pages/Collection').then((module) => ({ default: module.CollectionPage })));
+const ConciergePage = lazy(() => import('@/pages/Concierge').then((module) => ({ default: module.ConciergePage })));
+const WishlistPage = lazy(() => import('@/pages/Wishlist').then((module) => ({ default: module.WishlistPage })));
+const ProductDetail = lazy(() => import('@/pages/ProductDetail').then((module) => ({ default: module.ProductDetail })));
+const NotFoundPage = lazy(() => import('@/pages/NotFound').then((module) => ({ default: module.NotFoundPage })));
 
 function wrap(page: ReactNode) {
   return <AnimatedPage>{page}</AnimatedPage>;
@@ -23,23 +24,33 @@ export function AnimatedRoutes() {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait" initial={false}>
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={wrap(<HomePage />)} />
-        <Route path="/collections" element={wrap(<CollectionPage />)} />
-        <Route path="/cart" element={wrap(<CartPage />)} />
-        <Route path="/checkout" element={wrap(<CheckoutPage />)} />
-        <Route path="/notifications" element={wrap(<NotificationsPage />)} />
-        <Route path="/order-history" element={wrap(<ProfilePage />)} />
-        <Route path="/account" element={wrap(<ProfilePage />)} />
-        <Route path="/profile" element={wrap(<ProfilePage />)} />
-        <Route path="/wishlist" element={wrap(<WishlistPage />)} />
-        <Route path="/product/:id" element={wrap(<ProductDetail />)} />
-        <Route path="/login" element={wrap(<LoginPage />)} />
-        <Route path="/register" element={wrap(<RegisterPage />)} />
-        <Route path="/concierge" element={wrap(<ConciergePage />)} />
-        <Route path="*" element={wrap(<NotFoundPage />)} />
-      </Routes>
-    </AnimatePresence>
+    <Suspense
+      fallback={(
+        <div className="min-h-[50vh] flex items-center justify-center" role="status" aria-live="polite">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary/20 border-t-primary" />
+        </div>
+      )}
+    >
+      <AnimatePresence mode="wait" initial={false}>
+        <div key={location.pathname} className="contents">
+          <Routes location={location}>
+            <Route path="/" element={wrap(<HomePage />)} />
+            <Route path="/collections" element={wrap(<CollectionPage />)} />
+            <Route path="/cart" element={wrap(<CartPage />)} />
+            <Route path="/checkout" element={wrap(<CheckoutPage />)} />
+            <Route path="/notifications" element={wrap(<NotificationsPage />)} />
+            <Route path="/order-history" element={wrap(<ProfilePage />)} />
+            <Route path="/account" element={wrap(<ProfilePage />)} />
+            <Route path="/profile" element={wrap(<ProfilePage />)} />
+            <Route path="/wishlist" element={wrap(<WishlistPage />)} />
+            <Route path="/product/:id" element={wrap(<ProductDetail />)} />
+            <Route path="/login" element={wrap(<LoginPage />)} />
+            <Route path="/register" element={wrap(<RegisterPage />)} />
+            <Route path="/concierge" element={wrap(<ConciergePage />)} />
+            <Route path="*" element={wrap(<NotFoundPage />)} />
+          </Routes>
+        </div>
+      </AnimatePresence>
+    </Suspense>
   );
 }

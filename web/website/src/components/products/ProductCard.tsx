@@ -26,7 +26,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
 
   const inWishlist = isInWishlist(product.id);
 
-  // Use the likes count from the global map (polled every 5s) or fall back to product data
+  // Use a refreshed shared count when available, otherwise use the product payload.
   const displayLikes = likesMap[product.id] ?? product.likes ?? 0;
 
   const handleAddToCart = async (e: React.MouseEvent) => {

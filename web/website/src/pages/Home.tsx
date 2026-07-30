@@ -18,7 +18,8 @@ const DEFAULT_HERO_IMAGE =
 
 export function HomePage() {
   const { t, i18n } = useTranslation();
-  const [products, setProducts] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [featured, setFeatured] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [heroImage, setHeroImage] = useState<string>(DEFAULT_HERO_IMAGE);
   const [publicSettings, setPublicSettings] = useState<Record<string, string>>({});
@@ -37,18 +38,30 @@ export function HomePage() {
 
     const fetchProducts = async () => {
       try {
-        const response = await apiFetch('/shop/products/');
-        if (!response.ok) throw new Error('Failed to fetch');
-        const data = await response.json();
-        const mapped: Product[] = data.map((p: any) => ({
+        const mapProduct = (p: any): Product => ({
           ...p,
           isNew: p.is_new,
           isFeatured: p.is_featured,
           isLimited: p.is_limited,
           isCheap: p.is_cheap,
           category: p.category_name || p.category,
-        }));
-        setProducts(mapped);
+        });
+
+        const response = await apiFetch('/shop/products/home/');
+        if (response.ok) {
+          const data = await response.json();
+          setNewArrivals((data.new_arrivals || []).map(mapProduct));
+          setFeatured((data.featured || []).map(mapProduct));
+        } else {
+          // Backward-compatible while the new Cloud Run revision is deploying.
+          const fallbackResponse = await apiFetch('/shop/products/');
+          if (!fallbackResponse.ok) throw new Error('Failed to fetch');
+          const products: Product[] = (await fallbackResponse.json()).map(mapProduct);
+          const arrivals = products.filter((product) => product.isNew);
+          const highlighted = products.filter((product) => product.isFeatured);
+          setNewArrivals((arrivals.length ? arrivals : products).slice(0, 3));
+          setFeatured((highlighted.length ? highlighted : products).slice(0, 4));
+        }
       } catch (err) {
         console.error('Failed to load products:', err);
       } finally {
@@ -58,8 +71,6 @@ export function HomePage() {
     fetchProducts();
   }, [i18n.language]);
 
-  const newArrivals = products.filter(p => p.isNew).slice(0, 3);
-  const featured = products.filter(p => p.isFeatured).slice(0, 4);
   const displayTitle = contentOrFallback(
     localizedContentValue(publicSettings, PUBLIC_CONTENT_KEYS.homeHeroTitle, i18n.language),
     t('hero.title'),
@@ -114,7 +125,7 @@ export function HomePage() {
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
         ) : (
-          <ProductGrid products={newArrivals.length > 0 ? newArrivals : products.slice(0, 3)} layout="grid-3" />
+          <ProductGrid products={newArrivals} layout="grid-3" />
         )}
       </section>
 
@@ -129,7 +140,7 @@ export function HomePage() {
         {isLoading ? (
           <div className="flex justify-center py-12"><Loader2 className="w-8 h-8 animate-spin text-primary" /></div>
         ) : (
-          <ProductGrid products={featured.length > 0 ? featured : products.slice(3, 7)} layout="grid-4" />
+          <ProductGrid products={featured} layout="grid-4" />
         )}
       </section>
     </div>

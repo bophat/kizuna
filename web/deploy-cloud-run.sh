@@ -3,7 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ID="${1:-${PROJECT_ID:-}}"
-REGION="${REGION:-us-central1}"
+REGION="${REGION:-asia-southeast1}"
 SERVICE="${SERVICE:-kizuna-api}"
 RUNTIME_SA_NAME="${RUNTIME_SA_NAME:-kizuna-backend-runtime}"
 BUCKET="${GCS_BUCKET_NAME:-${PROJECT_ID}-kizuna-media}"
@@ -11,6 +11,11 @@ DATABASE_SECRET="${DATABASE_SECRET:-kizuna-database-url}"
 DJANGO_SECRET="${DJANGO_SECRET:-kizuna-django-secret-key}"
 WEBSITE_URL="${WEBSITE_URL:-}"
 ADMIN_URL="${ADMIN_URL:-}"
+CLOUD_RUN_CPU="${CLOUD_RUN_CPU:-1}"
+CLOUD_RUN_MEMORY="${CLOUD_RUN_MEMORY:-512Mi}"
+CLOUD_RUN_CONCURRENCY="${CLOUD_RUN_CONCURRENCY:-20}"
+MIN_INSTANCES="${MIN_INSTANCES:-0}"
+MAX_INSTANCES="${MAX_INSTANCES:-3}"
 
 if [[ -z "$PROJECT_ID" ]]; then
   echo "Usage: ./deploy-cloud-run.sh <GCP_PROJECT_ID>"
@@ -125,17 +130,18 @@ for secret_id in "$DATABASE_SECRET" "$DJANGO_SECRET"; do
 done
 
 echo "Building and deploying Django backend: $SERVICE"
+echo "Region: $REGION | min instances: $MIN_INSTANCES | max instances: $MAX_INSTANCES"
 gcloud run deploy "$SERVICE" \
   --project "$PROJECT_ID" \
   --source "$SCRIPT_DIR/backend" \
   --region "$REGION" \
   --allow-unauthenticated \
   --service-account "$RUNTIME_SA" \
-  --cpu=1 \
-  --memory=512Mi \
-  --concurrency=20 \
-  --min=0 \
-  --max=1 \
+  --cpu="$CLOUD_RUN_CPU" \
+  --memory="$CLOUD_RUN_MEMORY" \
+  --concurrency="$CLOUD_RUN_CONCURRENCY" \
+  --min="$MIN_INSTANCES" \
+  --max="$MAX_INSTANCES" \
   --timeout=300 \
   --set-env-vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}" \
   --set-secrets="DATABASE_URL=${DATABASE_SECRET}:latest,DJANGO_SECRET_KEY=${DJANGO_SECRET}:latest"

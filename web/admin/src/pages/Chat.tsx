@@ -148,7 +148,7 @@ export default function Chat() {
                 {t('chat.no_sessions')}
               </div>
             ) : (
-              Object.entries(sessions)
+              (Object.entries(sessions) as Array<[string, ChatSession]>)
                 .sort(([, a], [, b]) => b.updated_at - a.updated_at)
                 .map(([id, session]) => (
                   <button

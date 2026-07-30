@@ -33,17 +33,22 @@ export function ProductDetail() {
 
   const inWishlist = isInWishlist(id || '');
 
-  // Use the likes count from the global map (polled every 5s) or fall back to product data
+  // Use the latest shared likes count or fall back to the product payload.
   const displayLikes = product ? (likesMap[product.id] ?? product.likes ?? 0) : 0;
 
   useEffect(() => {
     const fetchProductDetails = async () => {
       try {
         setIsLoading(true);
-        // Fetch specific product
-        const response = await apiFetch(`/shop/products/${id}/`);
+        const [response, relatedRes] = await Promise.all([
+          apiFetch(`/shop/products/${id}/`),
+          apiFetch(`/shop/products/${id}/related/`),
+        ]);
         if (!response.ok) throw new Error(t('product.not_found'));
-        const p = await response.json();
+        const [p, relatedData] = await Promise.all([
+          response.json(),
+          relatedRes.ok ? relatedRes.json() : Promise.resolve([]),
+        ]);
         
         const mappedProduct: Product = {
           ...p,
@@ -57,11 +62,8 @@ export function ProductDetail() {
         setProduct(mappedProduct);
         setSelectedImage(mappedProduct.image);
         
-        // Fetch all products for "Related Products" section
-        const relatedRes = await apiFetch('/shop/products/');
-        if (relatedRes.ok) {
-          const allProds = await relatedRes.json();
-          const mappedAll = allProds.map((ap: any) => ({
+        if (Array.isArray(relatedData)) {
+          const mappedRelated = relatedData.map((ap: any) => ({
             ...ap,
             isNew: ap.is_new,
             isFeatured: ap.is_featured,
@@ -69,16 +71,7 @@ export function ProductDetail() {
             isCheap: ap.is_cheap,
             category: ap.category_name || ap.category,
           }));
-          
-          // Filter out current product, and prefer same category
-          let related = mappedAll.filter((ap: Product) => ap.id !== mappedProduct.id);
-          const sameCategory = related.filter((ap: Product) => ap.category === mappedProduct.category);
-          
-          if (sameCategory.length > 0) {
-            related = sameCategory;
-          }
-          
-          setRelatedProducts(related.slice(0, 4)); // Get up to 4 related products
+          setRelatedProducts(mappedRelated);
         }
       } catch (err) {
         console.error(err);

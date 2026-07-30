@@ -61,7 +61,14 @@ class AdminProductViewSet(viewsets.ModelViewSet):
         instance.delete()
 
 class AdminOrderViewSet(viewsets.ModelViewSet):
-    queryset = Order.objects.all().order_by('-created_at')
+    queryset = (
+        Order.objects.select_related('user', 'user__profile')
+        .prefetch_related(
+            'items__product__category',
+            'items__product__source_info',
+        )
+        .order_by('-created_at')
+    )
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -91,7 +98,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         serializer.save()
 
 class AdminUserViewSet(viewsets.ModelViewSet):
-    queryset = User.objects.all().order_by('-date_joined')
+    queryset = User.objects.select_related('profile').all().order_by('-date_joined')
     serializer_class = UserSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -103,7 +110,7 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         return queryset
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):
-    queryset = Category.objects.all()
+    queryset = Category.objects.annotate(product_count=Count('products')).all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser]
 

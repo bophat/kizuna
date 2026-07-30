@@ -15,7 +15,8 @@ tiếp tục chạy trên hai Vercel projects hiện có.
 ## Thông tin cần chuẩn bị
 
 - Google Cloud Project ID đã liên kết Billing Account.
-- `postgresql://neondb_owner:npg_e5BKv8ujNrOQ@ep-summer-haze-ao42qif5-pooler.c-2.ap-southeast-1.aws.neon.tech/kizuna?sslmode=require&channel_binding=require` của Neon đang sử dụng.
+- Neon pooled `DATABASE_URL` đang sử dụng. Chỉ nhập URL này trong prompt ẩn của
+  script hoặc Secret Manager; không ghi giá trị thật vào tài liệu hay Git.
 - URL website Vercel, ví dụ `https://kizuna-teal.vercel.app/`.
 - URL admin Vercel, ví dụ `https://kizuna-admin.vercel.app/login`.
 - Google Cloud CLI đã đăng nhập bằng `gcloud auth login`.
@@ -46,7 +47,8 @@ Script tự động:
 - build `web/backend/Dockerfile` bằng Cloud Build;
 - chạy Django migration và khởi động Gunicorn;
 - cấu hình CORS/CSRF cho đúng hai Vercel domains;
-- giới hạn Cloud Run ở `min=0`, `max=1`.
+- deploy mặc định tại `asia-southeast1`, gần Neon Singapore;
+- giới hạn Cloud Run mặc định ở `min=0`, `max=3`.
 
 Cũng có thể truyền URL Vercel trước:
 
@@ -56,19 +58,32 @@ ADMIN_URL=https://YOUR-ADMIN.vercel.app \
 ./deploy-cloud-run.sh YOUR_GCP_PROJECT_ID
 ```
 
+Mặc định `min=0` không tạo chi phí instance cố định nhưng request đầu sau thời
+gian idle có thể bị cold start. Muốn ưu tiên tốc độ ổn định:
+
+```bash
+MIN_INSTANCES=1 \
+WEBSITE_URL=https://YOUR-WEBSITE.vercel.app \
+ADMIN_URL=https://YOUR-ADMIN.vercel.app \
+./deploy-cloud-run.sh YOUR_GCP_PROJECT_ID
+```
+
+Có thể ghi đè thêm `REGION`, `MAX_INSTANCES`, `CLOUD_RUN_CPU`,
+`CLOUD_RUN_MEMORY` và `CLOUD_RUN_CONCURRENCY` khi cần.
+
 ## Cập nhật Vercel sau khi backend deploy
 
 Script sẽ in ra Cloud Run URL, ví dụ:
 
 ```text
-https://kizuna-api-xxxxx-uc.a.run.app
+https://kizuna-api-xxxxx-as.a.run.app
 ```
 
 Trong cả hai Vercel projects, cập nhật:
 
 ```text
-VITE_API_BASE_URL=https://kizuna-api-xxxxx-uc.a.run.app/api
-VITE_MEDIA_BASE_URL=https://kizuna-api-xxxxx-uc.a.run.app
+VITE_API_BASE_URL=https://kizuna-api-xxxxx-as.a.run.app/api
+VITE_MEDIA_BASE_URL=https://kizuna-api-xxxxx-as.a.run.app
 ```
 
 Sau đó chọn **Redeploy** cho Website và Admin. Không thêm dấu `/` ở cuối URL.
@@ -101,7 +116,7 @@ Mở website Vercel và kiểm tra:
 ```bash
 gcloud run services logs read kizuna-api \
   --project YOUR_GCP_PROJECT_ID \
-  --region us-central1 \
+  --region asia-southeast1 \
   --limit 100
 ```
 
@@ -115,4 +130,6 @@ cd /Users/phattdt/Desktop/phat/myprj-AIv2/web
 ```
 
 Script sẽ dùng lại Neon secret, Django secret, bucket và service account đã tạo.
-Không cần thay đổi lại Vercel nếu Cloud Run service URL vẫn giữ nguyên.
+Lần đầu chuyển từ `us-central1` sang `asia-southeast1`, Cloud Run sẽ tạo URL mới;
+phải cập nhật `VITE_API_BASE_URL` và `VITE_MEDIA_BASE_URL` trên cả hai dự án
+Vercel. Các lần deploy tiếp theo trong cùng region sẽ giữ nguyên URL.

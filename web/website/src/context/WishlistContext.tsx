@@ -77,11 +77,10 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
       setIsLoading(false);
     }
 
-    fetchLikesCounts();
-    
-    // Polling every 5 seconds for "realtime" updates
-    const interval = setInterval(fetchLikesCounts, 5000);
-    return () => clearInterval(interval);
+    // Product payloads already include likes. Refresh only when the visitor
+    // returns to the tab or immediately after a wishlist mutation.
+    window.addEventListener('focus', fetchLikesCounts);
+    return () => window.removeEventListener('focus', fetchLikesCounts);
   }, [isAuthenticated, i18n.language]);
 
   const addToWishlist = async (productId: string | number) => {

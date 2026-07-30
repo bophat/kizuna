@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import { apiFetch } from '@/lib/api';
+import { useAuth } from '@/context/AuthContext';
 
 export interface CartItem {
   id: number;
@@ -28,6 +29,7 @@ interface CartContextType {
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const [cart, setCart] = useState<Cart | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -98,8 +100,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
   };
 
   useEffect(() => {
-    fetchCart();
-  }, []);
+    if (authLoading) return;
+    if (isAuthenticated) {
+      fetchCart();
+    } else {
+      setCart(null);
+      setLoading(false);
+    }
+  }, [authLoading, isAuthenticated]);
 
   return (
     <CartContext.Provider value={{ cart, loading, addToCart, updateQuantity, removeFromCart, fetchCart }}>
