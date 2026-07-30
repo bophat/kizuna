@@ -42,6 +42,26 @@ ERROR_TRANSLATIONS = {
         'ja': '更新トークンがありません',
         'vi': 'Thiếu refresh token',
     },
+    'Please verify your email address before signing in.': {
+        'ja': 'ログインする前にメールアドレスを認証してください。',
+        'vi': 'Vui lòng xác minh địa chỉ email trước khi đăng nhập.',
+    },
+    'We could not send the verification email. Please try again later.': {
+        'ja': '認証メールを送信できませんでした。後でもう一度お試しください。',
+        'vi': 'Không thể gửi email xác minh. Vui lòng thử lại sau.',
+    },
+    'Verification token is required.': {
+        'ja': '認証トークンが必要です。',
+        'vi': 'Thiếu mã xác minh.',
+    },
+    'This verification link has expired.': {
+        'ja': 'この認証リンクは有効期限が切れています。',
+        'vi': 'Liên kết xác minh này đã hết hạn.',
+    },
+    'This verification link is invalid.': {
+        'ja': 'この認証リンクは無効です。',
+        'vi': 'Liên kết xác minh này không hợp lệ.',
+    },
     'AI concierge is disabled — an admin will reply shortly.': {
         'ja': 'AIコンシェルジュは無効です。管理者がまもなく返信します。',
         'vi': 'AI Concierge đang tắt. Quản trị viên sẽ sớm phản hồi.',

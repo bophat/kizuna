@@ -9,8 +9,16 @@ RUNTIME_SA_NAME="${RUNTIME_SA_NAME:-kizuna-backend-runtime}"
 BUCKET="${GCS_BUCKET_NAME:-${PROJECT_ID}-kizuna-media}"
 DATABASE_SECRET="${DATABASE_SECRET:-kizuna-database-url}"
 DJANGO_SECRET="${DJANGO_SECRET:-kizuna-django-secret-key}"
+EMAIL_PASSWORD_SECRET="${EMAIL_PASSWORD_SECRET:-kizuna-email-host-password}"
 WEBSITE_URL="${WEBSITE_URL:-}"
 ADMIN_URL="${ADMIN_URL:-}"
+EMAIL_HOST="${EMAIL_HOST:-}"
+EMAIL_PORT="${EMAIL_PORT:-587}"
+EMAIL_HOST_USER="${EMAIL_HOST_USER:-}"
+EMAIL_HOST_PASSWORD="${EMAIL_HOST_PASSWORD:-}"
+EMAIL_USE_TLS="${EMAIL_USE_TLS:-True}"
+EMAIL_USE_SSL="${EMAIL_USE_SSL:-False}"
+DEFAULT_FROM_EMAIL="${DEFAULT_FROM_EMAIL:-}"
 CLOUD_RUN_CPU="${CLOUD_RUN_CPU:-1}"
 CLOUD_RUN_MEMORY="${CLOUD_RUN_MEMORY:-512Mi}"
 CLOUD_RUN_CONCURRENCY="${CLOUD_RUN_CONCURRENCY:-20}"
@@ -35,6 +43,15 @@ fi
 if [[ -z "$ADMIN_URL" ]]; then
   read -r -p "Vercel admin URL (https://...): " ADMIN_URL
 fi
+if [[ -z "$EMAIL_HOST" ]]; then
+  read -r -p "SMTP host: " EMAIL_HOST
+fi
+if [[ -z "$EMAIL_HOST_USER" ]]; then
+  read -r -p "SMTP username: " EMAIL_HOST_USER
+fi
+if [[ -z "$DEFAULT_FROM_EMAIL" ]]; then
+  read -r -p "From email (for example KIZUNA <no-reply@example.com>): " DEFAULT_FROM_EMAIL
+fi
 
 WEBSITE_URL="${WEBSITE_URL%/}"
 ADMIN_URL="${ADMIN_URL%/}"
@@ -44,6 +61,28 @@ for frontend_url in "$WEBSITE_URL" "$ADMIN_URL"; do
     exit 2
   fi
 done
+if [[ -z "$EMAIL_HOST" || -z "$EMAIL_HOST_USER" || -z "$DEFAULT_FROM_EMAIL" ]]; then
+  echo "SMTP host, username and from email are required."
+  exit 2
+fi
+case "$EMAIL_USE_TLS" in
+  1|true|TRUE|True|yes|YES) EMAIL_USE_TLS="True" ;;
+  0|false|FALSE|False|no|NO) EMAIL_USE_TLS="False" ;;
+  *) echo "EMAIL_USE_TLS must be True or False."; exit 2 ;;
+esac
+case "$EMAIL_USE_SSL" in
+  1|true|TRUE|True|yes|YES) EMAIL_USE_SSL="True" ;;
+  0|false|FALSE|False|no|NO) EMAIL_USE_SSL="False" ;;
+  *) echo "EMAIL_USE_SSL must be True or False."; exit 2 ;;
+esac
+if [[ "$EMAIL_USE_TLS" == "True" && "$EMAIL_USE_SSL" == "True" ]]; then
+  echo "EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be True."
+  exit 2
+fi
+if [[ ! "$EMAIL_PORT" =~ ^[0-9]+$ ]]; then
+  echo "EMAIL_PORT must be a number."
+  exit 2
+fi
 
 RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
 
@@ -122,7 +161,17 @@ if ! secret_exists "$DJANGO_SECRET" && [[ -z "$django_secret_value" ]]; then
 fi
 create_or_update_secret "$DJANGO_SECRET" "$django_secret_value"
 
-for secret_id in "$DATABASE_SECRET" "$DJANGO_SECRET"; do
+if ! secret_exists "$EMAIL_PASSWORD_SECRET" && [[ -z "$EMAIL_HOST_PASSWORD" ]]; then
+  read -r -s -p "SMTP password or API key: " EMAIL_HOST_PASSWORD
+  echo
+fi
+if ! secret_exists "$EMAIL_PASSWORD_SECRET" && [[ -z "$EMAIL_HOST_PASSWORD" ]]; then
+  echo "SMTP password or API key cannot be empty."
+  exit 2
+fi
+create_or_update_secret "$EMAIL_PASSWORD_SECRET" "$EMAIL_HOST_PASSWORD"
+
+for secret_id in "$DATABASE_SECRET" "$DJANGO_SECRET" "$EMAIL_PASSWORD_SECRET"; do
   gcloud secrets add-iam-policy-binding "$secret_id" \
     --project "$PROJECT_ID" \
     --member="serviceAccount:${RUNTIME_SA}" \
@@ -143,8 +192,8 @@ gcloud run deploy "$SERVICE" \
   --min="$MIN_INSTANCES" \
   --max="$MAX_INSTANCES" \
   --timeout=300 \
-  --set-env-vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}" \
-  --set-secrets="DATABASE_URL=${DATABASE_SECRET}:latest,DJANGO_SECRET_KEY=${DJANGO_SECRET}:latest"
+  --set-env-vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|WEBSITE_URL=${WEBSITE_URL}|EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend|EMAIL_HOST=${EMAIL_HOST}|EMAIL_PORT=${EMAIL_PORT}|EMAIL_HOST_USER=${EMAIL_HOST_USER}|EMAIL_USE_TLS=${EMAIL_USE_TLS}|EMAIL_USE_SSL=${EMAIL_USE_SSL}|DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}|EMAIL_VERIFICATION_TIMEOUT=86400" \
+  --set-secrets="DATABASE_URL=${DATABASE_SECRET}:latest,DJANGO_SECRET_KEY=${DJANGO_SECRET}:latest,EMAIL_HOST_PASSWORD=${EMAIL_PASSWORD_SECRET}:latest"
 
 SERVICE_URL="$(
   gcloud run services describe "$SERVICE" \

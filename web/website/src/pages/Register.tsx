@@ -38,8 +38,12 @@ export function RegisterPage() {
       const data = await response.json();
 
       if (response.ok) {
-        navigate('/login');
+        navigate(`/verify-email?sent=1&email=${encodeURIComponent(email)}`, { replace: true });
       } else {
+        if (data?.code === 'verification_delivery_failed') {
+          setError(t('auth.verification_resend_failed'));
+          return;
+        }
         // Handle field-specific errors from Django
         if (data && typeof data === 'object') {
           setFieldErrors(data);

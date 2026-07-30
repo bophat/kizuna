@@ -29,6 +29,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   const isAuthEndpoint =
     endpoint.includes('/login/') ||
     endpoint.includes('/register/') ||
+    endpoint.includes('/verify-email/') ||
+    endpoint.includes('/resend-verification/') ||
     endpoint.includes('/logout/') ||
     endpoint.includes('/token/refresh/') ||
     endpoint.includes('/check-email/');

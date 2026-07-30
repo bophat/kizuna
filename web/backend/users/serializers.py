@@ -23,13 +23,32 @@ class RegisterSerializer(serializers.ModelSerializer):
         model = User
         fields = ['username', 'password', 'email']
 
+    def validate_username(self, value):
+        value = value.strip()
+        if User.objects.filter(username__iexact=value).exists():
+            raise serializers.ValidationError('A user with that username already exists.')
+        return value
+
+    def validate_email(self, value):
+        value = value.strip().lower()
+        if User.objects.filter(email__iexact=value).exists():
+            raise serializers.ValidationError('An account with this email already exists.')
+        return value
+
     def create(self, validated_data):
+        request = self.context.get('request')
+        created_by_admin = bool(
+            request
+            and request.user.is_authenticated
+            and request.user.is_staff
+        )
         return User.objects.create_user(
             username=validated_data['username'],
             password=validated_data['password'],
             email=validated_data['email'],
             is_staff=False,
             is_superuser=False,
+            is_active=created_by_admin,
         )
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):

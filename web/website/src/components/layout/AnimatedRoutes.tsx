@@ -10,6 +10,7 @@ const NotificationsPage = lazy(() => import('@/pages/Notifications').then((modul
 const ProfilePage = lazy(() => import('@/pages/Profile').then((module) => ({ default: module.ProfilePage })));
 const LoginPage = lazy(() => import('@/pages/Login').then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('@/pages/Register').then((module) => ({ default: module.RegisterPage })));
+const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmail').then((module) => ({ default: module.VerifyEmailPage })));
 const CollectionPage = lazy(() => import('@/pages/Collection').then((module) => ({ default: module.CollectionPage })));
 const ConciergePage = lazy(() => import('@/pages/Concierge').then((module) => ({ default: module.ConciergePage })));
 const WishlistPage = lazy(() => import('@/pages/Wishlist').then((module) => ({ default: module.WishlistPage })));
@@ -46,6 +47,7 @@ export function AnimatedRoutes() {
             <Route path="/product/:id" element={wrap(<ProductDetail />)} />
             <Route path="/login" element={wrap(<LoginPage />)} />
             <Route path="/register" element={wrap(<RegisterPage />)} />
+            <Route path="/verify-email" element={wrap(<VerifyEmailPage />)} />
             <Route path="/concierge" element={wrap(<ConciergePage />)} />
             <Route path="*" element={wrap(<NotFoundPage />)} />
           </Routes>

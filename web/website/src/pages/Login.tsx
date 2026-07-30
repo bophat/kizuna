@@ -14,6 +14,7 @@ export function LoginPage() {
   const [password, setPassword] = useState('');
   const [rememberMe, setRememberMe] = useState(!!localStorage.getItem('remembered_email'));
   const [error, setError] = useState('');
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [loading, setLoading] = useState(false);
   const [bgImage, setBgImage] = useState<string>("url('https://lh3.googleusercontent.com/aida-public/AB6AXuAYx4N_KGp9PaB1iF6i4DricApqoGzv8pp66cyyyczyePv66qo2crpj6RqBD7NFRAsd9ZT5I0Y4YFd-7IRfSnYPDuteNnLOCbSY7nwSgxmatbDqGuMRis_3AoE_6j9Vt-ekse4rbttScetenX78DcQeMHEq4SnxUyZX_yhrfcknlDjeG1-Ud1hCgagjtc2C3bfeQ1IGneeMTyiRmJs2wfAy4kvxOnlUSMxc9xjjjNwTMWlE1UvrW7xnGcSroSCYKS7iFk0J8o7eVJk')");
   const navigate = useNavigate();
@@ -36,6 +37,7 @@ export function LoginPage() {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
+    setNeedsVerification(false);
     setLoading(true);
 
     try {
@@ -59,7 +61,10 @@ export function LoginPage() {
         await refreshUser();
         navigate('/');
       } else {
-        if (response.status === 401) {
+        if (data.code === 'email_not_verified') {
+          setNeedsVerification(true);
+          setError(t('auth.email_not_verified'));
+        } else if (response.status === 401) {
           setError(t('auth.invalid_credentials'));
         } else {
           setError(data.message || data.detail || t('auth.invalid_credentials'));
@@ -94,6 +99,14 @@ export function LoginPage() {
             {error && (
               <div className="p-3 bg-red-50 border border-red-200 text-red-600 body-sm rounded-sm">
                 {error}
+                {needsVerification && (
+                  <Link
+                    to={`/verify-email?email=${encodeURIComponent(email)}`}
+                    className="block mt-2 font-medium underline"
+                  >
+                    {t('auth.verification_resend')}
+                  </Link>
+                )}
               </div>
             )}
             <div className="flex flex-col gap-2">

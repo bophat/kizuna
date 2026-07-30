@@ -10,10 +10,14 @@ from .views import (
     LogoutView,
     CheckEmailView,
     UserAvatarUploadView,
+    VerifyEmailView,
+    ResendVerificationView,
 )
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
+    path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
+    path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
     path('login/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
