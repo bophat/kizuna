@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/Icons';
-import { Loader2, Package, Star, LogOut, CheckCircle2, KeyRound } from 'lucide-react';
+import { CircleAlert, Loader2, Package, Star, LogOut, CheckCircle2, KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
@@ -140,10 +140,23 @@ export function ProfilePage() {
     setPasswordMessage(null);
     try {
       const response = await apiFetch('/password-change/request/', { method: 'POST' });
+      const data = await response.json().catch(() => ({}));
       if (response.ok) {
         setPasswordMessage({ type: 'success', text: t('profile.change_password_sent') });
+      } else if (response.status === 404) {
+        setPasswordMessage({ type: 'error', text: t('profile.change_password_unavailable') });
+      } else if (response.status === 429) {
+        setPasswordMessage({ type: 'error', text: t('profile.change_password_rate_limited') });
+      } else if (response.status === 401) {
+        await logout();
+        navigate('/login');
       } else {
-        setPasswordMessage({ type: 'error', text: t('profile.change_password_failed') });
+        setPasswordMessage({
+          type: 'error',
+          text: data.code === 'password_email_missing'
+            ? t('profile.change_password_email_missing')
+            : t('profile.change_password_failed'),
+        });
       }
     } catch {
       setPasswordMessage({ type: 'error', text: t('common.error_connection') });
@@ -296,31 +309,45 @@ export function ProfilePage() {
                 </div>
               </form>
 
-              <div className="mt-10 pt-8 border-t border-surface-variant">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
-                  <div>
-                    <h2 className="headline-sm mb-2">{t('profile.change_password')}</h2>
-                    <p className="body-sm text-secondary max-w-xl">{t('profile.change_password_body')}</p>
+              <section
+                className="mt-10 rounded-sm border border-surface-variant bg-surface-container/30 p-5 md:p-7"
+                aria-labelledby="change-password-title"
+              >
+                <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
+                  <div className="min-w-0 w-full max-w-xl">
+                    <h2 id="change-password-title" className="headline-sm mb-2 normal-case tracking-normal">
+                      {t('profile.change_password')}
+                    </h2>
+                    <p className="body-sm text-secondary w-full leading-relaxed normal-case break-normal">
+                      {t('profile.change_password_body')}
+                    </p>
                   </div>
                   <button
                     type="button"
                     onClick={handlePasswordChangeRequest}
                     disabled={isSendingPasswordEmail}
-                    className="border border-primary text-primary px-6 py-3 label-md tracking-normal lowercase hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-3 rounded-sm whitespace-nowrap"
+                    className="w-full md:w-auto md:self-start border border-primary text-primary px-6 py-3 label-md tracking-normal normal-case hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-3 rounded-sm whitespace-nowrap"
                   >
                     {isSendingPasswordEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound size={18} />}
                     {isSendingPasswordEmail ? t('profile.change_password_sending') : t('profile.change_password_send')}
                   </button>
                 </div>
                 {passwordMessage && (
-                  <p
-                    className={`mt-4 body-sm ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}
-                    role="status"
+                  <div
+                    className={`mt-5 flex items-start gap-3 rounded-sm border px-4 py-3 body-sm ${
+                      passwordMessage.type === 'success'
+                        ? 'border-green-200 bg-green-50 text-green-700'
+                        : 'border-red-200 bg-red-50 text-red-600'
+                    }`}
+                    role={passwordMessage.type === 'success' ? 'status' : 'alert'}
                   >
-                    {passwordMessage.text}
-                  </p>
+                    {passwordMessage.type === 'success'
+                      ? <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+                      : <CircleAlert className="mt-0.5 shrink-0" size={18} />}
+                    <span className="min-w-0 leading-relaxed normal-case">{passwordMessage.text}</span>
+                  </div>
                 )}
-              </div>
+              </section>
             </div>
           )}
 
