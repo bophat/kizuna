@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     'users',
     'shop',
     'admin_api',
+    'product_sources',
 ]
 
 EMAIL_BACKEND = os.environ.get(
@@ -122,6 +123,16 @@ STORAGES = {
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.environ.get('MEDIA_ROOT', str(BASE_DIR / 'media'))
+GCS_BUCKET_NAME = os.environ.get('GCS_BUCKET_NAME', '').strip()
+if GCS_BUCKET_NAME:
+    STORAGES['default'] = {
+        'BACKEND': 'core.storage.CloudRunMediaStorage',
+        'OPTIONS': {
+            'bucket_name': GCS_BUCKET_NAME,
+            'default_acl': None,
+            'file_overwrite': False,
+        },
+    }
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -182,6 +193,38 @@ EXCHANGE_RATE_API_URL = os.environ.get(
     'EXCHANGE_RATE_API_URL',
     'https://api.frankfurter.app/latest?from=USD&to=VND,JPY',
 )
+
+# --- Amazon/Qoo10 source imports ---
+USD_VND_RATE = os.environ.get('USD_VND_RATE', '25000')
+SOURCE_IMPORT_USE_FAKE_PROVIDERS = os.environ.get(
+    'SOURCE_IMPORT_USE_FAKE_PROVIDERS',
+    str(DEBUG),
+).lower() in ('1', 'true', 'yes')
+ALLOW_AUTO_CREATE_CATEGORY = os.environ.get(
+    'ALLOW_AUTO_CREATE_CATEGORY',
+    'false',
+).lower() in ('1', 'true', 'yes')
+SOURCE_IMPORT_MAX_BATCH = int(os.environ.get('SOURCE_IMPORT_MAX_BATCH', '50'))
+SOURCE_IMPORT_JPY_BUFFER = os.environ.get('SOURCE_IMPORT_JPY_BUFFER', '1000')
+SOURCE_IMPORT_JPY_TO_VND_RATE = os.environ.get('SOURCE_IMPORT_JPY_TO_VND_RATE', '200')
+SOURCE_IMPORT_MARKUP_RATE = os.environ.get('SOURCE_IMPORT_MARKUP_RATE', '0.15')
+SOURCE_IMPORT_LIGHT_SHIPPING_VND = os.environ.get('SOURCE_IMPORT_LIGHT_SHIPPING_VND', '20000')
+SOURCE_IMPORT_HEAVY_SHIPPING_PER_KG_VND = os.environ.get(
+    'SOURCE_IMPORT_HEAVY_SHIPPING_PER_KG_VND',
+    '180000',
+)
+SOURCE_IMPORT_HEAVY_WEIGHT_THRESHOLD_KG = os.environ.get(
+    'SOURCE_IMPORT_HEAVY_WEIGHT_THRESHOLD_KG',
+    '0.5',
+)
+SOURCE_IMPORT_ALLOWED_IMAGE_HOSTS = [
+    host.strip().lower()
+    for host in os.environ.get('SOURCE_IMPORT_ALLOWED_IMAGE_HOSTS', '').split(',')
+    if host.strip()
+]
+AUTO_UPDATE_MAX_INCREASE_PERCENT = os.environ.get('AUTO_UPDATE_MAX_INCREASE_PERCENT', '5')
+REVIEW_PRICE_INCREASE_PERCENT = os.environ.get('REVIEW_PRICE_INCREASE_PERCENT', '15')
+MCP_SYSTEM_USERNAME = os.environ.get('MCP_SYSTEM_USERNAME', 'mcp_system_user')
 
 CHATBOT_INTERNAL_TOKEN = os.environ.get('CHATBOT_INTERNAL_TOKEN', '')
 CHATBOT_SERVICE_URL = os.environ.get('CHATBOT_SERVICE_URL', 'http://127.0.0.1:8080')

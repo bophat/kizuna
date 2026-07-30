@@ -3,9 +3,10 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
-from shop.models import Product, Order, Category, UserProfile
+from shop.models import Product, ProductStatus, Order, Category, UserProfile
 from django.contrib.auth.models import User
 from django.db import transaction
+from django.conf import settings
 from django.db.models import Sum, Count
 from django.utils import timezone
 from datetime import timedelta
@@ -32,8 +33,27 @@ class AdminProductViewSet(viewsets.ModelViewSet):
 
     def perform_update(self, serializer):
         product_id = serializer.instance.id
+        old_status = serializer.instance.status
         logger.info(f"[ADMIN_UPDATE] User: {self.request.user} | Product ID: {product_id}")
-        serializer.save()
+        with transaction.atomic():
+            product = serializer.save()
+            if product.status != old_status:
+                from product_sources.services.audit_service import AuditService
+
+                source = getattr(product, 'source_info', None)
+                action = {
+                    ProductStatus.PUBLISHED: 'product.publish',
+                    ProductStatus.SUSPENDED: 'product.suspend',
+                }.get(product.status, 'product.status_change')
+                AuditService().log(
+                    action=action,
+                    actor=self.request.user,
+                    product_id=product.id,
+                    provider=source.provider if source else '',
+                    source_product_id=source.source_product_id if source else '',
+                    input_summary={'old_status': old_status, 'new_status': product.status},
+                    result_summary={'status': product.status},
+                )
 
     def perform_destroy(self, instance):
         product_id = instance.id
@@ -395,19 +415,12 @@ import io
 import re
 from decimal import Decimal, InvalidOperation
 from shop.models import ProductImage
-from shop.exchange_rates import get_exchange_rates
 from django.utils.text import slugify
 
 
 class BulkImportProductsView(APIView):
     """
-    Import products from Qoo10 scraper CSV.
-    
-    Pricing formula:
-      import_price_vnd = (price_jpy + 1000) * 200
-      shipping_vnd = weight_kg * 180000 if weight > 0.5 else 20000
-      selling_price_vnd = import_price_vnd * 1.15 + shipping_vnd
-      price_usd = selling_price_vnd / usd_to_vnd_rate
+    Import products from Qoo10 scraper CSV or source URL.
     """
     permission_classes = [permissions.IsAdminUser]
     parser_classes = [MultiPartParser, FormParser]
@@ -416,9 +429,7 @@ class BulkImportProductsView(APIView):
         """Parse Japanese price string to numeric value."""
         if not price_str:
             return None
-        # Remove 円, ¥, commas, spaces
         cleaned = re.sub(r'[円¥,\s\u3000]', '', str(price_str).strip())
-        # Extract first number
         match = re.search(r'[\d]+(?:\.[\d]+)?', cleaned)
         if match:
             try:
@@ -426,40 +437,6 @@ class BulkImportProductsView(APIView):
             except InvalidOperation:
                 return None
         return None
-
-    def _calculate_selling_price(self, price_jpy, weight_kg, usd_to_vnd):
-        """Calculate selling price using the pricing formula."""
-        if price_jpy is None:
-            return None
-        
-        # Import price (VND) = (price_jpy + 1000) * 200
-        import_price_vnd = (price_jpy + Decimal('1000')) * Decimal('200')
-        
-        # Shipping (VND)
-        if weight_kg and weight_kg > Decimal('0.5'):
-            shipping_vnd = weight_kg * Decimal('180000')
-        else:
-            shipping_vnd = Decimal('20000')
-        
-        # Selling price (VND) = import * 1.15 + shipping
-        selling_price_vnd = import_price_vnd * Decimal('1.15') + shipping_vnd
-        
-        # Convert to USD for DB storage
-        if usd_to_vnd and usd_to_vnd > 0:
-            price_usd = selling_price_vnd / Decimal(str(usd_to_vnd))
-        else:
-            price_usd = selling_price_vnd / Decimal('25000')
-        
-        return round(price_usd, 2)
-
-    def _clean_image_url(self, url):
-        """Clean image URL, prepending https: if protocol-relative."""
-        if not url:
-            return ""
-        url = url.strip()
-        if url.startswith('//'):
-            return f"https:{url}"
-        return url
 
     def post(self, request):
         csv_file = request.FILES.get('csv_file')
@@ -469,19 +446,28 @@ class BulkImportProductsView(APIView):
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Validate file type
         if not csv_file.name.lower().endswith('.csv'):
             return Response(
                 {'error': 'File must be a CSV file'},
                 status=status.HTTP_400_BAD_REQUEST
             )
 
-        # Get exchange rates
-        rates = get_exchange_rates()
-        usd_to_vnd = rates.get('usd_to_vnd', 25000)
+        usd_to_vnd = Decimal(str(settings.USD_VND_RATE))
+
+        from product_sources.services.import_service import SourceImportService
+        from product_sources.services.pricing_service import ProductPricingService
+        from product_sources.schemas.import_request import ImportSourceProductRequest
+        from product_sources.enums import ImageMode
+        from product_sources.exceptions import UnsupportedProviderError
+        from product_sources.providers import build_provider_registry
+
+        import_service = SourceImportService()
+        pricing_service = ProductPricingService()
+        provider_registry = build_provider_registry()
+        from product_sources.services.audit_service import AuditService
+        audit_service = AuditService()
 
         try:
-            # Read and decode CSV (handle BOM)
             content = csv_file.read().decode('utf-8-sig')
             reader = csv.DictReader(io.StringIO(content))
             
@@ -491,71 +477,133 @@ class BulkImportProductsView(APIView):
             
             for row_num, row in enumerate(reader, start=2):
                 try:
+                    url = (row.get('url') or row.get('URL') or '').strip()
+                    category_id_val = (row.get('category_id') or row.get('Category_ID') or '').strip()
+                    category_id = int(category_id_val) if category_id_val else None
+                    category_name = (row.get('category') or row.get('Category') or '').strip()
+                    if category_id is None and category_name:
+                        matched_category = Category.objects.filter(
+                            name__iexact=category_name,
+                        ).first()
+                        if matched_category:
+                            category_id = matched_category.id
+
+                    # If URL points to a supported provider (Amazon JP or Qoo10 JP), import via service
+                    is_supported_provider_url = False
+                    if url:
+                        try:
+                            provider_registry.resolve_by_url(url)
+                            is_supported_provider_url = True
+                        except UnsupportedProviderError:
+                            pass
+
+                    if is_supported_provider_url:
+                        weight_str = (row.get('weight') or row.get('Weight') or '').strip()
+                        try:
+                            weight_kg = Decimal(weight_str) if weight_str else Decimal('0.3')
+                        except InvalidOperation:
+                            weight_kg = Decimal('0.3')
+
+                        stock_str = (row.get('stock') or row.get('Stock') or '').strip()
+                        try:
+                            default_stock = max(0, int(stock_str)) if stock_str else 1
+                        except ValueError:
+                            default_stock = 1
+
+                        single_request = ImportSourceProductRequest(
+                            url=url,
+                            category_id=category_id,
+                            default_weight_kg=weight_kg,
+                            default_stock=default_stock,
+                            image_mode=ImageMode.REMOTE,
+                            dry_run=False,
+                        )
+                        import_service.import_product(single_request, request.user)
+                        created += 1
+                        continue
+
+                    # Fallback to manual CSV import logic
                     name = (row.get('name') or row.get('Name') or '').strip()
                     if not name:
                         errors.append(f'Row {row_num}: Missing product name')
                         continue
-                    
-                    # Generate product ID from SKU
+
                     sku = (row.get('sku') or row.get('SKU') or '').strip()
                     if sku:
                         product_id = f'QOO-{sku}' if not sku.startswith('QOO-') else sku
                     else:
                         product_id = f'QOO-{uuid.uuid4().hex[:8].upper()}'
-                    
-                    # Check for duplicate
+
                     if Product.objects.filter(id=product_id).exists():
                         skipped += 1
                         continue
                     
-                    # Parse price (Qoo10 scraper exports the price in 'originalPrice'/'Original Price' and literal label '販売価格' in 'price'/'Price')
                     price_jpy = self._parse_jpy_price(
                         row.get('originalPrice') or row.get('Original Price') or 
                         row.get('price') or row.get('Price', '')
                     )
                     
-                    # Parse weight from request data (sent alongside CSV)
                     weight_str = (row.get('weight') or row.get('Weight') or '').strip()
                     try:
                         weight_kg = Decimal(weight_str) if weight_str else Decimal('0.3')
                     except InvalidOperation:
                         weight_kg = Decimal('0.3')
                     
-                    # Calculate selling price
-                    price_usd = self._calculate_selling_price(price_jpy, weight_kg, usd_to_vnd)
-                    if price_usd is None:
-                        price_usd = Decimal('0')
-                    
+                    # Calculate price using shared Pricing Service
+                    price_usd = Decimal('0')
+                    if price_jpy is not None:
+                        calc_res = pricing_service.calculate(
+                            source_price_jpy=price_jpy,
+                            weight_kg=weight_kg,
+                            usd_vnd_rate=usd_to_vnd
+                        )
+                        price_usd = calc_res.selling_price_usd
+
                     # Handle category
                     category = None
-                    category_name = (row.get('category') or row.get('Category') or '').strip()
-                    if category_name:
-                        # Try to find by name (case-insensitive) first to prevent MultipleObjectsReturned
+
+                    if category_id:
+                        category = Category.objects.filter(pk=category_id).first()
+                        if category is None:
+                            errors.append(f'Row {row_num}: Category id={category_id} does not exist.')
+                            continue
+
+                    if not category and category_name:
                         category = Category.objects.filter(name__iexact=category_name).first()
                         if not category:
-                            # Generate a guaranteed unique slug
-                            base_slug = slugify(category_name) or 'category'
-                            slug = base_slug
-                            counter = 1
-                            while Category.objects.filter(slug=slug).exists():
-                                slug = f"{base_slug}-{counter}"
-                                counter += 1
-                            category = Category.objects.create(name=category_name, slug=slug)
-                    
-                    # Brand: use Brand field, fallback to Seller
+                            allow_auto = getattr(settings, 'ALLOW_AUTO_CREATE_CATEGORY', False)
+                            if allow_auto:
+                                base_slug = slugify(category_name) or 'category'
+                                slug = base_slug
+                                counter = 1
+                                while Category.objects.filter(slug=slug).exists():
+                                    slug = f"{base_slug}-{counter}"
+                                    counter += 1
+                                category = Category.objects.create(name=category_name, slug=slug)
+                            else:
+                                errors.append(f'Row {row_num}: Category "{category_name}" does not exist and auto-creation is disabled.')
+                                continue
+
+                    if category is None:
+                        errors.append(f'Row {row_num}: Category is required.')
+                        continue
+
                     brand = (row.get('brand') or row.get('Brand') or row.get('seller') or row.get('Seller') or '').strip()
-                    
-                    # Location from Shipping
                     location = (row.get('shipping') or row.get('Shipping') or '').strip()
+                    main_image = (
+                        row.get('mainImage') or row.get('image') or row.get('Main Image') or ''
+                    ).strip()
+                    if main_image.startswith('//'):
+                        main_image = f"https:{main_image}"
+
+                    stock_str = (row.get('stock') or row.get('Stock') or '').strip()
+                    try:
+                        stock = max(0, int(stock_str)) if stock_str else 1
+                    except ValueError:
+                        stock = 1
+
+                    description = f'Imported from Qoo10: {url}' if url else 'Imported from Qoo10'
                     
-                    # Main image URL
-                    main_image = self._clean_image_url(row.get('mainImage') or row.get('image') or row.get('Main Image') or '')
-                    
-                    # URL as description source
-                    source_url = (row.get('url') or row.get('URL') or '').strip()
-                    description = f'Imported from Qoo10: {source_url}' if source_url else 'Imported from Qoo10'
-                    
-                    # Create product
                     with transaction.atomic():
                         product = Product.objects.create(
                             id=product_id,
@@ -566,30 +614,41 @@ class BulkImportProductsView(APIView):
                             brand=brand[:100] if brand else '',
                             location=location[:100] if location else '',
                             description=description,
-                            stock=1,
+                            stock=stock,
                             weight=weight_kg,
+                            status=ProductStatus.DRAFT,
                             is_new=True,
                         )
                         
-                        # Store main image URL directly
                         if main_image and main_image.startswith('http'):
                             product.image = main_image
                             product.save(update_fields=['image'])
                         
-                        # Create gallery images from All Images
                         all_images_str = (row.get('All Images') or row.get('images') or '').strip()
                         if all_images_str:
                             image_urls = []
-                            for url in all_images_str.split('|'):
-                                cleaned_url = self._clean_image_url(url)
-                                if cleaned_url.startswith('http'):
-                                    image_urls.append(cleaned_url)
-                            for idx, img_url in enumerate(image_urls[:10]):  # Max 10 gallery images
+                            for u in all_images_str.split('|'):
+                                u = u.strip()
+                                if u.startswith('//'):
+                                    u = f"https:{u}"
+                                if u.startswith('http'):
+                                    image_urls.append(u)
+                            for idx, img_url in enumerate(image_urls[:10]):
                                 ProductImage.objects.create(
                                     product=product,
                                     image=img_url,
                                     is_primary=(idx == 0 and not main_image),
                                 )
+
+                        audit_service.log(
+                            action='product_source.import_manual_csv',
+                            actor=request.user,
+                            product_id=product.id,
+                            provider='manual',
+                            source_product_id=sku,
+                            input_summary={'row': row_num, 'sku': sku},
+                            result_summary={'product_id': product.id, 'status': product.status},
+                        )
                     
                     created += 1
                     
@@ -604,7 +663,7 @@ class BulkImportProductsView(APIView):
             return Response({
                 'created': created,
                 'skipped': skipped,
-                'errors': errors[:50],  # Cap at 50 errors
+                'errors': errors[:50],
                 'total_rows': created + skipped + len(errors),
             })
             

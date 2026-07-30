@@ -1,0 +1,156 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PROJECT_ID="${1:-${PROJECT_ID:-}}"
+REGION="${REGION:-us-central1}"
+SERVICE="${SERVICE:-kizuna-api}"
+RUNTIME_SA_NAME="${RUNTIME_SA_NAME:-kizuna-backend-runtime}"
+BUCKET="${GCS_BUCKET_NAME:-${PROJECT_ID}-kizuna-media}"
+DATABASE_SECRET="${DATABASE_SECRET:-kizuna-database-url}"
+DJANGO_SECRET="${DJANGO_SECRET:-kizuna-django-secret-key}"
+WEBSITE_URL="${WEBSITE_URL:-}"
+ADMIN_URL="${ADMIN_URL:-}"
+
+if [[ -z "$PROJECT_ID" ]]; then
+  echo "Usage: ./deploy-cloud-run.sh <GCP_PROJECT_ID>"
+  exit 2
+fi
+
+for command in gcloud openssl; do
+  if ! command -v "$command" >/dev/null 2>&1; then
+    echo "Missing required command: $command"
+    exit 2
+  fi
+done
+
+if [[ -z "$WEBSITE_URL" ]]; then
+  read -r -p "Vercel website URL (https://...): " WEBSITE_URL
+fi
+if [[ -z "$ADMIN_URL" ]]; then
+  read -r -p "Vercel admin URL (https://...): " ADMIN_URL
+fi
+
+WEBSITE_URL="${WEBSITE_URL%/}"
+ADMIN_URL="${ADMIN_URL%/}"
+for frontend_url in "$WEBSITE_URL" "$ADMIN_URL"; do
+  if [[ ! "$frontend_url" =~ ^https:// ]]; then
+    echo "Vercel URLs must start with https://"
+    exit 2
+  fi
+done
+
+RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+
+secret_exists() {
+  gcloud secrets describe "$1" --project "$PROJECT_ID" >/dev/null 2>&1
+}
+
+create_or_update_secret() {
+  local secret_id="$1"
+  local secret_value="$2"
+
+  if secret_exists "$secret_id"; then
+    if [[ -n "$secret_value" ]]; then
+      printf '%s' "$secret_value" \
+        | gcloud secrets versions add "$secret_id" \
+            --project "$PROJECT_ID" \
+            --data-file=- >/dev/null
+      echo "Updated secret: $secret_id"
+    else
+      echo "Reusing secret: $secret_id"
+    fi
+  else
+    printf '%s' "$secret_value" \
+      | gcloud secrets create "$secret_id" \
+          --project "$PROJECT_ID" \
+          --replication-policy=automatic \
+          --data-file=- >/dev/null
+    echo "Created secret: $secret_id"
+  fi
+}
+
+echo "Configuring Google Cloud project: $PROJECT_ID"
+gcloud config set project "$PROJECT_ID" >/dev/null
+gcloud services enable \
+  run.googleapis.com \
+  cloudbuild.googleapis.com \
+  artifactregistry.googleapis.com \
+  secretmanager.googleapis.com \
+  storage.googleapis.com \
+  iam.googleapis.com \
+  --project "$PROJECT_ID"
+
+if ! gcloud iam service-accounts describe "$RUNTIME_SA" \
+  --project "$PROJECT_ID" >/dev/null 2>&1; then
+  gcloud iam service-accounts create "$RUNTIME_SA_NAME" \
+    --project "$PROJECT_ID" \
+    --display-name="KIZUNA backend Cloud Run runtime"
+fi
+
+if ! gcloud storage buckets describe "gs://${BUCKET}" \
+  --project "$PROJECT_ID" >/dev/null 2>&1; then
+  gcloud storage buckets create "gs://${BUCKET}" \
+    --project "$PROJECT_ID" \
+    --location "$REGION" \
+    --uniform-bucket-level-access
+fi
+
+gcloud storage buckets add-iam-policy-binding "gs://${BUCKET}" \
+  --member="serviceAccount:${RUNTIME_SA}" \
+  --role="roles/storage.objectAdmin" >/dev/null
+
+database_value="${DATABASE_URL:-}"
+if ! secret_exists "$DATABASE_SECRET" && [[ -z "$database_value" ]]; then
+  read -r -s -p "Existing Neon DATABASE_URL: " database_value
+  echo
+fi
+if ! secret_exists "$DATABASE_SECRET" && [[ -z "$database_value" ]]; then
+  echo "DATABASE_URL cannot be empty."
+  exit 2
+fi
+create_or_update_secret "$DATABASE_SECRET" "$database_value"
+
+django_secret_value="${DJANGO_SECRET_KEY:-}"
+if ! secret_exists "$DJANGO_SECRET" && [[ -z "$django_secret_value" ]]; then
+  django_secret_value="$(openssl rand -base64 48)"
+fi
+create_or_update_secret "$DJANGO_SECRET" "$django_secret_value"
+
+for secret_id in "$DATABASE_SECRET" "$DJANGO_SECRET"; do
+  gcloud secrets add-iam-policy-binding "$secret_id" \
+    --project "$PROJECT_ID" \
+    --member="serviceAccount:${RUNTIME_SA}" \
+    --role="roles/secretmanager.secretAccessor" >/dev/null
+done
+
+echo "Building and deploying Django backend: $SERVICE"
+gcloud run deploy "$SERVICE" \
+  --project "$PROJECT_ID" \
+  --source "$SCRIPT_DIR/backend" \
+  --region "$REGION" \
+  --allow-unauthenticated \
+  --service-account "$RUNTIME_SA" \
+  --cpu=1 \
+  --memory=512Mi \
+  --concurrency=20 \
+  --min=0 \
+  --max=1 \
+  --timeout=300 \
+  --set-env-vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}" \
+  --set-secrets="DATABASE_URL=${DATABASE_SECRET}:latest,DJANGO_SECRET_KEY=${DJANGO_SECRET}:latest"
+
+SERVICE_URL="$(
+  gcloud run services describe "$SERVICE" \
+    --project "$PROJECT_ID" \
+    --region "$REGION" \
+    --format='value(status.url)'
+)"
+
+echo
+echo "Backend deploy complete: $SERVICE_URL"
+echo "Health check: $SERVICE_URL/healthz"
+echo
+echo "Update both Vercel projects and redeploy them:"
+echo "VITE_API_BASE_URL=$SERVICE_URL/api"
+echo "VITE_MEDIA_BASE_URL=$SERVICE_URL"

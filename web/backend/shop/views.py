@@ -1,7 +1,6 @@
 import mimetypes
-import os
 
-from django.conf import settings
+from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404
 from rest_framework import viewsets, status
 from rest_framework.decorators import action
@@ -11,7 +10,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
-from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, Category, Favorite
+from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, ProductStatus, Category, Favorite
 from .serializers import CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer, CategorySerializer, FavoriteSerializer
 
 class ExchangeRatesView(APIView):
@@ -23,12 +22,12 @@ class ExchangeRatesView(APIView):
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.all().order_by('-created_at')
+    queryset = Product.objects.filter(status=ProductStatus.PUBLISHED).order_by('-created_at')
     serializer_class = PublicProductSerializer
 
     @action(detail=False, methods=['get'])
     def likes_counts(self, request):
-        products = Product.objects.all().values('id', 'likes')
+        products = Product.objects.filter(status=ProductStatus.PUBLISHED).values('id', 'likes')
         return Response(list(products))
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
@@ -65,10 +64,15 @@ class CartViewSet(viewsets.ViewSet):
         if not product_id or not price:
             return Response({"error": "product_id and price are required"}, status=status.HTTP_400_BAD_REQUEST)
 
+        try:
+            product = Product.objects.get(pk=product_id, status=ProductStatus.PUBLISHED)
+        except Product.DoesNotExist:
+            return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
+
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
-            product_id=product_id,
-            defaults={'price': price}
+            product=product,
+            defaults={'price': product.price}
         )
 
         if not created:
@@ -176,6 +180,10 @@ class CheckoutViewSet(viewsets.ViewSet):
 
             # 1. Validate Stock first
             for item in cart.items.all():
+                if item.product.status != ProductStatus.PUBLISHED:
+                    return Response({
+                        "error": f"Product {item.product.name} is not available for checkout"
+                    }, status=status.HTTP_400_BAD_REQUEST)
                 if item.product.stock < item.quantity:
                     return Response({
                         "error": f"Insufficient stock for {item.product.name}. Available: {item.product.stock}"
@@ -271,7 +279,10 @@ class FavoriteViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]
 
     def list(self, request):
-        favorites = Favorite.objects.filter(user=request.user).order_by('-created_at')
+        favorites = Favorite.objects.filter(
+            user=request.user,
+            product__status=ProductStatus.PUBLISHED,
+        ).order_by('-created_at')
         serializer = FavoriteSerializer(favorites, many=True, context={'request': request})
         return Response(serializer.data)
 
@@ -282,7 +293,7 @@ class FavoriteViewSet(viewsets.ViewSet):
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
         
         try:
-            product = Product.objects.get(id=product_id)
+            product = Product.objects.get(id=product_id, status=ProductStatus.PUBLISHED)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -332,24 +343,23 @@ class PublicMediaView(APIView):
     permission_classes = [AllowAny]
 
     def get(self, request, path):
-        safe = os.path.normpath(path).replace('\\', '/').lstrip('/')
+        safe = path.replace('\\', '/').lstrip('/')
         if not safe or '..' in safe.split('/'):
             raise Http404
         if not any(safe.startswith(prefix) for prefix in PUBLIC_MEDIA_PREFIXES):
             raise Http404
 
-        media_root = os.path.realpath(settings.MEDIA_ROOT)
-        full_path = os.path.realpath(os.path.join(media_root, safe))
-        if not full_path.startswith(media_root + os.sep):
-            raise Http404
-        if not os.path.isfile(full_path):
-            raise Http404
+        try:
+            if not default_storage.exists(safe):
+                raise Http404
+            media = default_storage.open(safe, 'rb')
+        except Http404:
+            raise
+        except (FileNotFoundError, OSError, ValueError):
+            raise Http404 from None
 
-        content_type, _ = mimetypes.guess_type(full_path)
-        response = FileResponse(
-            open(full_path, 'rb'),
-            content_type=content_type or 'application/octet-stream',
-        )
+        content_type, _ = mimetypes.guess_type(safe)
+        response = FileResponse(media, content_type=content_type or 'application/octet-stream')
         response['Cross-Origin-Resource-Policy'] = 'cross-origin'
         response['Cache-Control'] = 'public, max-age=86400'
         return response

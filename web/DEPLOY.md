@@ -1,5 +1,8 @@
 # Triển khai KIZUNA
 
+> Deploy riêng Django backend lên **Google Cloud Run**, giữ frontend trên Vercel
+> và database trên Neon: xem `GOOGLE_CLOUD_DEPLOY.md`.
+
 | Thành phần | Nền tảng | Thư mục gốc |
 |------------|----------|-------------|
 | Website (khách) | [Vercel](https://vercel.com) | `web/website` |

@@ -2,6 +2,13 @@ from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import SettingViewSet, AdminProductViewSet, AdminOrderViewSet, AdminUserViewSet, AdminCategoryViewSet, DashboardStatsView, BulkImportProductsView
 from .views_product_images import ProductImageViewSet
+from product_sources.views import (
+    BulkImportView,
+    BulkSyncSourcesView,
+    ImportSourceProductView,
+    PreviewImportView,
+    SyncSourceProductView,
+)
 from .views_ai import (
     AiDiscoverView,
     BotConfigView,
@@ -34,6 +41,15 @@ router.register(r'repost-logs', RepostLogViewSet, basename='repost-logs')
 
 urlpatterns = [
     path('products/import-csv/', BulkImportProductsView.as_view(), name='admin-import-csv'),
+    path('products/import-source/preview/', PreviewImportView.as_view(), name='admin-import-source-preview'),
+    path('products/import-source/', ImportSourceProductView.as_view(), name='admin-import-source'),
+    path('products/import-source/bulk/', BulkImportView.as_view(), name='admin-import-source-bulk'),
+    path('products/sync-sources/', BulkSyncSourcesView.as_view(), name='admin-sync-sources'),
+    path(
+        'products/<str:product_id>/sync-source/',
+        SyncSourceProductView.as_view(),
+        name='admin-sync-source-product',
+    ),
     path('ai/discover/', AiDiscoverView.as_view(), name='admin-ai-discover'),
     path('bot/products/', BotProductsView.as_view(), name='bot-products'),
     path('bot/config/', BotConfigView.as_view(), name='bot-config'),

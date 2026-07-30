@@ -8,11 +8,24 @@ class Category(models.Model):
     def __str__(self):
         return self.name
 
+class ProductStatus(models.TextChoices):
+    DRAFT = 'draft', 'Draft'
+    REVIEW = 'review', 'Review'
+    PUBLISHED = 'published', 'Published'
+    SUSPENDED = 'suspended', 'Suspended'
+
+
 class Product(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
     name = models.CharField(max_length=200)
     price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default='USD')
+    status = models.CharField(
+        max_length=20,
+        choices=ProductStatus.choices,
+        default=ProductStatus.PUBLISHED,
+        db_index=True,
+    )
     category = models.ForeignKey(Category, on_delete=models.SET_NULL, null=True, related_name='products')
     brand = models.CharField(max_length=100, null=True, blank=True)
     location = models.CharField(max_length=100, null=True, blank=True)
