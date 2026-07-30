@@ -20,7 +20,9 @@ from .serializers import (
 )
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
+from rest_framework_simplejwt.settings import api_settings as jwt_settings
 from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.utils import get_md5_hash_password
 
 from .cookie_auth import REFRESH_COOKIE, clear_auth_cookies, set_auth_cookies
 from shop.models import UserProfile
@@ -64,20 +66,51 @@ class EmailTokenObtainPairView(TokenObtainPairView):
 
 
 class CookieTokenRefreshView(TokenRefreshView):
+    @staticmethod
+    def invalid_refresh_response(detail, code='token_not_valid'):
+        response = Response(
+            {'detail': detail, 'code': code},
+            status=status.HTTP_401_UNAUTHORIZED,
+        )
+        clear_auth_cookies(response)
+        return response
+
     def post(self, request, *args, **kwargs):
         refresh = request.COOKIES.get(REFRESH_COOKIE) or request.data.get('refresh')
         if not refresh:
-            return Response({'detail': 'Refresh token missing'}, status=status.HTTP_401_UNAUTHORIZED)
+            return self.invalid_refresh_response('Refresh token missing')
+
+        try:
+            refresh_token = RefreshToken(refresh)
+        except TokenError:
+            return self.invalid_refresh_response('Refresh token is invalid or expired')
+
+        user_id = refresh_token.get(jwt_settings.USER_ID_CLAIM)
+        user = User.objects.filter(
+            **{jwt_settings.USER_ID_FIELD: user_id},
+            is_active=True,
+        ).first()
+        if not user:
+            return self.invalid_refresh_response('User not found', 'user_not_found')
+
+        if (
+            jwt_settings.CHECK_REVOKE_TOKEN
+            and refresh_token.get(jwt_settings.REVOKE_TOKEN_CLAIM)
+            != get_md5_hash_password(user.password)
+        ):
+            return self.invalid_refresh_response(
+                'The password has changed. Please sign in again.',
+                'password_changed',
+            )
 
         serializer = self.get_serializer(data={'refresh': refresh})
         try:
             serializer.is_valid(raise_exception=True)
-        except TokenError as exc:
-            raise InvalidToken(exc.args[0]) from exc
+        except (InvalidToken, TokenError):
+            return self.invalid_refresh_response('Refresh token is invalid or expired')
 
         access = serializer.validated_data['access']
         response = Response({'detail': 'ok'})
-        refresh_token = RefreshToken(refresh)
         set_auth_cookies(response, access, str(refresh_token))
         return response
 

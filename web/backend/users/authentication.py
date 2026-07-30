@@ -1,3 +1,4 @@
+from rest_framework.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
 from .cookie_auth import ACCESS_COOKIE
@@ -15,5 +16,11 @@ class CookieJWTAuthentication(JWTAuthentication):
         if not raw_token:
             return None
 
-        validated_token = self.get_validated_token(raw_token)
-        return self.get_user(validated_token), validated_token
+        try:
+            validated_token = self.get_validated_token(raw_token)
+            return self.get_user(validated_token), validated_token
+        except AuthenticationFailed:
+            # A stale httpOnly cookie must not block AllowAny endpoints. Views
+            # protected by IsAuthenticated still reject the anonymous request,
+            # while an invalid Authorization header remains a hard failure.
+            return None

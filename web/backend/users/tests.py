@@ -305,6 +305,67 @@ class PasswordResetTests(APITestCase):
         rejected = other_device.get('/api/me/')
         self.assertEqual(rejected.status_code, status.HTTP_401_UNAUTHORIZED)
 
+    def test_stale_cookie_does_not_block_public_endpoints(self):
+        browser = APIClient()
+        login = browser.post(
+            '/api/login/',
+            {'email': self.user.email, 'password': self.old_password},
+            format='json',
+        )
+        self.assertEqual(login.status_code, status.HTTP_200_OK)
+
+        uid, token = create_password_reset_credentials(self.user)
+        changed = self.client.post(
+            '/api/password-reset/confirm/',
+            {
+                'uid': uid,
+                'token': token,
+                'new_password': self.new_password,
+                'confirm_password': self.new_password,
+            },
+            format='json',
+        )
+        self.assertEqual(changed.status_code, status.HTTP_200_OK)
+
+        public_response = browser.post(
+            '/api/password-reset/request/',
+            {'email': 'missing@example.com'},
+            format='json',
+        )
+        protected_response = browser.get('/api/me/')
+
+        self.assertEqual(public_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(protected_response.status_code, status.HTTP_401_UNAUTHORIZED)
+
+    def test_stale_refresh_cookie_is_rejected_and_auth_cookies_are_cleared(self):
+        browser = APIClient()
+        login = browser.post(
+            '/api/login/',
+            {'email': self.user.email, 'password': self.old_password},
+            format='json',
+        )
+        self.assertEqual(login.status_code, status.HTTP_200_OK)
+
+        uid, token = create_password_reset_credentials(self.user)
+        changed = self.client.post(
+            '/api/password-reset/confirm/',
+            {
+                'uid': uid,
+                'token': token,
+                'new_password': self.new_password,
+                'confirm_password': self.new_password,
+            },
+            format='json',
+        )
+        self.assertEqual(changed.status_code, status.HTTP_200_OK)
+
+        refreshed = browser.post('/api/token/refresh/', {}, format='json')
+
+        self.assertEqual(refreshed.status_code, status.HTTP_401_UNAUTHORIZED)
+        self.assertEqual(refreshed.data['code'], 'password_changed')
+        self.assertEqual(refreshed.cookies[ACCESS_COOKIE]['max-age'], 0)
+        self.assertEqual(refreshed.cookies[REFRESH_COOKIE]['max-age'], 0)
+
     def test_password_confirmation_and_validation_are_required(self):
         uid, token = create_password_reset_credentials(self.user)
 
