@@ -11,6 +11,8 @@ const ProfilePage = lazy(() => import('@/pages/Profile').then((module) => ({ def
 const LoginPage = lazy(() => import('@/pages/Login').then((module) => ({ default: module.LoginPage })));
 const RegisterPage = lazy(() => import('@/pages/Register').then((module) => ({ default: module.RegisterPage })));
 const VerifyEmailPage = lazy(() => import('@/pages/VerifyEmail').then((module) => ({ default: module.VerifyEmailPage })));
+const ForgotPasswordPage = lazy(() => import('@/pages/ForgotPassword').then((module) => ({ default: module.ForgotPasswordPage })));
+const ResetPasswordPage = lazy(() => import('@/pages/ResetPassword').then((module) => ({ default: module.ResetPasswordPage })));
 const CollectionPage = lazy(() => import('@/pages/Collection').then((module) => ({ default: module.CollectionPage })));
 const ConciergePage = lazy(() => import('@/pages/Concierge').then((module) => ({ default: module.ConciergePage })));
 const WishlistPage = lazy(() => import('@/pages/Wishlist').then((module) => ({ default: module.WishlistPage })));
@@ -48,6 +50,8 @@ export function AnimatedRoutes() {
             <Route path="/login" element={wrap(<LoginPage />)} />
             <Route path="/register" element={wrap(<RegisterPage />)} />
             <Route path="/verify-email" element={wrap(<VerifyEmailPage />)} />
+            <Route path="/forgot-password" element={wrap(<ForgotPasswordPage />)} />
+            <Route path="/reset-password" element={wrap(<ResetPasswordPage />)} />
             <Route path="/concierge" element={wrap(<ConciergePage />)} />
             <Route path="*" element={wrap(<NotFoundPage />)} />
           </Routes>

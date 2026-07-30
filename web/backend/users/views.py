@@ -7,9 +7,17 @@ from rest_framework.views import APIView
 from rest_framework.permissions import AllowAny, IsAuthenticated, IsAdminUser
 from rest_framework.parsers import MultiPartParser, FormParser
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
+from django.core.validators import validate_email
 from django.db import transaction
 from .models import Role
-from .serializers import UserSerializer, RegisterSerializer, RoleSerializer, EmailTokenObtainPairSerializer
+from .serializers import (
+    EmailTokenObtainPairSerializer,
+    RegisterSerializer,
+    RoleSerializer,
+    SetPasswordSerializer,
+    UserSerializer,
+)
 from rest_framework_simplejwt.views import TokenObtainPairView, TokenRefreshView
 from rest_framework_simplejwt.exceptions import InvalidToken, TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -17,8 +25,12 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from .cookie_auth import REFRESH_COOKIE, clear_auth_cookies, set_auth_cookies
 from shop.models import UserProfile
 from .email_verification import read_verification_token, send_verification_email
+from .password_reset import get_password_reset_user, send_password_reset_email
 from .throttles import (
     LoginRateThrottle,
+    PasswordChangeRequestRateThrottle,
+    PasswordResetConfirmRateThrottle,
+    PasswordResetRequestRateThrottle,
     RegisterRateThrottle,
     ResendVerificationRateThrottle,
     VerifyEmailRateThrottle,
@@ -189,6 +201,118 @@ class ResendVerificationView(APIView):
             },
             status=status.HTTP_200_OK,
         )
+
+
+class PasswordResetRequestView(APIView):
+    permission_classes = (AllowAny,)
+    throttle_classes = [PasswordResetRequestRateThrottle]
+
+    def post(self, request):
+        email = (request.data.get('email') or '').strip().lower()
+        try:
+            validate_email(email)
+        except ValidationError:
+            return Response(
+                {'detail': 'A valid email address is required.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = User.objects.filter(email__iexact=email, is_active=True).first()
+        if user and user.has_usable_password():
+            try:
+                send_password_reset_email(user, getattr(request, 'LANGUAGE_CODE', 'en'))
+            except Exception:
+                # Keep the response generic so an SMTP outage cannot reveal
+                # whether the requested email belongs to an account.
+                logger.exception('Unable to deliver password reset email')
+
+        return Response(
+            {
+                'detail': 'If an active account exists, a password reset email has been sent.',
+                'code': 'password_reset_email_sent',
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordChangeRequestView(APIView):
+    permission_classes = (IsAuthenticated,)
+    throttle_classes = [PasswordChangeRequestRateThrottle]
+
+    def post(self, request):
+        if not request.user.email:
+            return Response(
+                {
+                    'detail': 'Add an email address to your account before changing your password.',
+                    'code': 'password_email_missing',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        try:
+            send_password_reset_email(
+                request.user,
+                getattr(request, 'LANGUAGE_CODE', 'en'),
+            )
+        except Exception:
+            logger.exception('Unable to deliver password change email')
+            return Response(
+                {
+                    'detail': 'We could not send the password change email. Please try again later.',
+                    'code': 'password_reset_delivery_failed',
+                },
+                status=status.HTTP_503_SERVICE_UNAVAILABLE,
+            )
+
+        return Response(
+            {
+                'detail': 'A password change link has been sent to your email address.',
+                'code': 'password_reset_email_sent',
+            },
+            status=status.HTTP_200_OK,
+        )
+
+
+class PasswordResetConfirmView(APIView):
+    permission_classes = (AllowAny,)
+    throttle_classes = [PasswordResetConfirmRateThrottle]
+
+    def post(self, request):
+        uid = (request.data.get('uid') or '').strip()
+        token = (request.data.get('token') or '').strip()
+        if not uid or not token or len(uid) > 256 or len(token) > 256:
+            return Response(
+                {
+                    'detail': 'This password reset link is invalid or has expired.',
+                    'code': 'password_reset_invalid',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        user = get_password_reset_user(uid, token)
+        if not user:
+            return Response(
+                {
+                    'detail': 'This password reset link is invalid or has expired.',
+                    'code': 'password_reset_invalid',
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        serializer = SetPasswordSerializer(data=request.data, context={'user': user})
+        serializer.is_valid(raise_exception=True)
+        user.set_password(serializer.validated_data['new_password'])
+        user.save(update_fields=['password'])
+
+        response = Response(
+            {
+                'detail': 'Your password has been changed. Please sign in again.',
+                'code': 'password_reset_complete',
+            },
+            status=status.HTTP_200_OK,
+        )
+        clear_auth_cookies(response)
+        return response
 
 class UserListView(generics.ListCreateAPIView):
     queryset = User.objects.all()

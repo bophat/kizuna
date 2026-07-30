@@ -146,9 +146,12 @@ export function LoginPage() {
                 </div>
                 <span className="body-sm text-secondary group-hover:text-primary transition-colors">{t('auth.remember_me')}</span>
               </label>
-              <button type="button" className="label-sm text-secondary hover:text-primary transition-colors">
+              <Link
+                to={`/forgot-password?email=${encodeURIComponent(email)}`}
+                className="label-sm text-secondary hover:text-primary transition-colors"
+              >
                 {t('auth.forgot_password')}
-              </button>
+              </Link>
             </div>
             <button 
               type="submit"

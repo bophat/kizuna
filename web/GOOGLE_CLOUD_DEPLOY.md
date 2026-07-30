@@ -80,6 +80,7 @@ EMAIL_PORT="587" \
 EMAIL_HOST_USER="your-smtp-username" \
 EMAIL_USE_TLS="True" \
 EMAIL_USE_SSL="False" \
+
 DEFAULT_FROM_EMAIL="KIZUNA <no-reply@your-domain.com>" \
 WEBSITE_URL="https://kizuna-teal.vercel.app" \
 ADMIN_URL="https://kizuna-admin.vercel.app" \
@@ -111,14 +112,14 @@ Có thể ghi đè thêm `REGION`, `MAX_INSTANCES`, `CLOUD_RUN_CPU`,
 Script sẽ in ra Cloud Run URL, ví dụ:
 
 ```text
-https://kizuna-api-xxxxx-as.a.run.app
+https://kizuna-backend-PROJECT_NUMBER.asia-southeast1.run.app
 ```
 
 Trong cả hai Vercel projects, cập nhật:
 
 ```text
-VITE_API_BASE_URL=https://kizuna-api-xxxxx-as.a.run.app/api
-VITE_MEDIA_BASE_URL=https://kizuna-api-xxxxx-as.a.run.app
+VITE_API_BASE_URL=https://kizuna-backend-PROJECT_NUMBER.asia-southeast1.run.app/api
+VITE_MEDIA_BASE_URL=https://kizuna-backend-PROJECT_NUMBER.asia-southeast1.run.app
 ```
 
 Sau đó chọn **Redeploy** cho Website và Admin. Không thêm dấu `/` ở cuối URL.
@@ -128,7 +129,7 @@ Sau đó chọn **Redeploy** cho Website và Admin. Không thêm dấu `/` ở c
 ```bash
 export BACKEND_URL="https://YOUR-CLOUD-RUN-URL.run.app"
 
-curl -fsS "$BACKEND_URL/healthz"
+curl -fsS "$BACKEND_URL/api/health/"
 curl -fsS "$BACKEND_URL/api/shop/exchange-rates/"
 ```
 
@@ -162,7 +163,7 @@ curl -i -X POST "$BACKEND_URL/api/resend-verification/" \
 ## Xem log
 
 ```bash
-gcloud run services logs read kizuna-api \
+gcloud run services logs read kizuna-backend \
   --project YOUR_GCP_PROJECT_ID \
   --region asia-southeast1 \
   --limit 100

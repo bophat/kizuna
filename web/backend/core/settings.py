@@ -50,6 +50,7 @@ EMAIL_TIMEOUT = int(os.environ.get('EMAIL_TIMEOUT', '10'))
 DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'KIZUNA <no-reply@localhost>')
 WEBSITE_URL = os.environ.get('WEBSITE_URL', 'http://localhost:3000').rstrip('/')
 EMAIL_VERIFICATION_TIMEOUT = int(os.environ.get('EMAIL_VERIFICATION_TIMEOUT', '86400'))
+PASSWORD_RESET_TIMEOUT = int(os.environ.get('PASSWORD_RESET_TIMEOUT', '3600'))
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
@@ -173,6 +174,9 @@ REST_FRAMEWORK = {
         'register': '10/hour',
         'verify_email': '30/hour',
         'resend_verification': '5/hour',
+        'password_reset_request': '5/hour',
+        'password_reset_confirm': '20/hour',
+        'password_change_request': '5/hour',
         'concierge': '30/hour',
     },
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
@@ -182,6 +186,7 @@ SIMPLE_JWT = {
     'ACCESS_TOKEN_LIFETIME': timedelta(minutes=60),
     'REFRESH_TOKEN_LIFETIME': timedelta(days=7),
     'SLIDING_TOKEN_REFRESH_LIFETIME': timedelta(days=1),
+    'CHECK_REVOKE_TOKEN': True,
 }
 
 AUTHENTICATION_BACKENDS = [

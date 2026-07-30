@@ -31,6 +31,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     endpoint.includes('/register/') ||
     endpoint.includes('/verify-email/') ||
     endpoint.includes('/resend-verification/') ||
+    endpoint.includes('/password-reset/request/') ||
+    endpoint.includes('/password-reset/confirm/') ||
     endpoint.includes('/logout/') ||
     endpoint.includes('/token/refresh/') ||
     endpoint.includes('/check-email/');

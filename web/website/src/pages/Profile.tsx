@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/Icons';
-import { Loader2, Package, Star, LogOut, CheckCircle2 } from 'lucide-react';
+import { Loader2, Package, Star, LogOut, CheckCircle2, KeyRound } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
@@ -52,7 +52,9 @@ export function ProfilePage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [isSendingPasswordEmail, setIsSendingPasswordEmail] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -131,6 +133,23 @@ export function ProfilePage() {
   const handleLogout = async () => {
     await logout();
     navigate('/login');
+  };
+
+  const handlePasswordChangeRequest = async () => {
+    setIsSendingPasswordEmail(true);
+    setPasswordMessage(null);
+    try {
+      const response = await apiFetch('/password-change/request/', { method: 'POST' });
+      if (response.ok) {
+        setPasswordMessage({ type: 'success', text: t('profile.change_password_sent') });
+      } else {
+        setPasswordMessage({ type: 'error', text: t('profile.change_password_failed') });
+      }
+    } catch {
+      setPasswordMessage({ type: 'error', text: t('common.error_connection') });
+    } finally {
+      setIsSendingPasswordEmail(false);
+    }
   };
 
   // Get all unique purchased items from orders
@@ -276,6 +295,32 @@ export function ProfilePage() {
                   )}
                 </div>
               </form>
+
+              <div className="mt-10 pt-8 border-t border-surface-variant">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+                  <div>
+                    <h2 className="headline-sm mb-2">{t('profile.change_password')}</h2>
+                    <p className="body-sm text-secondary max-w-xl">{t('profile.change_password_body')}</p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={handlePasswordChangeRequest}
+                    disabled={isSendingPasswordEmail}
+                    className="border border-primary text-primary px-6 py-3 label-md tracking-normal lowercase hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-3 rounded-sm whitespace-nowrap"
+                  >
+                    {isSendingPasswordEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound size={18} />}
+                    {isSendingPasswordEmail ? t('profile.change_password_sending') : t('profile.change_password_send')}
+                  </button>
+                </div>
+                {passwordMessage && (
+                  <p
+                    className={`mt-4 body-sm ${passwordMessage.type === 'success' ? 'text-green-600' : 'text-red-500'}`}
+                    role="status"
+                  >
+                    {passwordMessage.text}
+                  </p>
+                )}
+              </div>
             </div>
           )}
 

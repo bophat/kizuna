@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ID="${1:-${PROJECT_ID:-}}"
 REGION="${REGION:-asia-southeast1}"
-SERVICE="${SERVICE:-kizuna-api}"
+SERVICE="${SERVICE:-kizuna-backend}"
 RUNTIME_SA_NAME="${RUNTIME_SA_NAME:-kizuna-backend-runtime}"
 BUCKET="${GCS_BUCKET_NAME:-${PROJECT_ID}-kizuna-media}"
 DATABASE_SECRET="${DATABASE_SECRET:-kizuna-database-url}"
@@ -195,16 +195,26 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|WEBSITE_URL=${WEBSITE_URL}|EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend|EMAIL_HOST=${EMAIL_HOST}|EMAIL_PORT=${EMAIL_PORT}|EMAIL_HOST_USER=${EMAIL_HOST_USER}|EMAIL_USE_TLS=${EMAIL_USE_TLS}|EMAIL_USE_SSL=${EMAIL_USE_SSL}|DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}|EMAIL_VERIFICATION_TIMEOUT=86400" \
   --set-secrets="DATABASE_URL=${DATABASE_SECRET}:latest,DJANGO_SECRET_KEY=${DJANGO_SECRET}:latest,EMAIL_HOST_PASSWORD=${EMAIL_PASSWORD_SECRET}:latest"
 
-SERVICE_URL="$(
+NON_DETERMINISTIC_SERVICE_URL="$(
   gcloud run services describe "$SERVICE" \
     --project "$PROJECT_ID" \
     --region "$REGION" \
     --format='value(status.url)'
 )"
+PROJECT_NUMBER="$(
+  gcloud projects describe "$PROJECT_ID" \
+    --format='value(projectNumber)'
+)"
+DETERMINISTIC_SERVICE_NAME="${SERVICE}-${PROJECT_NUMBER}"
+if (( ${#DETERMINISTIC_SERVICE_NAME} <= 63 )); then
+  SERVICE_URL="https://${DETERMINISTIC_SERVICE_NAME}.${REGION}.run.app"
+else
+  SERVICE_URL="$NON_DETERMINISTIC_SERVICE_URL"
+fi
 
 echo
 echo "Backend deploy complete: $SERVICE_URL"
-echo "Health check: $SERVICE_URL/healthz"
+echo "Health check: $SERVICE_URL/api/health/"
 echo
 echo "Update both Vercel projects and redeploy them:"
 echo "VITE_API_BASE_URL=$SERVICE_URL/api"

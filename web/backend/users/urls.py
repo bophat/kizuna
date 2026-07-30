@@ -12,12 +12,18 @@ from .views import (
     UserAvatarUploadView,
     VerifyEmailView,
     ResendVerificationView,
+    PasswordResetRequestView,
+    PasswordChangeRequestView,
+    PasswordResetConfirmView,
 )
 
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
     path('resend-verification/', ResendVerificationView.as_view(), name='resend_verification'),
+    path('password-reset/request/', PasswordResetRequestView.as_view(), name='password_reset_request'),
+    path('password-change/request/', PasswordChangeRequestView.as_view(), name='password_change_request'),
+    path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('login/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),

@@ -1,5 +1,6 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
+from django.contrib.auth.password_validation import validate_password
 from .models import Role
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer
 
@@ -50,6 +51,20 @@ class RegisterSerializer(serializers.ModelSerializer):
             is_superuser=False,
             is_active=created_by_admin,
         )
+
+
+class SetPasswordSerializer(serializers.Serializer):
+    new_password = serializers.CharField(write_only=True, min_length=8, max_length=128)
+    confirm_password = serializers.CharField(write_only=True, min_length=8, max_length=128)
+
+    def validate(self, attrs):
+        if attrs['new_password'] != attrs['confirm_password']:
+            raise serializers.ValidationError({
+                'confirm_password': 'Passwords do not match.',
+            })
+
+        validate_password(attrs['new_password'], self.context.get('user'))
+        return attrs
 
 class EmailTokenObtainPairSerializer(TokenObtainPairSerializer):
     def __init__(self, *args, **kwargs):
