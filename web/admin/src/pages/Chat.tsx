@@ -19,6 +19,10 @@ interface ChatSession {
   messages: ChatMessage[];
   adminTookOver: boolean;
   updated_at: number;
+  customer_id?: number | null;
+  customer_name?: string;
+  customer_username?: string;
+  customer_email?: string;
 }
 
 export default function Chat() {
@@ -82,6 +86,8 @@ export default function Chat() {
   };
 
   const formatCustomerId = (id: string) => id.split('_')[1] || id;
+  const getCustomerName = (id: string, session: ChatSession) =>
+    session.customer_name?.trim() || t('chat.customer_label', { id: formatCustomerId(id) });
 
   return (
     <div className="ma-spacing space-y-8">
@@ -162,8 +168,13 @@ export default function Chat() {
                       </div>
                       <div className="flex-1 min-w-0">
                         <h3 className="font-semibold text-sm text-brand-ink truncate">
-                          {t('chat.customer_label', { id: formatCustomerId(id) })}
+                          {getCustomerName(id, session)}
                         </h3>
+                        {session.customer_email && (
+                          <p className="text-[11px] text-brand-ink/40 truncate mt-0.5">
+                            {session.customer_email}
+                          </p>
+                        )}
                         <p className="text-xs text-brand-ink/50 truncate mt-1 font-serif italic">
                           {session.messages[session.messages.length - 1]?.content || t('chat.no_messages')}
                         </p>
@@ -190,8 +201,13 @@ export default function Chat() {
                   </div>
                   <div className="min-w-0">
                     <h3 className="font-serif font-bold text-lg text-brand-ink truncate">
-                      {t('chat.session_title', { id: activeSessionId })}
+                      {getCustomerName(activeSessionId, activeSession)}
                     </h3>
+                    {(activeSession.customer_email || activeSession.customer_username) && (
+                      <p className="text-xs text-brand-ink/50 truncate">
+                        {activeSession.customer_email || `@${activeSession.customer_username}`}
+                      </p>
+                    )}
                     <p className="text-xs text-brand-ink/50 font-serif italic">
                       {activeSession.adminTookOver
                         ? t('chat.status_admin')

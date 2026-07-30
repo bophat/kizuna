@@ -15,8 +15,14 @@ def is_ai_enabled() -> bool:
     return is_chatbot_enabled()
 
 
-def get_or_create_session(session_id: str) -> ConciergeSession:
+def get_or_create_session(session_id: str, user=None) -> ConciergeSession:
     session, _ = ConciergeSession.objects.get_or_create(session_id=session_id)
+    if (
+        getattr(user, 'is_authenticated', False)
+        and session.user_id is None
+    ):
+        session.user = user
+        session.save(update_fields=['user'])
     return session
 
 
@@ -36,8 +42,8 @@ def _history_for_ai(session: ConciergeSession, limit: int = 12) -> list[dict]:
     return [{'role': m.role, 'content': m.content} for m in msgs]
 
 
-def append_user_message(session_id: str, content: str) -> ConciergeMessage:
-    session = get_or_create_session(session_id)
+def append_user_message(session_id: str, content: str, user=None) -> ConciergeMessage:
+    session = get_or_create_session(session_id, user=user)
     msg = ConciergeMessage.objects.create(
         session=session,
         role=ConciergeMessage.Role.USER,
@@ -67,9 +73,9 @@ def append_assistant_message(
     return msg
 
 
-def handle_user_message(session_id: str, content: str) -> dict[str, Any]:
+def handle_user_message(session_id: str, content: str, user=None) -> dict[str, Any]:
     """Save user message; auto-reply with AI when enabled, else queue for admin."""
-    session = get_or_create_session(session_id)
+    session = get_or_create_session(session_id, user=user)
     ConciergeMessage.objects.create(
         session=session,
         role=ConciergeMessage.Role.USER,
@@ -128,7 +134,11 @@ def admin_reply(session_id: str, content: str) -> dict[str, Any]:
 
 
 def sessions_for_admin() -> dict[str, Any]:
-    sessions = ConciergeSession.objects.prefetch_related('messages').order_by('-updated_at')
+    sessions = (
+        ConciergeSession.objects.select_related('user')
+        .prefetch_related('messages')
+        .order_by('-updated_at')
+    )
     result: dict[str, Any] = {}
     for session in sessions:
         messages = [_message_to_dict(m) for m in session.messages.all()]
@@ -138,6 +148,10 @@ def sessions_for_admin() -> dict[str, Any]:
             'messages': messages,
             'adminTookOver': session.admin_took_over,
             'updated_at': session.updated_at.timestamp(),
+            'customer_id': session.user_id,
+            'customer_name': session.customer_name,
+            'customer_username': session.user.username if session.user_id else '',
+            'customer_email': session.user.email if session.user_id else '',
         }
     return result
 

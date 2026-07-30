@@ -153,9 +153,22 @@ class Favorite(models.Model):
 
 class ConciergeSession(models.Model):
     session_id = models.CharField(max_length=128, unique=True, db_index=True)
+    user = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='concierge_sessions',
+    )
     admin_took_over = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    @property
+    def customer_name(self):
+        if not self.user_id:
+            return ''
+        return self.user.get_full_name().strip() or self.user.username
 
     def __str__(self):
         return self.session_id

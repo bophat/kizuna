@@ -82,7 +82,7 @@ class ConciergeMessageView(APIView):
         if not session_id:
             return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
 
-        result = handle_user_message(session_id, message)
+        result = handle_user_message(session_id, message, user=request.user)
         return Response(result)
 
 

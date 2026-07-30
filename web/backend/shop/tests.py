@@ -1,7 +1,11 @@
+from unittest.mock import patch
+
+from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from .models import Category, Product
+from .concierge_store import sessions_for_admin
+from .models import Category, ConciergeSession, Product
 
 
 class PublicCatalogLocalizationTests(TestCase):
@@ -68,3 +72,50 @@ class PublicCatalogLocalizationTests(TestCase):
 
         self.assertEqual(response.status_code, 404)
         self.assertEqual(response.data['detail'], '該当するデータが見つかりません。')
+
+
+class ConciergeCustomerIdentityTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='hanako',
+            email='hanako@example.com',
+            first_name='Hanako',
+            last_name='Yamada',
+            password='test-password-123',
+        )
+
+    @patch('shop.concierge_store.is_ai_enabled', return_value=False)
+    def test_authenticated_message_exposes_profile_name_to_admin(self, _mock_ai):
+        self.client.force_authenticate(user=self.user)
+
+        response = self.client.post(
+            '/api/shop/concierge/message/',
+            {'session_id': 'web_authenticated', 'message': 'hello'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        session = ConciergeSession.objects.get(session_id='web_authenticated')
+        self.assertEqual(session.user, self.user)
+
+        admin_session = sessions_for_admin()['web_authenticated']
+        self.assertEqual(admin_session['customer_name'], 'Hanako Yamada')
+        self.assertEqual(admin_session['customer_email'], 'hanako@example.com')
+        self.assertEqual(admin_session['customer_username'], 'hanako')
+
+    @patch('shop.concierge_store.is_ai_enabled', return_value=False)
+    def test_customer_name_falls_back_to_username(self, _mock_ai):
+        self.user.first_name = ''
+        self.user.last_name = ''
+        self.user.save(update_fields=['first_name', 'last_name'])
+        self.client.force_authenticate(user=self.user)
+
+        self.client.post(
+            '/api/shop/concierge/message/',
+            {'session_id': 'web_username', 'message': 'hello'},
+            format='json',
+        )
+
+        admin_session = sessions_for_admin()['web_username']
+        self.assertEqual(admin_session['customer_name'], 'hanako')
