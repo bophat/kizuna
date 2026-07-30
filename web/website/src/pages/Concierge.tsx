@@ -4,6 +4,7 @@ import { fade, fadeUp, tweenFast } from '@/lib/motion';
 import { MessageItem } from '@/components/concierge/MessageItem';
 import { ChatInput } from '@/components/concierge/ChatInput';
 import { apiFetch, API_BASE_URL } from '@/lib/api';
+import { useTranslation } from 'react-i18next';
 
 interface Message {
   id: string;
@@ -11,18 +12,13 @@ interface Message {
   content: string;
 }
 
-const WELCOME: Message = {
-  id: 'welcome',
-  role: 'assistant',
-  content:
-    'Chào bạn! Mình là Kizuna AI, chuyên viên tư vấn trực tuyến của shop. Cảm ơn bạn đã ghé thăm. Bạn đang quan tâm hoặc muốn tìm kiếm mặt hàng cụ thể nào, xin vui lòng để lại thông tin để mình có thể hỗ trợ và tư vấn nhanh nhất cho bạn ạ.',
-};
-
-const WAITING_FOR_ADMIN =
-  'Cảm ơn bạn đã nhắn tin! Nhân viên shop sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát ạ.';
-
 export function ConciergePage() {
-  const [messages, setMessages] = useState<Message[]>([WELCOME]);
+  const { t } = useTranslation();
+  const welcomeMessage = t('concierge.welcome');
+  const waitingForAdmin = t('concierge.waiting_for_admin');
+  const [messages, setMessages] = useState<Message[]>([
+    { id: 'welcome', role: 'assistant', content: welcomeMessage },
+  ]);
   const [isLoading, setIsLoading] = useState(false);
   const [aiEnabled, setAiEnabled] = useState(false);
   const [adminTookOver, setAdminTookOver] = useState(false);
@@ -38,6 +34,14 @@ export function ConciergePage() {
   });
 
   useEffect(() => {
+    setMessages((previous) =>
+      previous.map((message) =>
+        message.id === 'welcome' ? { ...message, content: welcomeMessage } : message
+      )
+    );
+  }, [welcomeMessage]);
+
+  useEffect(() => {
     apiFetch('/shop/concierge/live-status/')
       .then((res) => (res.ok ? res.json() : { aiEnabled: false }))
       .then((data) => setAiEnabled(!!data.aiEnabled))
@@ -50,7 +54,7 @@ export function ConciergePage() {
         setAdminTookOver(!!data.adminTookOver);
         setAiEnabled(data.aiEnabled ?? false);
         setMessages([
-          WELCOME,
+          { id: 'welcome', role: 'assistant', content: welcomeMessage },
           ...data.messages.map((m: { id: string; role: string; content: string }) => ({
             id: m.id,
             role: m.role as 'user' | 'assistant',
@@ -59,7 +63,7 @@ export function ConciergePage() {
         ]);
       })
       .catch(() => {});
-  }, [sessionId]);
+  }, [sessionId, welcomeMessage]);
 
   useEffect(() => {
     const eventSource = new EventSource(
@@ -113,7 +117,7 @@ export function ConciergePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Concierge service unavailable');
+        throw new Error(data.error || t('concierge.service_unavailable'));
       }
 
       setAiEnabled(!!data.aiEnabled);
@@ -133,13 +137,13 @@ export function ConciergePage() {
       } else if (data.waitingForAdmin && !data.adminTookOver) {
         setMessages((prev) => {
           const last = prev[prev.length - 1];
-          if (last?.content === WAITING_FOR_ADMIN) return prev;
+          if (last?.content === waitingForAdmin) return prev;
           return [
             ...prev,
             {
               id: (Date.now() + 1).toString(),
               role: 'assistant',
-              content: WAITING_FOR_ADMIN,
+              content: waitingForAdmin,
             },
           ];
         });
@@ -151,8 +155,7 @@ export function ConciergePage() {
         {
           id: (Date.now() + 1).toString(),
           role: 'assistant',
-          content:
-            'Cảm ơn quý khách đã quan tâm và gửi yêu cầu mua hàng. Shop đã ghi nhận thông tin và sẽ liên hệ lại với quý khách để xác nhận trong thời gian sớm nhất. Xin vui lòng chờ trong giây lát!',
+          content: t('concierge.fallback_message'),
         },
       ]);
     } finally {
@@ -163,10 +166,10 @@ export function ConciergePage() {
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-surface">
       <div className="text-center py-6 shrink-0">
-        <span className="label-sm text-secondary/60 tracking-[0.2em] uppercase">Today</span>
+        <span className="label-sm text-secondary/60 tracking-[0.2em] uppercase">{t('concierge.today')}</span>
         {!aiEnabled && !adminTookOver && (
           <p className="text-xs text-secondary/50 mt-2 max-w-md mx-auto">
-            Nhân viên shop sẽ trả lời trực tiếp tin nhắn của bạn.
+            {t('concierge.manual_mode')}
           </p>
         )}
       </div>

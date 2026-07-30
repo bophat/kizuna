@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, ReactNode } from
 import { apiFetch } from '@/lib/api';
 import { Product } from '@/types';
 import { useAuth } from '@/context/AuthContext';
+import { useTranslation } from 'react-i18next';
 
 interface WishlistContextType {
   wishlistItems: { id: number; product: Product; created_at: string }[];
@@ -17,6 +18,7 @@ interface WishlistContextType {
 const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
 export function WishlistProvider({ children }: { children: ReactNode }) {
+  const { i18n } = useTranslation();
   const { isAuthenticated } = useAuth();
   const [wishlistItems, setWishlistItems] = useState<{ id: number; product: Product; created_at: string }[]>([]);
   const [likesMap, setLikesMap] = useState<Record<string, number>>({});
@@ -80,7 +82,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
     // Polling every 5 seconds for "realtime" updates
     const interval = setInterval(fetchLikesCounts, 5000);
     return () => clearInterval(interval);
-  }, [isAuthenticated]);
+  }, [isAuthenticated, i18n.language]);
 
   const addToWishlist = async (productId: string | number) => {
     try {

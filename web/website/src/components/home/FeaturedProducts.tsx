@@ -5,8 +5,10 @@ import { Product } from '@/types';
 import { apiFetch } from '@/lib/api';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { ProductImage } from '@/components/products/ProductImage';
+import { useTranslation } from 'react-i18next';
 
 export function FeaturedProducts() {
+  const { t, i18n } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -35,7 +37,7 @@ export function FeaturedProducts() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [i18n.language]);
 
   if (isLoading) {
     return (
@@ -55,9 +57,9 @@ export function FeaturedProducts() {
   return (
     <section className="px-8 max-w-[1280px] mx-auto w-full mb-xl">
       <div className="flex items-center justify-between mb-8 border-b border-surface-variant pb-2">
-        <h2 className="headline-md">Featured Collection</h2>
+        <h2 className="headline-md">{t('home.featured')}</h2>
         <Link to="/collections?filter=featured" className="label-sm text-tertiary hover:text-primary transition-colors border-b border-transparent hover:border-primary pb-1">
-          View All
+          {t('home.view_all')}
         </Link>
       </div>
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
@@ -76,7 +78,7 @@ export function FeaturedProducts() {
             )}
             {main.isLimited && (
               <div className="absolute top-4 left-4 bg-white/90 border border-surface-variant px-3 py-1 label-sm">
-                Limited Edition
+                {t('product.limited')}
               </div>
             )}
           </div>

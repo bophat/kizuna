@@ -22,8 +22,10 @@ import AiDiscovery from './pages/AiDiscovery';
 import { apiFetch } from './lib/api';
 import { Loader2 } from 'lucide-react';
 import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
+import { useTranslation } from 'react-i18next';
 
 function App() {
+  const { t } = useTranslation();
   const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -54,7 +56,7 @@ function App() {
     return (
       <div className="min-h-screen bg-brand-paper flex flex-col items-center justify-center gap-4">
         <Loader2 className="w-10 h-10 animate-spin text-brand-red" />
-        <p className="text-sm font-serif italic text-brand-ink/40">Authenticating with KIZUNA systems...</p>
+        <p className="text-sm font-serif italic text-brand-ink/40">{t('common.authenticating')}</p>
       </div>
     );
   }

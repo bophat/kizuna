@@ -28,7 +28,7 @@ export function CollectionPage() {
       try {
         setIsLoading(true);
         const response = await apiFetch('/shop/products/');
-        if (!response.ok) throw new Error('Failed to fetch products');
+        if (!response.ok) throw new Error(t('collection.load_error'));
         const data = await response.json();
         
         const mappedProducts: Product[] = data.map((p: any) => ({
@@ -42,13 +42,13 @@ export function CollectionPage() {
         setProducts(mappedProducts);
       } catch (err) {
         console.error(err);
-        setError('Failed to load products');
+        setError(t('collection.load_error'));
       } finally {
         setIsLoading(false);
       }
     };
     fetchProducts();
-  }, []);
+  }, [t]);
 
   // Get filter values from URL
   const categoryFilters = useMemo(() => searchParams.get('category')?.split(',').filter(Boolean) || [], [searchParams]);
@@ -211,7 +211,9 @@ export function CollectionPage() {
           {/* Title & Stats */}
           <div>
             <h1 className="headline-xl capitalize">
-              {searchQuery ? `Search Results for "${searchQuery}"` : t('products')}
+              {searchQuery
+                ? t('collection.search_results', { query: searchQuery })
+                : t('nav.products')}
             </h1>
             <p className="body-md text-secondary mt-2">
               {t('filter.results', { count: filteredProducts.length })}
@@ -241,7 +243,7 @@ export function CollectionPage() {
         {/* Active Filters Bar */}
         {(categoryFilters.length > 0 || brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-8 items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mr-2">Active:</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mr-2">{t('collection.active')}:</span>
 
             {brandFilters.map(b => (
               <button key={b} onClick={() => updateFilter('brand', b, true)} className="flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-xs hover:bg-surface-variant transition-colors">

@@ -11,11 +11,11 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { fadeUp, slideX, tweenBase, tweenFast } from '@/lib/motion';
 import { ProductImage } from '@/components/products/ProductImage';
 
-const STEPS = ['Information', 'Shipping', 'Payment', 'Success'];
+const STEPS = ['information', 'shipping', 'payment', 'success'] as const;
 const SHIPPING_USD = 75;
 
 export function CheckoutPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { format: formatPrice, rates } = useFormatPrice();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
@@ -92,11 +92,11 @@ export function CheckoutPage() {
         await fetchCart(); // Refresh cart to empty
         nextStep(); // Go to Success step
       } else {
-        alert(data.error || 'Failed to checkout');
+        alert(data.error || t('checkout.errors.failed'));
       }
     } catch (error) {
       console.error(error);
-      alert('Checkout error');
+      alert(t('checkout.errors.failed'));
     } finally {
       setIsSubmitting(false);
     }
@@ -119,7 +119,7 @@ export function CheckoutPage() {
       });
       setProductCache(cache);
     });
-  }, [cart?.items]);
+  }, [cart?.items, i18n.language]);
 
   const subtotal = parseFloat(cart?.total_amount || '0');
 
@@ -129,7 +129,7 @@ export function CheckoutPage() {
       ...cartItem,
       productDetail: product
         ? { name: product.name, image: product.image, location: product.location }
-        : { name: `Product #${cartItem.product_id}`, image: '', location: '' }
+        : { name: t('product.fallback_name', { id: cartItem.product_id }), image: '', location: '' }
     };
   }) || [];
 
@@ -234,7 +234,7 @@ export function CheckoutPage() {
                 {orderData.bank_details.qr_code_url && (
                   <div className="flex flex-col items-center gap-4 pt-4">
                     <div className="p-4 bg-white rounded-2xl md:rounded-3xl shadow-xl border border-zinc-100">
-                      <img src={orderData.bank_details.qr_code_url} alt="Bank QR" className="w-40 h-40 md:w-48 md:h-48" />
+                      <img src={orderData.bank_details.qr_code_url} alt={t('checkout.bank_qr_alt')} className="w-40 h-40 md:w-48 md:h-48" />
                     </div>
                     <p className="text-xs text-zinc-500 italic text-center">{t('checkout.scan_to_pay')}</p>
                   </div>
@@ -427,7 +427,7 @@ function InformationForm({
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
               className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
-              placeholder="First Name"
+              placeholder={t('checkout.first_name')}
             />
           </div>
           <div className="flex flex-col gap-2">
@@ -437,7 +437,7 @@ function InformationForm({
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
               className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
-              placeholder="Last Name"
+              placeholder={t('checkout.last_name')}
 
             />
           </div>

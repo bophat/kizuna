@@ -42,6 +42,15 @@ class SecurityTests(SimpleTestCase):
         with self.assertRaises(SSRFBlockedError):
             validate_external_url('http://www.amazon.co.jp/dp/B07HG6S41K')
 
+    @patch(
+        'product_sources.services.compliance_service.socket.getaddrinfo',
+        side_effect=deterministic_public_dns,
+    )
+    def test_qoo10_image_cdn_is_allowed(self, _resolver):
+        validate_external_url(
+            'https://gd.image-qoo10.jp/li/084/222/example.g_400-w_g.jpg',
+        )
+
     @override_settings(DEBUG=False, SOURCE_IMPORT_USE_FAKE_PROVIDERS=False)
     def test_production_registry_does_not_use_fake_provider(self):
         provider = build_provider_registry().get_by_code('amazon_jp')

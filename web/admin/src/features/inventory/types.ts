@@ -1,10 +1,16 @@
 export interface ProductFormData {
   id: string;
   name: string;
+  name_en: string;
+  name_ja: string;
+  name_vi: string;
   price: string;
   category: string;
   stock: string;
   description: string;
+  description_en: string;
+  description_ja: string;
+  description_vi: string;
   brand: string;
   location: string;
   weight: string;

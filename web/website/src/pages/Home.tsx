@@ -9,6 +9,7 @@ import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
 import {
   PUBLIC_CONTENT_KEYS,
   contentOrFallback,
+  localizedContentValue,
   parsePublicSettings,
 } from '@izuna/shared/lib/publicSettings';
 
@@ -16,30 +17,20 @@ const DEFAULT_HERO_IMAGE =
   'https://images.unsplash.com/photo-1584622650111-993a426fbf0a?q=80&w=2070&auto=format&fit=crop';
 
 export function HomePage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [heroImage, setHeroImage] = useState<string>(DEFAULT_HERO_IMAGE);
-  const [heroTitle, setHeroTitle] = useState<string | null>(null);
-  const [heroSubtitle, setHeroSubtitle] = useState<string | null>(null);
-  const [heroCta, setHeroCta] = useState<string | null>(null);
+  const [publicSettings, setPublicSettings] = useState<Record<string, string>>({});
 
   useEffect(() => {
     apiFetch('/shop/settings/')
       .then((res) => (res.ok ? res.json() : []))
       .then((data: unknown) => {
         const byKey = parsePublicSettings(data);
+        setPublicSettings(byKey);
         if (byKey[PUBLIC_CONTENT_KEYS.homeHeroImage]) {
           setHeroImage(getMediaUrl(byKey[PUBLIC_CONTENT_KEYS.homeHeroImage]));
-        }
-        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroTitle]) {
-          setHeroTitle(byKey[PUBLIC_CONTENT_KEYS.homeHeroTitle]);
-        }
-        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroSubtitle]) {
-          setHeroSubtitle(byKey[PUBLIC_CONTENT_KEYS.homeHeroSubtitle]);
-        }
-        if (byKey[PUBLIC_CONTENT_KEYS.homeHeroCta]) {
-          setHeroCta(byKey[PUBLIC_CONTENT_KEYS.homeHeroCta]);
         }
       })
       .catch(() => {});
@@ -65,13 +56,22 @@ export function HomePage() {
       }
     };
     fetchProducts();
-  }, []);
+  }, [i18n.language]);
 
   const newArrivals = products.filter(p => p.isNew).slice(0, 3);
   const featured = products.filter(p => p.isFeatured).slice(0, 4);
-  const displayTitle = contentOrFallback(heroTitle ?? undefined, t('hero.title'));
-  const displaySubtitle = contentOrFallback(heroSubtitle ?? undefined, t('hero.subtitle'));
-  const displayCta = contentOrFallback(heroCta ?? undefined, t('hero.cta'));
+  const displayTitle = contentOrFallback(
+    localizedContentValue(publicSettings, PUBLIC_CONTENT_KEYS.homeHeroTitle, i18n.language),
+    t('hero.title'),
+  );
+  const displaySubtitle = contentOrFallback(
+    localizedContentValue(publicSettings, PUBLIC_CONTENT_KEYS.homeHeroSubtitle, i18n.language),
+    t('hero.subtitle'),
+  );
+  const displayCta = contentOrFallback(
+    localizedContentValue(publicSettings, PUBLIC_CONTENT_KEYS.homeHeroCta, i18n.language),
+    t('hero.cta'),
+  );
 
   return (
     <div className="flex flex-col gap-xl pb-20">

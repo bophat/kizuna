@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect, FormEvent } from 'react';
 import { Icons } from '../Icons';
+import { useTranslation } from 'react-i18next';
 
 interface ChatInputProps {
   onSend: (message: string) => void;
@@ -7,6 +8,7 @@ interface ChatInputProps {
 }
 
 export function ChatInput({ onSend, isLoading }: ChatInputProps) {
+  const { t } = useTranslation();
   const [input, setInput] = useState('');
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -37,13 +39,14 @@ export function ChatInput({ onSend, isLoading }: ChatInputProps) {
             handleSubmit();
           }
         }}
-        placeholder="Ask about Japanese crafts, artists, or travel..."
+        placeholder={t('concierge.input_placeholder')}
         className="w-full pl-4 pr-16 py-4 bg-surface border border-surface-variant rounded-sm focus:outline-none focus:ring-1 focus:ring-secondary/20 resize-none body-md leading-relaxed"
         rows={1}
         disabled={isLoading}
       />
       <button
         type="submit"
+        aria-label={t('concierge.send')}
         disabled={isLoading || !input.trim()}
         className="absolute right-4 bottom-4 p-2 text-secondary disabled:opacity-30 hover:bg-surface-variant rounded-full transition-colors"
       >

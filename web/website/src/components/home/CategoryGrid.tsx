@@ -5,6 +5,7 @@ import { motion } from 'motion/react';
 import { apiFetch } from '@/lib/api';
 import { ProductImage } from '@/components/products/ProductImage';
 import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
+import { useTranslation } from 'react-i18next';
 
 interface Category {
   id: number;
@@ -32,6 +33,7 @@ function getCategoryImage(cat: Category): string {
 }
 
 export function CategoryGrid() {
+  const { t, i18n } = useTranslation();
   const [categories, setCategories] = useState<Category[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -49,7 +51,7 @@ export function CategoryGrid() {
       }
     };
     fetchCategories();
-  }, []);
+  }, [i18n.language]);
 
   if (isLoading) {
     return (
@@ -66,9 +68,9 @@ export function CategoryGrid() {
   return (
     <section className="px-8 max-w-[1280px] mx-auto w-full">
       <div className="flex items-center justify-between mb-8 border-b border-surface-variant pb-2">
-        <h2 className="headline-md">Curated Categories</h2>
+        <h2 className="headline-md">{t('home.categories')}</h2>
         <Link to="/collections" className="label-sm text-tertiary hover:text-primary transition-colors border-b border-transparent hover:border-primary pb-1">
-          View All
+          {t('home.view_all')}
         </Link>
       </div>
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-6">

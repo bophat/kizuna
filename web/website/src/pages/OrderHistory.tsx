@@ -56,7 +56,7 @@ export function OrderHistoryPage() {
       }
     };
     fetchOrders();
-  }, []);
+  }, [i18n.language, t]);
 
 
   const getStatusStep = (status: string) => STATUS_STEPS.indexOf(status);

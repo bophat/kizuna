@@ -8,6 +8,7 @@ import {
   newSocialAccount,
 } from '@izuna/shared/lib/integrationSettings';
 import { secretFieldPlaceholder } from '@izuna/shared/lib/secretMask';
+import { useTranslation } from 'react-i18next';
 
 type Props = {
   accounts: SocialAccount[];
@@ -15,6 +16,7 @@ type Props = {
 };
 
 export function SocialAccountsSection({ accounts, onChange }: Props) {
+  const { t } = useTranslation();
   const [addOpen, setAddOpen] = useState(false);
 
   const updateAccount = (id: string, patch: Partial<SocialAccount>) => {
@@ -43,10 +45,10 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
       <div className="flex items-center justify-between gap-4">
         <div>
           <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">
-            Social networks
+            {t('settings.integrations.social_networks')}
           </h4>
           <p className="text-xs text-brand-ink/50 italic font-serif mt-1">
-            Add each platform you want the chatbot and auto-repost to connect to.
+            {t('settings.integrations.social_help')}
           </p>
         </div>
         <div className="relative">
@@ -56,7 +58,7 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
             className="flex items-center gap-2 px-4 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-colors"
           >
             <Plus size={16} />
-            Add network
+            {t('settings.integrations.add_network')}
             <ChevronDown size={14} className={addOpen ? 'rotate-180 transition-transform' : ''} />
           </button>
           {addOpen && (
@@ -69,7 +71,9 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
                   className="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-paper transition-colors"
                 >
                   <span className="font-semibold text-brand-ink">{p.label}</span>
-                  <span className="block text-xs text-brand-ink/40 mt-0.5">{p.description}</span>
+                  <span className="block text-xs text-brand-ink/40 mt-0.5">
+                    {t(`settings.integrations.platforms.${p.id}`)}
+                  </span>
                 </button>
               ))}
             </div>
@@ -79,7 +83,7 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
 
       {accounts.length === 0 ? (
         <div className="rounded-md border border-dashed border-brand-clay p-8 text-center text-sm text-brand-ink/40 font-serif italic">
-          No social accounts yet. Click &quot;Add network&quot; to connect Facebook, Instagram, TikTok, Zalo, LINE…
+          {t('settings.integrations.no_social_accounts')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -99,7 +103,7 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
                       type="text"
                       value={account.label}
                       onChange={(e) => updateAccount(account.id, { label: e.target.value })}
-                      placeholder="Display name"
+                      placeholder={t('settings.integrations.display_name')}
                       className="px-3 py-1.5 border border-brand-clay rounded-md text-sm min-w-[160px]"
                     />
                     <label className="flex items-center gap-2 text-sm text-brand-ink/70 cursor-pointer">
@@ -109,19 +113,21 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
                         onChange={(e) => updateAccount(account.id, { enabled: e.target.checked })}
                         className="rounded border-brand-clay"
                       />
-                      Active
+                      {t('settings.integrations.active')}
                     </label>
                   </div>
                   <button
                     type="button"
                     onClick={() => removeAccount(account.id)}
                     className="p-2 text-brand-red hover:bg-red-50 rounded-md transition-colors"
-                    title="Remove"
+                    title={t('common.delete')}
                   >
                     <Trash2 size={16} />
                   </button>
                 </div>
-                <p className="text-xs text-brand-ink/40 italic -mt-2">{meta.description}</p>
+                <p className="text-xs text-brand-ink/40 italic -mt-2">
+                  {t(`settings.integrations.platforms.${account.platform}`)}
+                </p>
                 <div className="grid gap-3 sm:grid-cols-2">
                   {meta.fields.map((field) => (
                     <div
@@ -129,14 +135,18 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
                       className={field.type === 'textarea' ? 'sm:col-span-2' : ''}
                     >
                       <label className="block text-xs font-semibold text-brand-ink mb-1">
-                        {field.label}
+                        {t(`settings.integrations.fields.${field.key}`, { defaultValue: field.label })}
                       </label>
                       {field.type === 'textarea' ? (
                         <textarea
                           value={account.credentials[field.key] || ''}
                           onChange={(e) => updateCredential(account.id, field.key, e.target.value)}
                           rows={2}
-                          placeholder={field.placeholder}
+                          placeholder={
+                            field.key === 'group_ids'
+                              ? t('settings.integrations.group_ids_placeholder')
+                              : field.placeholder
+                          }
                           className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm resize-y"
                         />
                       ) : (
@@ -147,7 +157,9 @@ export function SocialAccountsSection({ accounts, onChange }: Props) {
                           placeholder={
                             field.type === 'password'
                               ? secretFieldPlaceholder(account.credentials[field.key])
-                              : field.placeholder
+                              : field.key === 'group_ids'
+                                ? t('settings.integrations.group_ids_placeholder')
+                                : field.placeholder
                           }
                           autoComplete="off"
                           className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"

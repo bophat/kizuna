@@ -13,7 +13,7 @@ export function MobileNav() {
     {
       to: '/collections',
       icon: Icons.Package,
-      label: t('products'),
+      label: t('nav.products'),
     },
     {
       to: '/wishlist',

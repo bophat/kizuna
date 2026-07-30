@@ -51,8 +51,16 @@ export function ProductFormModal({
   onDragLeave,
   onDrop,
 }: ProductFormModalProps) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { format: formatPrice, formatUsd } = useFormatPrice();
+  const [contentLanguage, setContentLanguage] = React.useState<'default' | 'en' | 'ja' | 'vi'>(() => {
+    const language = i18n.language.split('-')[0];
+    return language === 'en' || language === 'ja' || language === 'vi' ? language : 'default';
+  });
+  const nameField = contentLanguage === 'default' ? 'name' : `name_${contentLanguage}` as keyof ProductFormData;
+  const descriptionField = contentLanguage === 'default'
+    ? 'description'
+    : `description_${contentLanguage}` as keyof ProductFormData;
 
   if (!isOpen) return null;
 
@@ -151,14 +159,31 @@ export function ProductFormModal({
                       </div>
                     </div>
                     <div className="space-y-2">
+                      <div className="flex flex-wrap gap-2">
+                        {(['default', 'en', 'ja', 'vi'] as const).map((language) => (
+                          <button
+                            key={language}
+                            type="button"
+                            onClick={() => setContentLanguage(language)}
+                            className={cn(
+                              'px-3 py-1.5 rounded-sm border text-[10px] font-bold uppercase tracking-wider transition-colors',
+                              contentLanguage === language
+                                ? 'bg-brand-red text-white border-brand-red'
+                                : 'bg-white border-brand-clay text-brand-ink/50 hover:border-brand-red'
+                            )}
+                          >
+                            {t(`inventory.modal.languages.${language}`)}
+                          </button>
+                        ))}
+                      </div>
                       <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                         {t('inventory.modal.name_label')}
                       </label>
                       <input
-                        required
+                        required={contentLanguage === 'default'}
                         className="w-full px-6 py-4 bg-white border border-brand-clay rounded-sm text-lg font-serif font-bold text-brand-ink focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all shadow-sm"
-                        value={formData.name}
-                        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                        value={String(formData[nameField])}
+                        onChange={(e) => setFormData({ ...formData, [nameField]: e.target.value })}
                       />
                     </div>
                     <div className="space-y-4">
@@ -314,7 +339,12 @@ export function ProductFormModal({
                     >
                       {previewUrl ? (
                         <>
-                          <img src={getMediaUrl(previewUrl)} className="w-full h-full object-cover" alt="" />
+                          <img
+                            src={getMediaUrl(previewUrl)}
+                            className="w-full h-full object-cover"
+                            alt=""
+                            referrerPolicy="no-referrer"
+                          />
                           <div className="absolute inset-0 bg-brand-ink/40 opacity-0 hover:opacity-100 transition-opacity flex items-center justify-center backdrop-blur-sm">
                             <label className="cursor-pointer bg-white text-brand-ink px-8 py-4 rounded-sm text-xs font-bold uppercase tracking-widest flex items-center gap-3 shadow-2xl hover:bg-brand-red hover:text-white transition-all">
                               <Upload size={16} />
@@ -368,8 +398,8 @@ export function ProductFormModal({
                         rows={10}
                         placeholder={t('inventory.modal.description_placeholder')}
                         className="w-full px-6 py-5 bg-white border border-brand-clay rounded-sm text-base font-serif italic text-brand-ink/80 focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all resize-none shadow-inner"
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        value={String(formData[descriptionField])}
+                        onChange={(e) => setFormData({ ...formData, [descriptionField]: e.target.value })}
                       />
                     </div>
                   </motion.div>

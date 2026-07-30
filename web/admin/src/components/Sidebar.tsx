@@ -27,8 +27,8 @@ export function Sidebar() {
   const navItems = [
     { icon: LayoutDashboard, label: t('nav.dashboard'), path: '/' },
     { icon: MessageCircle, label: t('nav.chat'), path: '/chat' },
-    { icon: ShieldCheck, label: 'Approvals', path: '/approvals' },
-    { icon: Sparkles, label: 'AI Discovery', path: '/ai-discovery' },
+    { icon: ShieldCheck, label: t('nav.approvals'), path: '/approvals' },
+    { icon: Sparkles, label: t('nav.ai_discovery'), path: '/ai-discovery' },
     { icon: Package, label: t('nav.inventory'), path: '/inventory' },
     { icon: Menu, label: t('nav.categories'), path: '/categories' },
     { icon: ShoppingBag, label: t('nav.orders'), path: '/orders' },

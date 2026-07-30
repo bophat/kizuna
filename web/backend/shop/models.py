@@ -3,6 +3,9 @@ from django.contrib.auth.models import User
 
 class Category(models.Model):
     name = models.CharField(max_length=100)
+    name_en = models.CharField(max_length=100, blank=True, default='')
+    name_ja = models.CharField(max_length=100, blank=True, default='')
+    name_vi = models.CharField(max_length=100, blank=True, default='')
     slug = models.SlugField(unique=True)
 
     def __str__(self):
@@ -18,6 +21,9 @@ class ProductStatus(models.TextChoices):
 class Product(models.Model):
     id = models.CharField(max_length=100, primary_key=True)
     name = models.CharField(max_length=200)
+    name_en = models.CharField(max_length=200, blank=True, default='')
+    name_ja = models.CharField(max_length=200, blank=True, default='')
+    name_vi = models.CharField(max_length=200, blank=True, default='')
     price = models.DecimalField(max_digits=10, decimal_places=2)
     currency = models.CharField(max_length=10, default='USD')
     status = models.CharField(
@@ -30,6 +36,9 @@ class Product(models.Model):
     brand = models.CharField(max_length=100, null=True, blank=True)
     location = models.CharField(max_length=100, null=True, blank=True)
     description = models.TextField()
+    description_en = models.TextField(blank=True, default='')
+    description_ja = models.TextField(blank=True, default='')
+    description_vi = models.TextField(blank=True, default='')
     image = models.ImageField(upload_to='products/', null=True, blank=True)
     
     # Flags
@@ -171,4 +180,3 @@ class ConciergeMessage(models.Model):
 
     def __str__(self):
         return f'{self.session.session_id}: {self.role}'
-

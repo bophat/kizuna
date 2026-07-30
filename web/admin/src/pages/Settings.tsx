@@ -4,7 +4,13 @@ import { motion } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { useSettings } from '../hooks/useSettings';
 import { toast } from '@izuna/shared/lib/toast';
-import { PUBLIC_CONTENT_KEYS } from '@izuna/shared/lib/publicSettings';
+import {
+  PUBLIC_CONTENT_KEYS,
+  localizedContentKey,
+  localizedContentValue,
+  normalizeContentLanguage,
+  type PublicContentLanguage,
+} from '@izuna/shared/lib/publicSettings';
 import { INTEGRATION_KEYS, migrateLegacySocialSettings, serializeSocialIntegrations, type SocialAccount } from '@izuna/shared/lib/integrationSettings';
 import { secretFieldPlaceholder } from '@izuna/shared/lib/secretMask';
 import { SocialAccountsSection } from '../components/settings/SocialAccountsSection';
@@ -12,7 +18,7 @@ import { apiFetch, getMediaUrl } from '../lib/api';
 import { useChatbot } from '../contexts/ChatbotContext';
 
 export default function Settings() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { settings, loading, updateSetting, updateSettingsBatch } = useSettings();
   const { refresh: refreshChatbot } = useChatbot();
   const [publicSiteUrl, setPublicSiteUrl] = useState('');
@@ -22,6 +28,9 @@ export default function Settings() {
   const [uploadingHeroBg, setUploadingHeroBg] = useState(false);
   const [saving, setSaving] = useState(false);
   const [savingContent, setSavingContent] = useState(false);
+  const [contentLanguage, setContentLanguage] = useState<PublicContentLanguage>(() =>
+    normalizeContentLanguage(i18n.language)
+  );
   const [homeHeroTitle, setHomeHeroTitle] = useState('');
   const [homeHeroSubtitle, setHomeHeroSubtitle] = useState('');
   const [homeHeroCta, setHomeHeroCta] = useState('');
@@ -47,10 +56,6 @@ export default function Settings() {
     if (settings['home_hero_image']) {
       setHeroBg(getMediaUrl(settings['home_hero_image']));
     }
-    setHomeHeroTitle(settings[PUBLIC_CONTENT_KEYS.homeHeroTitle] || '');
-    setHomeHeroSubtitle(settings[PUBLIC_CONTENT_KEYS.homeHeroSubtitle] || '');
-    setHomeHeroCta(settings[PUBLIC_CONTENT_KEYS.homeHeroCta] || '');
-    setLoginHeroText(settings[PUBLIC_CONTENT_KEYS.loginHeroText] || '');
     setSocialAccounts(migrateLegacySocialSettings(settings));
     setGeminiKey(settings[INTEGRATION_KEYS.geminiApiKey] || '');
     setSerperKey(settings[INTEGRATION_KEYS.serperApiKey] || '');
@@ -61,6 +66,15 @@ export default function Settings() {
     setChatbotToken(settings[INTEGRATION_KEYS.chatbotInternalToken] || '');
     setChatbotEnabled(settings[INTEGRATION_KEYS.chatbotEnabled] || 'false');
   }, [settings]);
+
+  useEffect(() => {
+    const valueFor = (key: string) =>
+      localizedContentValue(settings, key, contentLanguage) || '';
+    setHomeHeroTitle(valueFor(PUBLIC_CONTENT_KEYS.homeHeroTitle));
+    setHomeHeroSubtitle(valueFor(PUBLIC_CONTENT_KEYS.homeHeroSubtitle));
+    setHomeHeroCta(valueFor(PUBLIC_CONTENT_KEYS.homeHeroCta));
+    setLoginHeroText(valueFor(PUBLIC_CONTENT_KEYS.loginHeroText));
+  }, [contentLanguage, settings]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -80,10 +94,10 @@ export default function Settings() {
     setSavingContent(true);
     try {
       await Promise.all([
-        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroTitle, homeHeroTitle),
-        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroSubtitle, homeHeroSubtitle),
-        updateSetting(PUBLIC_CONTENT_KEYS.homeHeroCta, homeHeroCta),
-        updateSetting(PUBLIC_CONTENT_KEYS.loginHeroText, loginHeroText),
+        updateSetting(localizedContentKey(PUBLIC_CONTENT_KEYS.homeHeroTitle, contentLanguage), homeHeroTitle),
+        updateSetting(localizedContentKey(PUBLIC_CONTENT_KEYS.homeHeroSubtitle, contentLanguage), homeHeroSubtitle),
+        updateSetting(localizedContentKey(PUBLIC_CONTENT_KEYS.homeHeroCta, contentLanguage), homeHeroCta),
+        updateSetting(localizedContentKey(PUBLIC_CONTENT_KEYS.loginHeroText, contentLanguage), loginHeroText),
       ]);
       toast.success(t('common.success') || toast.messages.saveSuccess);
     } catch {
@@ -109,9 +123,9 @@ export default function Settings() {
         [INTEGRATION_KEYS.chatbotEnabled]: chatbotEnabled,
       });
       await refreshChatbot();
-      toast.success('Integration settings saved');
+      toast.success(t('settings.integrations.saved'));
     } catch {
-      toast.error('Failed to save integrations');
+      toast.error(t('settings.integrations.save_failed'));
     } finally {
       setSavingIntegrations(false);
     }
@@ -128,12 +142,12 @@ export default function Settings() {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) throw new Error(t('settings.media.upload_failed'));
       const data = await res.json();
       setLoginBg(getMediaUrl(data.url));
-      toast.success('Background image updated');
+      toast.success(t('settings.media.login_updated'));
     } catch {
-      toast.error('Failed to upload background image');
+      toast.error(t('settings.media.login_upload_failed'));
     } finally {
       setUploadingBg(false);
     }
@@ -150,12 +164,12 @@ export default function Settings() {
         method: 'POST',
         body: formData,
       });
-      if (!res.ok) throw new Error('Upload failed');
+      if (!res.ok) throw new Error(t('settings.media.upload_failed'));
       const data = await res.json();
       setHeroBg(getMediaUrl(data.url));
-      toast.success('Hero image updated');
+      toast.success(t('settings.media.hero_updated'));
     } catch {
-      toast.error('Failed to upload hero image');
+      toast.error(t('settings.media.hero_upload_failed'));
     } finally {
       setUploadingHeroBg(false);
     }
@@ -191,7 +205,7 @@ export default function Settings() {
             <div className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-brand-ink mb-1">
-                  Public Site URL
+                  {t('settings.public_site.url')}
                 </label>
                 <input
                   type="url"
@@ -200,7 +214,7 @@ export default function Settings() {
                   placeholder="https://kizuna-teal.vercel.app"
                   className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors"
                 />
-                <p className="text-xs text-brand-ink/50 mt-1 italic font-serif">The URL used for the "View Public Site" link.</p>
+                <p className="text-xs text-brand-ink/50 mt-1 italic font-serif">{t('settings.public_site.url_help')}</p>
               </div>
             </div>
           </div>
@@ -231,56 +245,73 @@ export default function Settings() {
           <div className="flex items-center gap-2">
             <Type size={20} className="text-brand-red" />
             <div>
-              <h3 className="text-lg font-serif font-bold text-brand-ink">Page Content</h3>
+              <h3 className="text-lg font-serif font-bold text-brand-ink">{t('settings.content.title')}</h3>
               <p className="text-xs text-brand-ink/50 italic font-serif">
-                Custom text for the website home hero and admin login page. Leave blank to use default translations.
+                {t('settings.content.description')}
               </p>
             </div>
           </div>
 
+          <div className="flex flex-wrap gap-2">
+            {(['en', 'ja', 'vi'] as PublicContentLanguage[]).map((language) => (
+              <button
+                key={language}
+                type="button"
+                onClick={() => setContentLanguage(language)}
+                className={`px-4 py-2 rounded-md text-xs font-bold uppercase border transition-colors ${
+                  contentLanguage === language
+                    ? 'bg-brand-red text-white border-brand-red'
+                    : 'bg-white text-brand-ink/60 border-brand-clay hover:border-brand-red'
+                }`}
+              >
+                {t(`settings.content.languages.${language}`)}
+              </button>
+            ))}
+          </div>
+
           <div className="space-y-4 pt-2 border-t border-brand-clay">
-            <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">Website — Home Hero</h4>
+            <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">{t('settings.content.website_hero')}</h4>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Headline</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.content.headline')}</label>
               <input
                 type="text"
                 value={homeHeroTitle}
                 onChange={(e) => setHomeHeroTitle(e.target.value)}
-                placeholder="静寂の芸術"
+                placeholder={t('settings.content.headline_placeholder')}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Subtitle</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.content.subtitle')}</label>
               <textarea
                 value={homeHeroSubtitle}
                 onChange={(e) => setHomeHeroSubtitle(e.target.value)}
                 rows={3}
-                placeholder="日本全国の巨匠によって手作りされた…"
+                placeholder={t('settings.content.subtitle_placeholder')}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors resize-y"
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Button label</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.content.button_label')}</label>
               <input
                 type="text"
                 value={homeHeroCta}
                 onChange={(e) => setHomeHeroCta(e.target.value)}
-                placeholder="コレクションを見る"
+                placeholder={t('settings.content.button_placeholder')}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors"
               />
             </div>
           </div>
 
           <div className="space-y-4 pt-6 border-t border-brand-clay">
-            <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">Admin — Login Side Panel</h4>
+            <h4 className="text-sm font-semibold text-brand-ink uppercase tracking-wider">{t('settings.content.admin_login')}</h4>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Hero quote</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.content.hero_quote')}</label>
               <textarea
                 value={loginHeroText}
                 onChange={(e) => setLoginHeroText(e.target.value)}
                 rows={3}
-                placeholder="Curating the finest traditions of Japanese craftsmanship…"
+                placeholder={t('settings.content.quote_placeholder')}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md focus:outline-none focus:border-brand-red/30 transition-colors resize-y"
               />
             </div>
@@ -307,13 +338,13 @@ export default function Settings() {
       >
         <div className="p-8 space-y-6">
           <div>
-            <h3 className="text-lg font-serif font-bold text-brand-ink mb-2">Login Background Image</h3>
-            <p className="text-xs text-brand-ink/50 italic font-serif">Upload a background image for the login page. Max 5MB. JPEG, PNG, WEBP, GIF.</p>
+            <h3 className="text-lg font-serif font-bold text-brand-ink mb-2">{t('settings.media.login_background')}</h3>
+            <p className="text-xs text-brand-ink/50 italic font-serif">{t('settings.media.login_help')}</p>
           </div>
 
           {loginBg && (
             <div className="relative w-full h-48 rounded-md overflow-hidden border border-brand-clay">
-              <img src={loginBg} alt="Login background preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src={loginBg} alt={t('settings.media.login_preview')} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
           )}
 
@@ -321,7 +352,7 @@ export default function Settings() {
             <label className="flex items-center gap-3 cursor-pointer">
               <span className="flex items-center gap-2 px-5 py-2.5 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-all disabled:opacity-50">
                 {uploadingBg ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                {uploadingBg ? 'Uploading...' : 'Choose Image'}
+                {uploadingBg ? t('settings.media.uploading') : t('settings.media.choose_image')}
               </span>
               <input
                 type="file"
@@ -332,20 +363,20 @@ export default function Settings() {
               />
               {!loginBg && (
                 <span className="text-xs text-brand-ink/40 italic font-serif flex items-center gap-1">
-                  <ImageIcon size={14} /> No image set — using default
+                  <ImageIcon size={14} /> {t('settings.media.default_image')}
                 </span>
               )}
             </label>
           </div>
 
           <div className="pt-8 border-t border-brand-clay">
-            <h3 className="text-lg font-serif font-bold text-brand-ink mb-2">Home Hero Image</h3>
-            <p className="text-xs text-brand-ink/50 italic font-serif">Upload a background image for the website's home page hero section. Max 5MB.</p>
+            <h3 className="text-lg font-serif font-bold text-brand-ink mb-2">{t('settings.media.home_hero')}</h3>
+            <p className="text-xs text-brand-ink/50 italic font-serif">{t('settings.media.home_hero_help')}</p>
           </div>
 
           {heroBg && (
             <div className="relative w-full h-48 rounded-md overflow-hidden border border-brand-clay">
-              <img src={heroBg} alt="Hero background preview" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
+              <img src={heroBg} alt={t('settings.media.hero_preview')} className="w-full h-full object-cover" referrerPolicy="no-referrer" />
             </div>
           )}
 
@@ -353,7 +384,7 @@ export default function Settings() {
             <label className="flex items-center gap-3 cursor-pointer">
               <span className="flex items-center gap-2 px-5 py-2.5 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red transition-all disabled:opacity-50">
                 {uploadingHeroBg ? <Loader2 size={16} className="animate-spin" /> : <Upload size={16} />}
-                {uploadingHeroBg ? 'Uploading...' : 'Choose Image'}
+                {uploadingHeroBg ? t('settings.media.uploading') : t('settings.media.choose_image')}
               </span>
               <input
                 type="file"
@@ -364,7 +395,7 @@ export default function Settings() {
               />
               {!heroBg && (
                 <span className="text-xs text-brand-ink/40 italic font-serif flex items-center gap-1">
-                  <ImageIcon size={14} /> No image set — using default
+                  <ImageIcon size={14} /> {t('settings.media.default_image')}
                 </span>
               )}
             </label>
@@ -383,9 +414,9 @@ export default function Settings() {
           <div className="flex items-center gap-2">
             <Key size={20} className="text-brand-red" />
             <div>
-              <h3 className="text-lg font-serif font-bold text-brand-ink">AI & Social Integrations</h3>
+              <h3 className="text-lg font-serif font-bold text-brand-ink">{t('settings.integrations.title')}</h3>
               <p className="text-xs text-brand-ink/50 italic font-serif">
-                Connect social networks, AI keys, and chatbot service. Add multiple platforms below.
+                {t('settings.integrations.description')}
               </p>
             </div>
           </div>
@@ -394,19 +425,18 @@ export default function Settings() {
 
           <div className="grid gap-4 sm:grid-cols-2 pt-6 border-t border-brand-clay">
             <h4 className="sm:col-span-2 text-sm font-semibold text-brand-ink uppercase tracking-wider">
-              AI & Chatbot service
+              {t('settings.integrations.ai_service')}
             </h4>
             <div className="sm:col-span-2 rounded-lg border border-brand-clay bg-brand-paper/30 p-4 flex flex-wrap items-center justify-between gap-4">
               <div>
-                <p className="text-sm font-semibold text-brand-ink">AI Concierge (tự động trả lời)</p>
+                <p className="text-sm font-semibold text-brand-ink">{t('settings.integrations.concierge_title')}</p>
                 <p className="text-xs text-brand-ink/50 mt-1 italic font-serif">
-                  Bật: bot AI tư vấn khách trên website. Tắt: admin trả lời thủ công trong Chat.
-                  URL Flask bên dưới chỉ cần khi dùng Facebook bot / thông báo realtime.
+                  {t('settings.integrations.concierge_help')}
                 </p>
               </div>
               <label className="inline-flex items-center gap-3 cursor-pointer">
                 <span className="text-xs font-bold uppercase tracking-wider text-brand-ink/50">
-                  {chatbotEnabled === 'true' ? 'On' : 'Off'}
+                  {chatbotEnabled === 'true' ? t('common.on') : t('common.off')}
                 </span>
                 <input
                   type="checkbox"
@@ -417,7 +447,7 @@ export default function Settings() {
               </label>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Gemini API Key</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.gemini_key')}</label>
               <input
                 type="password"
                 value={geminiKey}
@@ -428,7 +458,7 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Serper API Key (web search)</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.serper_key')}</label>
               <input
                 type="password"
                 value={serperKey}
@@ -439,32 +469,32 @@ export default function Settings() {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Auto-repost enabled</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.repost_enabled')}</label>
               <select value={repostEnabled} onChange={(e) => setRepostEnabled(e.target.value)}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm">
-                <option value="true">Yes</option>
-                <option value="false">No</option>
+                <option value="true">{t('common.yes')}</option>
+                <option value="false">{t('common.no')}</option>
               </select>
-              <p className="text-xs text-brand-ink/40 mt-1 italic">Uses Group IDs from Facebook accounts above.</p>
+              <p className="text-xs text-brand-ink/40 mt-1 italic">{t('settings.integrations.repost_help')}</p>
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Posts per day</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.posts_per_day')}</label>
               <input type="number" value={repostPostsPerDay} onChange={(e) => setRepostPostsPerDay(e.target.value)}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Delay between posts (min)</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.post_delay')}</label>
               <input type="number" value={repostDelay} onChange={(e) => setRepostDelay(e.target.value)}
                 className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Chatbot service URL</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.chatbot_url')}</label>
               <input type="url" value={chatbotUrl} onChange={(e) => setChatbotUrl(e.target.value)}
                 placeholder="http://127.0.0.1:8080"
                 className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm" />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-brand-ink mb-1">Internal bot token</label>
+              <label className="block text-sm font-semibold text-brand-ink mb-1">{t('settings.integrations.bot_token')}</label>
               <input
                 type="password"
                 value={chatbotToken}
@@ -473,7 +503,7 @@ export default function Settings() {
                 autoComplete="off"
                 className="w-full px-4 py-2 border border-brand-clay rounded-md text-sm"
               />
-              <p className="text-xs text-brand-ink/40 mt-1 italic">Same value in Django + Flask + newfeed .env</p>
+              <p className="text-xs text-brand-ink/40 mt-1 italic">{t('settings.integrations.bot_token_help')}</p>
             </div>
           </div>
         </div>
@@ -481,7 +511,7 @@ export default function Settings() {
           <button type="submit" disabled={savingIntegrations}
             className="flex items-center gap-2 px-6 py-2 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red disabled:opacity-50">
             {savingIntegrations ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-            Save Integrations
+            {t('settings.integrations.save')}
           </button>
         </div>
       </motion.form>

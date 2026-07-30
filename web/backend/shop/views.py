@@ -22,7 +22,12 @@ class ExchangeRatesView(APIView):
 
 
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
-    queryset = Product.objects.filter(status=ProductStatus.PUBLISHED).order_by('-created_at')
+    queryset = (
+        Product.objects.filter(status=ProductStatus.PUBLISHED)
+        .select_related('category', 'source_info')
+        .prefetch_related('gallery')
+        .order_by('-created_at')
+    )
     serializer_class = PublicProductSerializer
 
     @action(detail=False, methods=['get'])
@@ -325,13 +330,19 @@ class FavoriteViewSet(viewsets.ViewSet):
         return Response({"error": "Favorite not found"}, status=status.HTTP_404_NOT_FOUND)
 
 
-PUBLIC_SETTING_KEYS = frozenset({
-    'login_background_image',
-    'home_hero_image',
+PUBLIC_CONTENT_SETTING_KEYS = frozenset({
     'home_hero_title',
     'home_hero_subtitle',
     'home_hero_cta',
     'login_hero_text',
+})
+
+
+PUBLIC_SETTING_KEYS = frozenset({
+    'login_background_image',
+    'home_hero_image',
+    *PUBLIC_CONTENT_SETTING_KEYS,
+    *(f'{key}_{language}' for key in PUBLIC_CONTENT_SETTING_KEYS for language in ('en', 'ja', 'vi')),
 })
 
 

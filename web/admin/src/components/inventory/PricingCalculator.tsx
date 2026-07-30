@@ -191,7 +191,9 @@ export function PricingCalculator({ weight = 0, onApplyPrice }: PricingCalculato
                       : 'bg-white border-brand-clay text-brand-ink/60 hover:border-brand-ink'
                   )}
                 >
-                  {cur === 'JPY' ? '¥ JPY (Yên Nhật)' : '$ USD (Đô la Mỹ)'}
+                  {cur === 'JPY'
+                    ? t('pricing.currencies.jpy')
+                    : t('pricing.currencies.usd')}
                 </button>
               ))}
             </div>

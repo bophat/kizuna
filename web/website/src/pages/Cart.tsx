@@ -13,7 +13,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { ProductImage } from '@/components/products/ProductImage';
 
 export function CartPage() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { format: formatPrice, rates } = useFormatPrice();
   const { cart, removeFromCart, updateQuantity } = useCart();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -52,7 +52,7 @@ export function CartPage() {
       });
       setProductCache(cache);
     });
-  }, [cart?.items]);
+  }, [cart?.items, i18n.language]);
 
   const items = cart?.items.map(cartItem => {
     const product = productCache[cartItem.product_id];
@@ -60,7 +60,7 @@ export function CartPage() {
       ...cartItem,
       productDetail: product
         ? { name: product.name, image: product.image, location: product.location }
-        : { name: `Product #${cartItem.product_id}`, image: '', location: '' }
+        : { name: t('product.fallback_name', { id: cartItem.product_id }), image: '', location: '' }
     };
   }) || [];
 

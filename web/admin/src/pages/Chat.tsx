@@ -90,8 +90,7 @@ export default function Chat() {
           <div className="flex items-start gap-2">
             <AlertCircle size={18} className="shrink-0 mt-0.5" />
             <p>
-              <strong>Chế độ trả lời thủ công.</strong> AI Concierge đang tắt — khách nhắn từ website
-              sẽ chờ bạn trả lời tại đây. Bật AI trong Settings nếu muốn bot tự tư vấn.
+              <strong>{t('chat.manual_mode_title')}</strong> {t('chat.manual_mode_description')}
             </p>
           </div>
           <Link
@@ -99,7 +98,7 @@ export default function Chat() {
             className="inline-flex items-center gap-2 px-4 py-2 bg-brand-ink text-white rounded-md text-xs font-semibold hover:bg-brand-red transition-colors shrink-0"
           >
             <SettingsIcon size={14} />
-            Settings
+            {t('nav.settings')}
           </Link>
         </div>
       )}
@@ -198,7 +197,7 @@ export default function Chat() {
                         ? t('chat.status_admin')
                         : aiEnabled
                           ? t('chat.status_ai')
-                          : 'Chờ admin trả lời'}
+                          : t('chat.status_waiting_admin')}
                     </p>
                   </div>
                 </div>

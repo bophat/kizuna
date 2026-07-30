@@ -18,7 +18,7 @@ interface PendingReply {
 }
 
 export default function ApprovalQueue() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [items, setItems] = useState<PendingReply[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<number | null>(null);
@@ -34,11 +34,11 @@ export default function ApprovalQueue() {
         setItems(Array.isArray(data) ? data : data.results || []);
       }
     } catch {
-      toast.error('Failed to load approval queue');
+      toast.error(t('approval_queue.load_failed'));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     fetchPending();
@@ -54,12 +54,12 @@ export default function ApprovalQueue() {
         method: 'POST',
         body: JSON.stringify(body),
       });
-      if (!res.ok) throw new Error('Approve failed');
-      toast.success('Message sent to customer');
+      if (!res.ok) throw new Error(t('approval_queue.approve_failed'));
+      toast.success(t('approval_queue.sent'));
       setEditingId(null);
       fetchPending();
     } catch {
-      toast.error('Failed to approve — check chatbot service is running');
+      toast.error(t('approval_queue.approve_failed'));
     } finally {
       setActing(null);
     }
@@ -69,20 +69,20 @@ export default function ApprovalQueue() {
     setActing(id);
     try {
       const res = await apiFetch(`/pending-replies/${id}/reject/`, { method: 'POST' });
-      if (!res.ok) throw new Error('Reject failed');
-      toast.success('Rejected');
+      if (!res.ok) throw new Error(t('approval_queue.reject_failed'));
+      toast.success(t('approval_queue.rejected'));
       fetchPending();
     } catch {
-      toast.error('Failed to reject');
+      toast.error(t('approval_queue.reject_failed'));
     } finally {
       setActing(null);
     }
   };
 
   const channelLabel = (ch: string) => {
-    if (ch === 'messenger') return 'Messenger';
-    if (ch === 'comment') return 'Comment → Inbox';
-    if (ch === 'website') return 'Website';
+    if (ch === 'messenger') return t('approval_queue.channels.messenger');
+    if (ch === 'comment') return t('approval_queue.channels.comment');
+    if (ch === 'website') return t('approval_queue.channels.website');
     return ch;
   };
 
@@ -90,17 +90,17 @@ export default function ApprovalQueue() {
     <div className="p-8 lg:p-12 max-w-5xl mx-auto space-y-8">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">AI Chatbot</p>
-          <h1 className="text-4xl font-serif font-bold text-brand-ink">Approval Queue</h1>
+          <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">{t('approval_queue.eyebrow')}</p>
+          <h1 className="text-4xl font-serif font-bold text-brand-ink">{t('approval_queue.title')}</h1>
           <p className="text-sm text-brand-ink/40 mt-2 font-serif italic">
-            Greetings are sent automatically. All other AI replies require your approval before reaching customers.
+            {t('approval_queue.description')}
           </p>
         </div>
         <button
           onClick={fetchPending}
           className="flex items-center gap-2 px-4 py-2 border border-brand-clay rounded-md text-sm hover:bg-brand-paper"
         >
-          <RefreshCw size={16} /> Refresh
+          <RefreshCw size={16} /> {t('approval_queue.refresh')}
         </button>
       </div>
 
@@ -111,7 +111,7 @@ export default function ApprovalQueue() {
       ) : items.length === 0 ? (
         <div className="text-center py-20 text-brand-ink/40 font-serif italic">
           <MessageSquare className="w-12 h-12 mx-auto mb-4 opacity-30" />
-          No messages waiting for approval
+          {t('approval_queue.empty')}
         </div>
       ) : (
         <div className="space-y-4">
@@ -124,10 +124,10 @@ export default function ApprovalQueue() {
             >
               <div className="flex items-center justify-between text-xs uppercase tracking-wider text-brand-ink/50">
                 <span className="font-bold text-brand-red">{channelLabel(item.channel)}</span>
-                <span>{new Date(item.created_at).toLocaleString()}</span>
+                <span>{new Date(item.created_at).toLocaleString(i18n.language)}</span>
               </div>
               <div className="bg-brand-paper/50 rounded-md p-4">
-                <p className="text-xs font-bold text-brand-ink/40 mb-1">Customer</p>
+                <p className="text-xs font-bold text-brand-ink/40 mb-1">{t('approval_queue.customer')}</p>
                 <p className="text-sm text-brand-ink">{item.incoming_message}</p>
               </div>
               {editingId === item.id ? (
@@ -139,7 +139,7 @@ export default function ApprovalQueue() {
                 />
               ) : (
                 <div className="bg-white border border-brand-clay rounded-md p-4">
-                  <p className="text-xs font-bold text-brand-ink/40 mb-1">AI Draft</p>
+                  <p className="text-xs font-bold text-brand-ink/40 mb-1">{t('approval_queue.ai_draft')}</p>
                   <p className="text-sm text-brand-ink whitespace-pre-wrap">{item.draft_reply}</p>
                 </div>
               )}
@@ -155,14 +155,14 @@ export default function ApprovalQueue() {
                   }}
                   className="px-4 py-2 text-sm border border-brand-clay rounded-md hover:bg-brand-paper"
                 >
-                  {editingId === item.id ? 'Cancel edit' : 'Edit'}
+                  {editingId === item.id ? t('approval_queue.cancel_edit') : t('common.edit')}
                 </button>
                 <button
                   onClick={() => handleReject(item.id)}
                   disabled={acting === item.id}
                   className="flex items-center gap-2 px-4 py-2 text-sm border border-brand-red/30 text-brand-red rounded-md hover:bg-red-50 disabled:opacity-50"
                 >
-                  <X size={16} /> Reject
+                  <X size={16} /> {t('approval_queue.reject')}
                 </button>
                 <button
                   onClick={() => handleApprove(item)}
@@ -170,7 +170,7 @@ export default function ApprovalQueue() {
                   className="flex items-center gap-2 px-5 py-2 text-sm bg-brand-ink text-white rounded-md hover:bg-brand-red disabled:opacity-50"
                 >
                   {acting === item.id ? <Loader2 size={16} className="animate-spin" /> : <Check size={16} />}
-                  Approve & Send
+                  {t('approval_queue.approve_send')}
                 </button>
               </div>
             </motion.div>

@@ -3,6 +3,7 @@ import { Loader2, Search, Sparkles, ExternalLink, X } from 'lucide-react';
 import { motion } from 'motion/react';
 import { apiFetch } from '../lib/api';
 import { toast } from '@izuna/shared/lib/toast';
+import { useTranslation } from 'react-i18next';
 
 interface TrendingLead {
   id: number;
@@ -17,6 +18,7 @@ interface TrendingLead {
 }
 
 export default function AiDiscovery() {
+  const { t } = useTranslation();
   const [query, setQuery] = useState('');
   const [platforms, setPlatforms] = useState(['facebook', 'instagram', 'tiktok']);
   const [searching, setSearching] = useState(false);
@@ -53,11 +55,11 @@ export default function AiDiscovery() {
         body: JSON.stringify({ query: query.trim(), platforms }),
       });
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || 'Search failed');
-      toast.success(`Found ${data.count || 0} trending products`);
+      if (!res.ok) throw new Error(data.error || t('ai_discovery.search_failed'));
+      toast.success(t('ai_discovery.found_count', { count: data.count || 0 }));
       setLeads((prev) => [...(data.leads || []), ...prev]);
     } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'AI search failed — check API keys in Settings');
+      toast.error(err instanceof Error ? err.message : t('ai_discovery.search_error'));
     } finally {
       setSearching(false);
     }
@@ -77,10 +79,10 @@ export default function AiDiscovery() {
   return (
     <div className="p-8 lg:p-12 max-w-5xl mx-auto space-y-8">
       <div>
-        <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">AI Discovery</p>
-        <h1 className="text-4xl font-serif font-bold text-brand-ink">Hot Products on Social</h1>
+        <p className="text-xs font-medium text-brand-red tracking-[0.2em] uppercase mb-2">{t('ai_discovery.eyebrow')}</p>
+        <h1 className="text-4xl font-serif font-bold text-brand-ink">{t('ai_discovery.title')}</h1>
         <p className="text-sm text-brand-ink/40 mt-2 font-serif italic">
-          AI searches Facebook, Instagram, TikTok & web for trending products. Import winners to your catalog.
+          {t('ai_discovery.description')}
         </p>
       </div>
 
@@ -95,7 +97,7 @@ export default function AiDiscovery() {
               type="text"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="e.g. cushion foundation japan, skincare trending..."
+              placeholder={t('ai_discovery.placeholder')}
               className="w-full pl-10 pr-4 py-3 border border-brand-clay rounded-md text-sm"
             />
           </div>
@@ -105,7 +107,7 @@ export default function AiDiscovery() {
             className="flex items-center gap-2 px-6 py-3 bg-brand-ink text-white rounded-md text-sm hover:bg-brand-red disabled:opacity-50"
           >
             {searching ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} />}
-            Search
+            {t('ai_discovery.search')}
           </button>
         </div>
         <div className="flex gap-2 flex-wrap">
@@ -131,7 +133,7 @@ export default function AiDiscovery() {
           <Loader2 className="w-8 h-8 animate-spin text-brand-red" />
         </div>
       ) : leads.length === 0 ? (
-        <p className="text-center text-brand-ink/40 font-serif italic py-12">No leads yet — run a search above</p>
+        <p className="text-center text-brand-ink/40 font-serif italic py-12">{t('ai_discovery.empty')}</p>
       ) : (
         <div className="space-y-3">
           {leads.map((lead) => (

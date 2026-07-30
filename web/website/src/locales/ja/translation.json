@@ -49,7 +49,10 @@
     "loading": "読み込み中...",
     "error": "エラーが発生しました",
     "search": "検索",
-    "error_connection": "サーバーへの接続に失敗しました。バックエンドが実行されているか確認してください。"
+    "error_connection": "サーバーへの接続に失敗しました。バックエンドが実行されているか確認してください。",
+    "page_not_found": "ページが見つかりません",
+    "page_not_found_desc": "お探しのページは削除、名称変更、または一時的に利用できない可能性があります。",
+    "back_to_home": "ホームに戻る"
   },
   "filter": {
     "title": "フィルターと並べ替え",
@@ -67,14 +70,20 @@
     "likes": "お気に入り順",
     "clear_all": "すべてクリア",
     "apply": "フィルターを適用",
-    "results": "{{count}}件の商品を表示中"
+    "results": "{{count}}件の商品を表示中",
+    "show_per_page": "1ページの表示件数",
+    "showing_range": "全{{total}}件中 {{start}}〜{{end}}件を表示"
   },
   "product": {
     "not_found": "商品が見つかりません",
+    "load_error": "商品詳細の読み込みに失敗しました",
+    "fallback_name": "商品 #{{id}}",
     "back_to_shop": "ショップに戻る",
     "back": "戻る",
     "new": "新着",
+    "limited": "限定品",
     "best_price": "最安値",
+    "best_seller": "ベストセラー",
     "favorites": "お気に入り",
     "sold": "{{count}}+ 点販売",
     "no_description": "この商品の説明はありません。",
@@ -142,7 +151,11 @@
     "est_delivery": "お届け予定日: 7-14 営業日",
     "secure_payment_desc": "すべての取引は安全に暗号化されています。",
     "fill_required": "必須項目をすべて入力してください",
-    "secure_checkout": "安全な決済"
+    "secure_checkout": "安全な決済",
+    "bank_qr_alt": "銀行振込用QRコード",
+    "errors": {
+      "failed": "決済に失敗しました。もう一度お試しください。"
+    }
   },
   "wishlist": {
     "title": "お気に入り",
@@ -201,6 +214,40 @@
   },
   "users": {
     "phone": "電話番号"
+  },
+  "collection": {
+    "search_results": "「{{query}}」の検索結果",
+    "active": "適用中",
+    "load_error": "商品の読み込みに失敗しました"
+  },
+  "notifications": {
+    "title": "お知らせ",
+    "dismiss": "閉じる",
+    "items": {
+      "1": {
+        "title": "新しい見積もりが届きました",
+        "message": "職人がお客様のご依頼を確認し、詳細な提案とスケジュールを提出しました。",
+        "time": "たった今",
+        "action": "見積もりを見る"
+      },
+      "2": {
+        "title": "商品を発送しました",
+        "message": "ご注文の商品は工房を出発し、日本郵便で輸送中です。",
+        "time": "昨日",
+        "action": "注文を見る"
+      }
+    }
+  },
+  "concierge": {
+    "welcome": "こんにちは！ショップのオンラインコンシェルジュ、Kizuna AIです。本日はどのような商品をお探しですか？メッセージをいただければ、できるだけ早くご案内します。",
+    "waiting_for_admin": "メッセージありがとうございます。ショップスタッフがまもなく返信しますので、少々お待ちください。",
+    "fallback_message": "商品についてお問い合わせいただきありがとうございます。ショップで内容を確認し、詳細確認のためまもなくご連絡します。",
+    "service_unavailable": "現在コンシェルジュサービスをご利用いただけません",
+    "today": "今日",
+    "manual_mode": "ショップスタッフがメッセージに直接返信します。",
+    "input_placeholder": "日本の工芸品、職人、旅行について質問してください...",
+    "send": "メッセージを送信",
+    "ask_kenji": "Kenjiに相談"
   },
   "footer": {
     "privacy": "プライバシーポリシー",

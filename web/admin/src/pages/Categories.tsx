@@ -24,6 +24,9 @@ export default function Categories() {
   const [editingCategory, setEditingCategory] = useState<any>(null);
   const [formData, setFormData] = useState({
     name: '',
+    name_en: '',
+    name_ja: '',
+    name_vi: '',
     slug: ''
   });
 
@@ -54,12 +57,18 @@ export default function Categories() {
       setEditingCategory(category);
       setFormData({
         name: category.name,
+        name_en: category.name_en || '',
+        name_ja: category.name_ja || '',
+        name_vi: category.name_vi || '',
         slug: category.slug
       });
     } else {
       setEditingCategory(null);
       setFormData({
         name: '',
+        name_en: '',
+        name_ja: '',
+        name_vi: '',
         slug: ''
       });
     }
@@ -153,7 +162,7 @@ export default function Categories() {
               <AlertCircle size={24} />
             </div>
             <p className="text-brand-ink/60 font-serif italic">{error}</p>
-            <button onClick={fetchCategories} className="text-brand-red text-sm font-bold hover:underline">Try again</button>
+            <button onClick={fetchCategories} className="text-brand-red text-sm font-bold hover:underline">{t('common.try_again')}</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -261,6 +270,20 @@ export default function Categories() {
                       setFormData({...formData, name, slug: editingCategory ? formData.slug : slug});
                     }}
                   />
+                </div>
+                <div className="grid gap-3 sm:grid-cols-3">
+                  {(['en', 'ja', 'vi'] as const).map((language) => (
+                    <div key={language} className="space-y-1">
+                      <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">
+                        {t(`categories.modal.name_${language}`)}
+                      </label>
+                      <input
+                        className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-brand-red/10 focus:border-brand-red transition-all"
+                        value={formData[`name_${language}`]}
+                        onChange={(e) => setFormData({ ...formData, [`name_${language}`]: e.target.value })}
+                      />
+                    </div>
+                  ))}
                 </div>
                 <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('categories.modal.slug_label')}</label>

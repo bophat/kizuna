@@ -12,11 +12,11 @@ interface DateRangeModalProps {
 }
 
 const PRESETS = [
-  { label: 'Hôm nay', days: 0 },
-  { label: '7 ngày qua', days: 7 },
-  { label: '30 ngày qua', days: 30 },
-  { label: 'Tháng này', type: 'thisMonth' as const },
-  { label: 'Năm nay', type: 'thisYear' as const },
+  { key: 'today', days: 0 },
+  { key: 'last_7_days', days: 7 },
+  { key: 'last_30_days', days: 30 },
+  { key: 'this_month', type: 'thisMonth' as const },
+  { key: 'this_year', type: 'thisYear' as const },
 ];
 
 export function DateRangeModal({ isOpen, startDate, endDate, onClose, onApply }: DateRangeModalProps) {
@@ -76,7 +76,7 @@ export function DateRangeModal({ isOpen, startDate, endDate, onClose, onApply }:
             <div className="grid grid-cols-2 gap-8">
               <div className="space-y-3">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 block">
-                  Từ ngày
+                  {t('dashboard.date_range.from')}
                 </label>
                 <input
                   type="date"
@@ -87,7 +87,7 @@ export function DateRangeModal({ isOpen, startDate, endDate, onClose, onApply }:
               </div>
               <div className="space-y-3">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 block">
-                  Đến ngày
+                  {t('dashboard.date_range.to')}
                 </label>
                 <input
                   type="date"
@@ -101,11 +101,11 @@ export function DateRangeModal({ isOpen, startDate, endDate, onClose, onApply }:
             <div className="flex flex-wrap gap-2 pt-4">
               {PRESETS.map((preset) => (
                 <button
-                  key={preset.label}
+                  key={preset.key}
                   onClick={() => applyPreset(preset)}
                   className="px-3 py-2 text-[10px] font-bold uppercase tracking-wider text-brand-ink/60 border border-brand-clay hover:border-brand-red hover:text-brand-red rounded-sm transition-all"
                 >
-                  {preset.label}
+                  {t(`dashboard.date_range.${preset.key}`)}
                 </button>
               ))}
             </div>
@@ -116,7 +116,7 @@ export function DateRangeModal({ isOpen, startDate, endDate, onClose, onApply }:
               onClick={onClose}
               className="flex-1 px-6 py-3 text-xs font-bold uppercase tracking-widest text-brand-ink/40 hover:text-brand-ink transition-colors"
             >
-              Hủy
+              {t('common.cancel')}
             </button>
             <button
               onClick={() => {
@@ -125,7 +125,7 @@ export function DateRangeModal({ isOpen, startDate, endDate, onClose, onApply }:
               }}
               className="flex-1 bg-brand-red text-white px-6 py-3 text-xs font-bold uppercase tracking-widest rounded-sm hover:bg-brand-red/90 shadow-lg shadow-brand-red/20 transition-all"
             >
-              Áp dụng
+              {t('common.apply')}
             </button>
           </div>
         </motion.div>

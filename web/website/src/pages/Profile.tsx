@@ -67,7 +67,7 @@ export function ProfilePage() {
   useEffect(() => {
     fetchProfile();
     fetchOrders();
-  }, []);
+  }, [i18n.language]);
 
   const fetchProfile = async () => {
     try {

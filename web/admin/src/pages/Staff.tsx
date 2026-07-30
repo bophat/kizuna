@@ -200,7 +200,7 @@ export default function Staff() {
               <AlertCircle size={24} />
             </div>
             <p className="text-brand-ink/60 font-serif italic">{error}</p>
-            <button onClick={fetchStaff} className="text-brand-red text-sm font-bold hover:underline">Try again</button>
+            <button onClick={fetchStaff} className="text-brand-red text-sm font-bold hover:underline">{t('common.try_again')}</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -335,7 +335,7 @@ export default function Staff() {
                     className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
                     value={formData.username}
                     onChange={(e) => setFormData({...formData, username: e.target.value})}
-                    placeholder="e.g. curator_john"
+                    placeholder={t('staff.modal.username_placeholder')}
                     required
                   />
                 </div>

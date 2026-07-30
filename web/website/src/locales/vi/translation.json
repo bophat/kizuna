@@ -49,7 +49,10 @@
     "loading": "Đang tải...",
     "error": "Đã có lỗi xảy ra",
     "search": "Tìm kiếm",
-    "error_connection": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra xem backend có đang chạy không."
+    "error_connection": "Không thể kết nối đến máy chủ. Vui lòng kiểm tra xem backend có đang chạy không.",
+    "page_not_found": "Không tìm thấy trang",
+    "page_not_found_desc": "Trang bạn tìm kiếm có thể đã bị xóa, đổi tên hoặc tạm thời không khả dụng.",
+    "back_to_home": "Quay về trang chủ"
   },
   "filter": {
     "title": "Lọc & Sắp xếp",
@@ -67,14 +70,20 @@
     "likes": "Yêu thích nhất",
     "clear_all": "Xóa tất cả",
     "apply": "Áp dụng",
-    "results": "Đang hiển thị {{count}} sản phẩm"
+    "results": "Đang hiển thị {{count}} sản phẩm",
+    "show_per_page": "Số mục mỗi trang",
+    "showing_range": "Hiển thị {{start}}–{{end}} trên tổng số {{total}}"
   },
   "product": {
     "not_found": "Không tìm thấy sản phẩm",
+    "load_error": "Không thể tải chi tiết sản phẩm",
+    "fallback_name": "Sản phẩm #{{id}}",
     "back_to_shop": "Quay lại cửa hàng",
     "back": "Quay lại",
     "new": "Mới",
+    "limited": "Phiên bản giới hạn",
     "best_price": "Giá tốt nhất",
+    "best_seller": "Bán chạy nhất",
     "favorites": "lượt thích",
     "sold": "Đã bán {{count}}+",
     "no_description": "Không có mô tả cho sản phẩm này.",
@@ -142,7 +151,11 @@
     "est_delivery": "Thời gian giao hàng dự kiến: 7-14 ngày làm việc",
     "secure_payment_desc": "Mọi giao dịch đều được bảo mật và mã hóa.",
     "fill_required": "Vui lòng điền đầy đủ các thông tin bắt buộc",
-    "secure_checkout": "Thanh toán an toàn"
+    "secure_checkout": "Thanh toán an toàn",
+    "bank_qr_alt": "Mã QR chuyển khoản ngân hàng",
+    "errors": {
+      "failed": "Thanh toán thất bại. Vui lòng thử lại."
+    }
   },
   "wishlist": {
     "title": "Danh sách yêu thích",
@@ -201,6 +214,40 @@
   },
   "users": {
     "phone": "Số điện thoại"
+  },
+  "collection": {
+    "search_results": "Kết quả tìm kiếm cho “{{query}}”",
+    "active": "Đang áp dụng",
+    "load_error": "Không thể tải danh sách sản phẩm"
+  },
+  "notifications": {
+    "title": "Thông báo",
+    "dismiss": "Bỏ qua",
+    "items": {
+      "1": {
+        "title": "Đã có báo giá mới",
+        "message": "Nghệ nhân đã xem yêu cầu và gửi đề xuất chi tiết cùng tiến độ thực hiện.",
+        "time": "Vừa xong",
+        "action": "Xem báo giá"
+      },
+      "2": {
+        "title": "Đơn hàng đã được gửi",
+        "message": "Đơn hàng đã rời xưởng và đang được vận chuyển qua Japan Post.",
+        "time": "Hôm qua",
+        "action": "Xem đơn hàng"
+      }
+    }
+  },
+  "concierge": {
+    "welcome": "Chào bạn! Mình là Kizuna AI, chuyên viên tư vấn trực tuyến của shop. Hôm nay bạn đang quan tâm hoặc muốn tìm mặt hàng nào? Hãy để lại tin nhắn để mình hỗ trợ nhanh nhất nhé.",
+    "waiting_for_admin": "Cảm ơn bạn đã nhắn tin! Nhân viên shop sẽ phản hồi trong thời gian sớm nhất. Vui lòng chờ trong giây lát.",
+    "fallback_message": "Cảm ơn quý khách đã gửi yêu cầu mua hàng. Shop đã ghi nhận thông tin và sẽ sớm liên hệ để xác nhận chi tiết.",
+    "service_unavailable": "Dịch vụ tư vấn hiện không khả dụng",
+    "today": "Hôm nay",
+    "manual_mode": "Nhân viên shop sẽ trực tiếp trả lời tin nhắn của bạn.",
+    "input_placeholder": "Hỏi về đồ thủ công, nghệ nhân hoặc du lịch Nhật Bản...",
+    "send": "Gửi tin nhắn",
+    "ask_kenji": "Hỏi Kenji"
   },
   "footer": {
     "privacy": "Chính sách bảo mật",

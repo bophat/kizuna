@@ -9,7 +9,9 @@
     "profile": "プロフィール",
     "chat": "チャット",
     "pricing": "価格計算",
-    "settings": "設定"
+    "settings": "設定",
+    "approvals": "承認キュー",
+    "ai_discovery": "AI商品発見"
   },
   "chat": {
     "title": "ライブチャット",
@@ -30,7 +32,10 @@
     "admin_reply": "管理者返信",
     "input_admin": "返信を入力...",
     "input_takeover": "AIから引き継ぐには入力...",
-    "select_session": "チャットセッションを選択してください"
+    "select_session": "チャットセッションを選択してください",
+    "manual_mode_title": "手動返信モードです。",
+    "manual_mode_description": "AIコンシェルジュはオフです。ウェブサイトからのメッセージにはここで返信してください。自動応答を使うには設定でAIを有効にします。",
+    "status_waiting_admin": "管理者の返信待ち"
   },
   "dashboard": {
     "title": "レジストリ分析",
@@ -39,6 +44,15 @@
     "mode_relative": "期間指定",
     "mode_specific": "個別選択",
     "current_period": "現在の期間",
+    "date_range": {
+      "from": "開始日",
+      "to": "終了日",
+      "today": "今日",
+      "last_7_days": "過去7日間",
+      "last_30_days": "過去30日間",
+      "this_month": "今月",
+      "this_year": "今年"
+    },
     "period_day": "日次",
     "period_week": "週次",
     "period_month": "月次",
@@ -96,6 +110,8 @@
     "search_placeholder": "名前、ID、または職人でコレクションを検索...",
     "loading": "コレクションをカタログ化中...",
     "confirm_delete": "このアーティファクトを廃止してもよろしいですか？",
+    "filter_by": "絞り込み",
+    "all_categories": "すべてのカテゴリー",
     "errors": {
       "load_failed": "アーティファクトの読み込みに失敗しました。",
       "fetch_error": "データの取得中にエラーが発生しました。"
@@ -121,6 +137,7 @@
       "category_label": "分類",
       "category_placeholder": "分類を選択",
       "name_label": "アーティファクト名称",
+      "languages": { "default": "原文", "en": "英語", "ja": "日本語", "vi": "ベトナム語" },
       "attributes_label": "コレクション属性",
       "attributes": {
         "featured": "キュレート済み",
@@ -188,7 +205,12 @@
       "stat_created": "作成",
       "stat_skipped": "スキップ",
       "stat_errors": "エラー",
-      "error_list": "エラー詳細"
+      "error_list": "エラー詳細",
+      "confirm_delete_all": "すべての商品を削除しますか？この操作は取り消せません。",
+      "delete_all_button": "すべて削除",
+      "formula_import": "仕入価格 =（元価格 JPY + ¥1,000）× 200",
+      "formula_shipping": "送料 = 重量 > 0.5 kg ? 重量 × ₫180,000 : ₫20,000",
+      "formula_selling": "販売価格 = 仕入価格 × 1.15 + 送料"
     }
   },
   "pricing": {
@@ -198,6 +220,10 @@
     "subtitle": "原価 → 販売価格（日本 → ベトナム）",
     "section_costs": "コスト入力",
     "section_result": "計算結果",
+    "currencies": {
+      "jpy": "¥ JPY（日本円）",
+      "usd": "$ USD（米ドル）"
+    },
     "fields": {
       "currency": "入力通貨",
       "origin_cost": "原価",
@@ -287,6 +313,7 @@
       "save_notes": "メモを保存",
       "view_artifact": "フルアーティファクトを表示",
       "no_receipt": "この取引の支払い領収書はまだアップロードされていません。",
+      "receipt_alt": "支払い領収書",
       "updating": "更新中...",
       "table": {
         "product": "製品",
@@ -349,6 +376,7 @@
       "update_title": "スタッフ権限の更新",
       "new_title": "新しいスタッフメンバーの登録",
       "username": "ユーザー名",
+      "username_placeholder": "例：curator_john",
       "first_name": "名",
       "last_name": "姓",
       "email": "メール",
@@ -416,6 +444,9 @@
       "update_title": "カテゴリーを更新",
       "new_title": "新しいタクソノミー項目",
       "name_label": "カテゴリー名",
+      "name_en": "英語名",
+      "name_ja": "日本語名",
+      "name_vi": "ベトナム語名",
       "slug_label": "スラッグ（URLパス）",
       "cancel": "キャンセル",
       "update_button": "登録を更新",
@@ -435,7 +466,102 @@
       "notifications": "通知",
       "database": "システム＆データ"
     },
+    "public_site": {
+      "url": "公開サイトURL",
+      "url_help": "「サイトを表示」リンクで使用するURLです。"
+    },
+    "content": {
+      "title": "ページコンテンツ",
+      "description": "ウェブサイトのホームヒーローと管理画面ログインページの文章を言語別に設定します。空欄の場合は既定の翻訳を使用します。",
+      "website_hero": "ウェブサイト — ホームヒーロー",
+      "headline": "見出し",
+      "subtitle": "サブタイトル",
+      "button_label": "ボタンラベル",
+      "admin_login": "管理画面 — ログインサイドパネル",
+      "hero_quote": "ヒーローメッセージ",
+      "headline_placeholder": "見出しを入力",
+      "subtitle_placeholder": "サブタイトルを入力",
+      "button_placeholder": "ボタンラベルを入力",
+      "quote_placeholder": "ログインメッセージを入力",
+      "logo_upload": "ロゴをアップロード",
+      "logo_current": "現在のロゴ",
+      "upload_button": "画像を選択",
+      "uploading": "アップロード中...",
+      "preview": "プレビュー",
+      "languages": { "en": "英語", "ja": "日本語", "vi": "ベトナム語" }
+    },
+    "media": {
+      "login_background": "ログイン背景画像",
+      "login_help": "ログインページの背景画像をアップロードします。最大5MB、JPEG・PNG・WEBP・GIF対応。",
+      "login_preview": "ログイン背景のプレビュー",
+      "home_hero": "ホームヒーロー画像",
+      "home_hero_help": "ウェブサイトのホームヒーロー背景をアップロードします。最大5MB。",
+      "hero_preview": "ヒーロー背景のプレビュー",
+      "uploading": "アップロード中...",
+      "choose_image": "画像を選択",
+      "default_image": "画像未設定 — 既定画像を使用中",
+      "upload_failed": "アップロードに失敗しました",
+      "login_updated": "背景画像を更新しました",
+      "login_upload_failed": "背景画像をアップロードできませんでした",
+      "hero_updated": "ヒーロー画像を更新しました",
+      "hero_upload_failed": "ヒーロー画像をアップロードできませんでした"
+    },
+    "integrations": {
+      "title": "AI・SNS連携",
+      "description": "SNS、AIキー、チャットボットサービスを接続します。複数のプラットフォームを追加できます。",
+      "saved": "連携設定を保存しました",
+      "save_failed": "連携設定を保存できませんでした",
+      "social_networks": "ソーシャルネットワーク",
+      "social_help": "チャットボットと自動再投稿で使用するプラットフォームを追加します。",
+      "add_network": "ネットワークを追加",
+      "no_social_accounts": "SNSアカウントがありません。Facebook、Instagram、TikTok、Zalo、LINEなどを追加してください。",
+      "display_name": "表示名",
+      "active": "有効",
+      "gemini_key": "Gemini APIキー",
+      "serper_key": "Serper APIキー（ウェブ検索）",
+      "ai_service": "AI・チャットボットサービス",
+      "concierge_title": "AIコンシェルジュ（自動返信）",
+      "concierge_help": "有効にするとAIがウェブサイトのお客様に対応します。無効時は管理者がチャットで手動返信します。Flask URLはFacebook botまたはリアルタイム通知を使う場合のみ必要です。",
+      "repost_enabled": "自動再投稿を有効にする",
+      "repost_help": "上記FacebookアカウントのGroup IDを使用します。",
+      "posts_per_day": "1日の投稿数",
+      "post_delay": "投稿間隔（分）",
+      "chatbot_url": "チャットボットサービスURL",
+      "bot_token": "内部botトークン",
+      "bot_token_help": "Django、Flask、newfeedの.envで同じ値を使用します。",
+      "group_ids_placeholder": "[\"123456\",\"789012\"] またはカンマ区切り",
+      "platforms": {
+        "facebook": "Messenger、コメント、ファンページ投稿のグループへの再投稿",
+        "instagram": "Meta Graph APIによるDM・コメントの自動化",
+        "tiktok": "TikTok for Business API",
+        "twitter": "X API v2",
+        "zalo": "Zalo公式アカウント",
+        "line": "LINE Messaging API",
+        "youtube": "YouTube Data API"
+      },
+      "fields": {
+        "access_token": "アクセストークン",
+        "page_id": "ページID",
+        "verify_token": "Webhook検証トークン",
+        "group_ids": "グループID（自動再投稿）",
+        "account_id": "InstagramビジネスアカウントID",
+        "business_id": "ビジネスID",
+        "api_key": "APIキー",
+        "api_secret": "APIシークレット",
+        "bearer_token": "Bearerトークン",
+        "oa_id": "OA ID",
+        "secret_key": "シークレットキー",
+        "channel_token": "チャンネルアクセストークン",
+        "channel_secret": "チャンネルシークレット",
+        "channel_id": "チャンネルID"
+      },
+      "save": "連携設定を保存"
+    },
     "general": {
+      "title": "基本設定",
+      "description": "システム設定パラメータを変更します",
+      "add_setting": "新しい設定を追加",
+      "add_button": "追加",
       "gallery_name": "ギャラリー名",
       "primary_contact": "主な連絡先",
       "status": "運用ステータス",
@@ -474,6 +600,35 @@
     },
     "coming_soon": "高度な {{section}} コントロールは現在準備中です..."
   },
+  "ai_discovery": {
+    "eyebrow": "AI商品発見",
+    "title": "SNSで話題の商品",
+    "description": "AIがFacebook、Instagram、TikTok、ウェブからトレンド商品を探し、有望な候補をカタログに取り込みます。",
+    "placeholder": "例：日本のクッションファンデ、話題のスキンケア...",
+    "search": "検索",
+    "empty": "候補はまだありません — 上のフォームから検索してください",
+    "search_failed": "検索に失敗しました",
+    "search_error": "AI検索に失敗しました — 設定のAPIキーを確認してください",
+    "found_count": "話題の商品が{{count}}件見つかりました"
+  },
+  "approval_queue": {
+    "eyebrow": "AIチャットボット",
+    "title": "承認キュー",
+    "description": "挨拶は自動送信されます。それ以外のAI返信はお客様に届く前に承認が必要です。",
+    "refresh": "更新",
+    "empty": "承認待ちのメッセージはありません",
+    "customer": "お客様",
+    "ai_draft": "AI下書き",
+    "cancel_edit": "編集をキャンセル",
+    "reject": "却下",
+    "approve_send": "承認して送信",
+    "load_failed": "承認キューを読み込めませんでした",
+    "approve_failed": "承認できませんでした。チャットボットサービスを確認してください",
+    "reject_failed": "却下に失敗しました",
+    "sent": "お客様にメッセージを送信しました",
+    "rejected": "却下しました",
+    "channels": { "messenger": "Messenger", "comment": "コメント → 受信箱", "website": "ウェブサイト" }
+  },
   "login": {
     "hero_text": "現代の世界に向けて、日本の伝統工芸の粋をお届けします。",
     "locations": "東京 • 京都 • 大阪",
@@ -483,6 +638,7 @@
     "email_placeholder": "name@kizuna-gallery.jp",
     "password_label": "パスワード",
     "password_placeholder": "••••••••",
+    "background_alt": "ログイン背景",
     "forgot_password": "お忘れですか？",
     "authenticate_button": "認証する",
     "footer_text_line1": "アカウントへのアクセスに問題がある場合は、",
@@ -516,7 +672,18 @@
     "loading_logistics": "物流情報を同期中...",
     "reset": "リセット",
     "save": "保存",
-    "error_occurred": "エラーが発生しました"
+    "error_occurred": "エラーが発生しました",
+    "try_again": "もう一度試す",
+    "cancel": "キャンセル",
+    "apply": "適用",
+    "on": "オン",
+    "off": "オフ",
+    "yes": "はい",
+    "no": "いいえ"
+  },
+  "filter": {
+    "show_per_page": "1ページの表示件数",
+    "showing_range": "全{{total}}件中 {{start}}〜{{end}}件を表示"
   },
   "validation": {
     "required": "この項目は必須です",

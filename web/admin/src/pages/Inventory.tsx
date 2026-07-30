@@ -158,7 +158,7 @@ export default function InventoryPage() {
             </div>
             <p className="text-brand-ink/60 font-serif italic">{error}</p>
             <button onClick={fetchData} className="text-brand-red text-sm font-bold hover:underline">
-              Try again
+              {t('common.try_again')}
             </button>
           </div>
         ) : (

@@ -17,7 +17,7 @@ import { FREE_SHIPPING_MIN_USD } from '@/lib/formatPrice';
 export function ProductDetail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
   
   const [product, setProduct] = useState<Product | null>(null);
@@ -42,7 +42,7 @@ export function ProductDetail() {
         setIsLoading(true);
         // Fetch specific product
         const response = await apiFetch(`/shop/products/${id}/`);
-        if (!response.ok) throw new Error('Product not found');
+        if (!response.ok) throw new Error(t('product.not_found'));
         const p = await response.json();
         
         const mappedProduct: Product = {
@@ -82,7 +82,7 @@ export function ProductDetail() {
         }
       } catch (err) {
         console.error(err);
-        setError('Failed to load product details');
+        setError(t('product.load_error'));
       } finally {
         setIsLoading(false);
       }
@@ -92,7 +92,7 @@ export function ProductDetail() {
       fetchProductDetails();
       window.scrollTo(0, 0);
     }
-  }, [id]);
+  }, [id, i18n.language, t]);
 
   if (isLoading) {
     return (

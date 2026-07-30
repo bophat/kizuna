@@ -9,7 +9,9 @@
     "profile": "Hồ sơ",
     "chat": "Chat CSKH",
     "pricing": "Tính giá",
-    "settings": "Cài đặt"
+    "settings": "Cài đặt",
+    "approvals": "Duyệt phản hồi",
+    "ai_discovery": "Khám phá bằng AI"
   },
   "chat": {
     "title": "Live Chat",
@@ -30,7 +32,10 @@
     "admin_reply": "Admin trả lời",
     "input_admin": "Nhập câu trả lời của bạn...",
     "input_takeover": "Nhập để tiếp quản chat từ AI...",
-    "select_session": "Chọn một phiên chat để bắt đầu"
+    "select_session": "Chọn một phiên chat để bắt đầu",
+    "manual_mode_title": "Chế độ trả lời thủ công.",
+    "manual_mode_description": "AI Concierge đang tắt. Tin nhắn từ website sẽ chờ bạn trả lời tại đây. Hãy bật AI trong Cài đặt nếu muốn tự động tư vấn.",
+    "status_waiting_admin": "Đang chờ quản trị viên trả lời"
   },
   "dashboard": {
     "title": "Phân tích Đăng ký",
@@ -39,6 +44,15 @@
     "mode_relative": "Khoảng thời gian",
     "mode_specific": "Chọn cụ thể",
     "current_period": "Giai đoạn hiện tại",
+    "date_range": {
+      "from": "Từ ngày",
+      "to": "Đến ngày",
+      "today": "Hôm nay",
+      "last_7_days": "7 ngày qua",
+      "last_30_days": "30 ngày qua",
+      "this_month": "Tháng này",
+      "this_year": "Năm nay"
+    },
     "period_day": "Ngày",
     "period_week": "Tuần",
     "period_month": "Tháng",
@@ -96,6 +110,8 @@
     "search_placeholder": "Tìm kiếm bộ sưu tập theo tên, ID hoặc nghệ nhân...",
     "loading": "Đang lập danh mục bộ sưu tập...",
     "confirm_delete": "Bạn có chắc chắn muốn gỡ bỏ hiện vật này không?",
+    "filter_by": "Lọc theo",
+    "all_categories": "Tất cả danh mục",
     "errors": {
       "load_failed": "Không thể tải hiện vật.",
       "fetch_error": "Đã xảy ra lỗi khi lấy dữ liệu."
@@ -121,6 +137,7 @@
       "category_label": "Phân loại",
       "category_placeholder": "Chọn phân loại",
       "name_label": "Tên gọi hiện vật",
+      "languages": { "default": "Nguyên bản", "en": "Tiếng Anh", "ja": "Tiếng Nhật", "vi": "Tiếng Việt" },
       "attributes_label": "Thuộc tính bộ sưu tập",
       "attributes": {
         "featured": "Được giám tuyển",
@@ -188,7 +205,12 @@
       "stat_created": "Đã tạo",
       "stat_skipped": "Bỏ qua",
       "stat_errors": "Lỗi",
-      "error_list": "Chi tiết lỗi"
+      "error_list": "Chi tiết lỗi",
+      "confirm_delete_all": "Xóa toàn bộ sản phẩm? Thao tác này không thể hoàn tác.",
+      "delete_all_button": "Xóa tất cả",
+      "formula_import": "Giá nhập = (giá gốc JPY + 1.000¥) × 200",
+      "formula_shipping": "Phí vận chuyển = cân nặng > 0,5 kg ? cân nặng × 180.000₫ : 20.000₫",
+      "formula_selling": "Giá bán = giá nhập × 1,15 + phí vận chuyển"
     }
   },
   "pricing": {
@@ -198,6 +220,10 @@
     "subtitle": "Giá vốn → giá bán (Nhật → Việt Nam)",
     "section_costs": "Chi phí đầu vào",
     "section_result": "Kết quả tính toán",
+    "currencies": {
+      "jpy": "¥ JPY (Yên Nhật)",
+      "usd": "$ USD (Đô la Mỹ)"
+    },
     "fields": {
       "currency": "Loại tiền tệ đầu vào",
       "origin_cost": "Giá gốc",
@@ -287,6 +313,7 @@
       "save_notes": "Lưu ghi chú",
       "view_artifact": "Xem toàn bộ hiện vật",
       "no_receipt": "Chưa có biên lai thanh toán nào được tải lên cho giao dịch này.",
+      "receipt_alt": "Biên lai thanh toán",
       "updating": "Đang cập nhật...",
       "table": {
         "product": "Sản phẩm",
@@ -349,6 +376,7 @@
       "update_title": "Cập nhật quyền hạn nhân viên",
       "new_title": "Đăng ký thành viên nhân viên mới",
       "username": "Tên người dùng",
+      "username_placeholder": "Ví dụ: curator_john",
       "first_name": "Tên",
       "last_name": "Họ",
       "email": "Email",
@@ -416,6 +444,9 @@
       "update_title": "Cập nhật danh mục",
       "new_title": "Mục phân loại mới",
       "name_label": "Tên danh mục",
+      "name_en": "Tên tiếng Anh",
+      "name_ja": "Tên tiếng Nhật",
+      "name_vi": "Tên tiếng Việt",
       "slug_label": "Slug (đường dẫn URL)",
       "cancel": "Hủy",
       "update_button": "Cập nhật sổ đăng ký",
@@ -435,12 +466,96 @@
       "notifications": "Thông báo",
       "database": "Hệ thống & Dữ liệu"
     },
+    "public_site": {
+      "url": "URL website công khai",
+      "url_help": "URL được sử dụng cho liên kết Xem trang công khai."
+    },
     "content": {
-      "logo_upload": "Upload Logo",
+      "title": "Nội dung trang",
+      "description": "Thiết lập nội dung riêng cho Hero trang chủ và trang đăng nhập Admin theo từng ngôn ngữ. Để trống để dùng bản dịch mặc định.",
+      "website_hero": "Website — Hero trang chủ",
+      "headline": "Tiêu đề chính",
+      "subtitle": "Tiêu đề phụ",
+      "button_label": "Nhãn nút",
+      "admin_login": "Admin — Khung bên trang đăng nhập",
+      "hero_quote": "Thông điệp Hero",
+      "headline_placeholder": "Nhập tiêu đề chính",
+      "subtitle_placeholder": "Nhập tiêu đề phụ",
+      "button_placeholder": "Nhập nhãn nút",
+      "quote_placeholder": "Nhập thông điệp đăng nhập",
+      "logo_upload": "Tải logo lên",
       "logo_current": "Logo hiện tại",
       "upload_button": "Chọn ảnh",
-      "uploading": "Đang upload...",
-      "preview": "Xem trước"
+      "uploading": "Đang tải lên...",
+      "preview": "Xem trước",
+      "languages": { "en": "Tiếng Anh", "ja": "Tiếng Nhật", "vi": "Tiếng Việt" }
+    },
+    "media": {
+      "login_background": "Ảnh nền đăng nhập",
+      "login_help": "Tải ảnh nền cho trang đăng nhập. Tối đa 5 MB; hỗ trợ JPEG, PNG, WEBP hoặc GIF.",
+      "login_preview": "Xem trước ảnh nền đăng nhập",
+      "home_hero": "Ảnh Hero trang chủ",
+      "home_hero_help": "Tải ảnh nền cho khu vực Hero trên trang chủ website. Tối đa 5 MB.",
+      "hero_preview": "Xem trước ảnh nền Hero",
+      "uploading": "Đang tải lên...",
+      "choose_image": "Chọn ảnh",
+      "default_image": "Chưa đặt ảnh — đang dùng ảnh mặc định",
+      "upload_failed": "Tải ảnh thất bại",
+      "login_updated": "Đã cập nhật ảnh nền",
+      "login_upload_failed": "Không thể tải ảnh nền lên",
+      "hero_updated": "Đã cập nhật ảnh Hero",
+      "hero_upload_failed": "Không thể tải ảnh Hero lên"
+    },
+    "integrations": {
+      "title": "Tích hợp AI & mạng xã hội",
+      "description": "Kết nối mạng xã hội, khóa AI và dịch vụ chatbot. Có thể thêm nhiều nền tảng.",
+      "saved": "Đã lưu cài đặt tích hợp",
+      "save_failed": "Không thể lưu cài đặt tích hợp",
+      "social_networks": "Mạng xã hội",
+      "social_help": "Thêm các nền tảng mà chatbot và chức năng tự đăng lại sẽ sử dụng.",
+      "add_network": "Thêm mạng xã hội",
+      "no_social_accounts": "Chưa có tài khoản mạng xã hội. Hãy thêm Facebook, Instagram, TikTok, Zalo hoặc LINE.",
+      "display_name": "Tên hiển thị",
+      "active": "Hoạt động",
+      "gemini_key": "Gemini API Key",
+      "serper_key": "Serper API Key (tìm kiếm web)",
+      "ai_service": "Dịch vụ AI & Chatbot",
+      "concierge_title": "AI Concierge (trả lời tự động)",
+      "concierge_help": "Khi bật, AI sẽ tư vấn khách trên website. Khi tắt, quản trị viên trả lời thủ công trong Chat. URL Flask chỉ cần khi dùng Facebook bot hoặc thông báo thời gian thực.",
+      "repost_enabled": "Bật tự động đăng lại",
+      "repost_help": "Sử dụng Group ID từ các tài khoản Facebook phía trên.",
+      "posts_per_day": "Số bài mỗi ngày",
+      "post_delay": "Khoảng cách giữa các bài (phút)",
+      "chatbot_url": "URL dịch vụ chatbot",
+      "bot_token": "Token bot nội bộ",
+      "bot_token_help": "Sử dụng cùng một giá trị trong Django, Flask và file .env của newfeed.",
+      "group_ids_placeholder": "[\"123456\",\"789012\"] hoặc phân tách bằng dấu phẩy",
+      "platforms": {
+        "facebook": "Messenger, bình luận và đăng lại bài fanpage vào nhóm",
+        "instagram": "Tự động hóa tin nhắn và bình luận qua Meta Graph API",
+        "tiktok": "TikTok for Business API",
+        "twitter": "X API v2",
+        "zalo": "Tài khoản Zalo Official Account",
+        "line": "LINE Messaging API",
+        "youtube": "YouTube Data API"
+      },
+      "fields": {
+        "access_token": "Access Token",
+        "page_id": "Page ID",
+        "verify_token": "Webhook Verify Token",
+        "group_ids": "Group ID (tự động đăng lại)",
+        "account_id": "Instagram Business Account ID",
+        "business_id": "Business ID",
+        "api_key": "API Key",
+        "api_secret": "API Secret",
+        "bearer_token": "Bearer Token",
+        "oa_id": "OA ID",
+        "secret_key": "Secret Key",
+        "channel_token": "Channel Access Token",
+        "channel_secret": "Channel Secret",
+        "channel_id": "Channel ID"
+      },
+      "save": "Lưu tích hợp"
     },
     "general": {
       "title": "Cài đặt Chung",
@@ -485,6 +600,35 @@
     },
     "coming_soon": "Các điều khiển {{section}} nâng cao hiện đang được chuẩn bị..."
   },
+  "ai_discovery": {
+    "eyebrow": "Khám phá bằng AI",
+    "title": "Sản phẩm đang thịnh hành trên mạng xã hội",
+    "description": "AI tìm kiếm sản phẩm thịnh hành trên Facebook, Instagram, TikTok và web để đưa các lựa chọn tốt vào danh mục.",
+    "placeholder": "Ví dụ: phấn nước Nhật Bản, mỹ phẩm đang thịnh hành...",
+    "search": "Tìm kiếm",
+    "empty": "Chưa có sản phẩm tiềm năng — hãy tìm kiếm ở phía trên",
+    "search_failed": "Tìm kiếm thất bại",
+    "search_error": "AI tìm kiếm thất bại — hãy kiểm tra API key trong Cài đặt",
+    "found_count": "Tìm thấy {{count}} sản phẩm đang thịnh hành"
+  },
+  "approval_queue": {
+    "eyebrow": "AI Chatbot",
+    "title": "Hàng đợi phê duyệt",
+    "description": "Lời chào được gửi tự động. Các phản hồi AI khác phải được duyệt trước khi gửi đến khách hàng.",
+    "refresh": "Làm mới",
+    "empty": "Không có tin nhắn đang chờ duyệt",
+    "customer": "Khách hàng",
+    "ai_draft": "Bản nháp AI",
+    "cancel_edit": "Hủy chỉnh sửa",
+    "reject": "Từ chối",
+    "approve_send": "Duyệt & gửi",
+    "load_failed": "Không thể tải hàng đợi phê duyệt",
+    "approve_failed": "Không thể phê duyệt — hãy kiểm tra dịch vụ chatbot",
+    "reject_failed": "Không thể từ chối",
+    "sent": "Đã gửi tin nhắn cho khách hàng",
+    "rejected": "Đã từ chối",
+    "channels": { "messenger": "Messenger", "comment": "Bình luận → Hộp thư", "website": "Website" }
+  },
   "login": {
     "hero_text": "Tuyển chọn những truyền thống tinh xảo nhất của nghề thủ công Nhật Bản cho thế giới hiện đại.",
     "locations": "Tokyo • Kyoto • Osaka",
@@ -494,6 +638,7 @@
     "email_placeholder": "name@kizuna-gallery.jp",
     "password_label": "Mật khẩu",
     "password_placeholder": "••••••••",
+    "background_alt": "Ảnh nền đăng nhập",
     "forgot_password": "Quên?",
     "authenticate_button": "Xác thực",
     "footer_text_line1": "Nếu bạn gặp vấn đề khi truy cập tài khoản,",
@@ -527,7 +672,18 @@
     "loading_logistics": "Đang đồng bộ hóa hậu cần...",
     "reset": "Đặt lại",
     "save": "Lưu",
-    "error_occurred": "Đã xảy ra lỗi"
+    "error_occurred": "Đã xảy ra lỗi",
+    "try_again": "Thử lại",
+    "cancel": "Hủy",
+    "apply": "Áp dụng",
+    "on": "Bật",
+    "off": "Tắt",
+    "yes": "Có",
+    "no": "Không"
+  },
+  "filter": {
+    "show_per_page": "Số mục mỗi trang",
+    "showing_range": "Hiển thị {{start}}–{{end}} trên tổng số {{total}}"
   },
   "validation": {
     "required": "Trường này không được để trống",

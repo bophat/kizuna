@@ -49,7 +49,10 @@
     "loading": "Loading...",
     "error": "An error occurred",
     "search": "Search",
-    "error_connection": "Failed to connect to the server. Please check if the backend is running."
+    "error_connection": "Failed to connect to the server. Please check if the backend is running.",
+    "page_not_found": "Page Not Found",
+    "page_not_found_desc": "The page you are looking for might have been removed, renamed, or be temporarily unavailable.",
+    "back_to_home": "Return to Home"
   },
   "filter": {
     "title": "Filter & Sort",
@@ -67,14 +70,20 @@
     "likes": "Most Liked",
     "clear_all": "Clear All",
     "apply": "Apply Filters",
-    "results": "Showing {{count}} products"
+    "results": "Showing {{count}} products",
+    "show_per_page": "Show per page",
+    "showing_range": "Showing {{start}}–{{end}} of {{total}}"
   },
   "product": {
     "not_found": "Product not found",
+    "load_error": "Failed to load product details",
+    "fallback_name": "Product #{{id}}",
     "back_to_shop": "Back to Shop",
     "back": "Back",
     "new": "New",
+    "limited": "Limited Edition",
     "best_price": "Best Price",
+    "best_seller": "Best Seller",
     "favorites": "favorites",
     "sold": "{{count}}+ sold",
     "no_description": "No description available for this product.",
@@ -142,7 +151,11 @@
     "est_delivery": "Estimated delivery: 7-14 Business Days",
     "secure_payment_desc": "All transactions are secure and encrypted.",
     "fill_required": "Please fill in all required fields",
-    "secure_checkout": "Secure Checkout"
+    "secure_checkout": "Secure Checkout",
+    "bank_qr_alt": "Bank transfer QR code",
+    "errors": {
+      "failed": "Checkout failed. Please try again."
+    }
   },
   "wishlist": {
     "title": "Your Wishlist",
@@ -201,6 +214,40 @@
   },
   "users": {
     "phone": "Phone Number"
+  },
+  "collection": {
+    "search_results": "Search results for “{{query}}”",
+    "active": "Active",
+    "load_error": "Failed to load products"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "dismiss": "Dismiss",
+    "items": {
+      "1": {
+        "title": "New Quote Available",
+        "message": "The artisan has reviewed your request and submitted a detailed proposal and timeline.",
+        "time": "Just now",
+        "action": "View Quote"
+      },
+      "2": {
+        "title": "Order Dispatched",
+        "message": "Your order has left the studio and is currently in transit via Japan Post.",
+        "time": "Yesterday",
+        "action": "View Order"
+      }
+    }
+  },
+  "concierge": {
+    "welcome": "Hello! I’m Kizuna AI, the shop’s online concierge. What item are you interested in or looking for today? Leave a message and I’ll help as quickly as possible.",
+    "waiting_for_admin": "Thanks for your message! A shop staff member will respond shortly. Please wait a moment.",
+    "fallback_message": "Thank you for your purchase inquiry. The shop has received your request and will contact you shortly to confirm the details.",
+    "service_unavailable": "The concierge service is currently unavailable",
+    "today": "Today",
+    "manual_mode": "A shop staff member will reply to your message directly.",
+    "input_placeholder": "Ask about Japanese crafts, artists, or travel...",
+    "send": "Send message",
+    "ask_kenji": "Ask Kenji"
   },
   "footer": {
     "privacy": "Privacy Policy",

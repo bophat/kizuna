@@ -67,12 +67,12 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           {!!product.isCheap && (
             <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
-              Best Price
+              {t('product.best_price')}
             </span>
           )}
           {product.sales > 50 && (
             <span className="bg-primary text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
-              Best Seller
+              {t('product.best_seller')}
             </span>
           )}
         </div>

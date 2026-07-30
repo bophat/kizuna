@@ -1,11 +1,33 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, Category, Favorite, ProductImage
+from .image_urls import resolve_image_url, resolve_product_image_url
+
+
+SUPPORTED_CONTENT_LANGUAGES = frozenset({'en', 'ja', 'vi'})
+
+
+def request_language(context):
+    request = context.get('request')
+    language = getattr(request, 'LANGUAGE_CODE', 'en') if request else 'en'
+    language = language.split('-')[0]
+    return language if language in SUPPORTED_CONTENT_LANGUAGES else 'en'
+
+
+def localized_value(instance, field_name, context):
+    language = request_language(context)
+    translated = getattr(instance, f'{field_name}_{language}', '')
+    return translated.strip() if isinstance(translated, str) and translated.strip() else getattr(instance, field_name)
 
 class CategorySerializer(serializers.ModelSerializer):
+    name = serializers.SerializerMethodField()
+
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug']
+
+    def get_name(self, obj):
+        return localized_value(obj, 'name', self.context)
 
 
 class ProductImageSerializer(serializers.ModelSerializer):
@@ -15,22 +37,14 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        if instance.image:
-            if instance.image.name.startswith('http'):
-                ret['image'] = instance.image.name
-            else:
-                request = self.context.get('request')
-                if request:
-                    ret['image'] = request.build_absolute_uri(instance.image.url)
-                else:
-                    ret['image'] = instance.image.url
-        else:
-            ret['image'] = None
+        ret['image'] = resolve_image_url(instance.image, self.context.get('request'))
         return ret
 
 
 class PublicProductSerializer(serializers.ModelSerializer):
-    category = serializers.ReadOnlyField(source='category.name')
+    name = serializers.SerializerMethodField()
+    description = serializers.SerializerMethodField()
+    category = serializers.SerializerMethodField()
     gallery = ProductImageSerializer(many=True, read_only=True)
     class Meta:
         model = Product
@@ -43,18 +57,22 @@ class PublicProductSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        if instance.image:
-            if instance.image.name.startswith('http'):
-                ret['image'] = instance.image.name
-            else:
-                request = self.context.get('request')
-                if request:
-                    ret['image'] = request.build_absolute_uri(instance.image.url)
-                else:
-                    ret['image'] = instance.image.url
-        else:
-            ret['image'] = None
+        ret['image'] = resolve_product_image_url(
+            instance,
+            self.context.get('request'),
+        )
         return ret
+
+    def get_name(self, obj):
+        return localized_value(obj, 'name', self.context)
+
+    def get_description(self, obj):
+        return localized_value(obj, 'description', self.context)
+
+    def get_category(self, obj):
+        if not obj.category:
+            return None
+        return localized_value(obj.category, 'name', self.context)
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
@@ -91,7 +109,7 @@ class CartSerializer(serializers.ModelSerializer):
         fields = ['id', 'items', 'total_amount', 'created_at', 'updated_at']
 
 class OrderItemSerializer(serializers.ModelSerializer):
-    product_name = serializers.CharField(read_only=True)
+    product_name = serializers.SerializerMethodField()
     image = serializers.SerializerMethodField()
 
     class Meta:
@@ -99,12 +117,14 @@ class OrderItemSerializer(serializers.ModelSerializer):
         fields = ['id', 'product_id', 'product_name', 'quantity', 'price', 'image']
 
     def get_image(self, obj):
-        if obj.product and obj.product.image:
-            request = self.context.get('request')
-            if request:
-                return request.build_absolute_uri(obj.product.image.url)
-            return obj.product.image.url
-        return None
+        if not obj.product:
+            return None
+        return resolve_product_image_url(obj.product, self.context.get('request'))
+
+    def get_product_name(self, obj):
+        if obj.product:
+            return localized_value(obj.product, 'name', self.context)
+        return obj.product_name
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)

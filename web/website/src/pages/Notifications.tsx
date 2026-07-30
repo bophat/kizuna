@@ -3,12 +3,15 @@ import { NOTIFICATIONS } from '@/constants';
 import { motion } from 'motion/react';
 import { fadeUp, tweenFast } from '@/lib/motion';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 export function NotificationsPage() {
+  const { t } = useTranslation();
+
   return (
     <div className="max-w-[768px] mx-auto px-4 md:px-8 py-12 md:py-16">
       <div className="mb-12">
-        <h1 className="headline-xl">Notifications</h1>
+        <h1 className="headline-xl">{t('notifications.title')}</h1>
       </div>
 
       <div className="flex flex-col gap-6">
@@ -35,11 +38,13 @@ export function NotificationsPage() {
 
             <div className="flex-grow flex flex-col gap-2">
               <div className="flex justify-between items-start gap-4 w-full">
-                <h2 className="headline-md text-xl">{notif.title}</h2>
-                <span className="label-sm text-secondary lowercase tracking-normal">{notif.time}</span>
+                <h2 className="headline-md text-xl">{t(`notifications.items.${notif.id}.title`)}</h2>
+                <span className="label-sm text-secondary lowercase tracking-normal">
+                  {t(`notifications.items.${notif.id}.time`)}
+                </span>
               </div>
               <p className="body-md text-on-surface-variant mt-2 max-w-xl">
-                {notif.message}
+                {t(`notifications.items.${notif.id}.message`)}
               </p>
               
               {notif.actionLabel && (
@@ -48,10 +53,10 @@ export function NotificationsPage() {
                     to={notif.type === 'quote' ? '/quote-review' : '#'}
                     className="bg-primary text-white px-8 py-3 label-md rounded-sm hover:opacity-90 transition-all font-bold"
                   >
-                    {notif.actionLabel}
+                    {t(`notifications.items.${notif.id}.action`)}
                   </Link>
                   <button className="text-secondary label-md border border-surface-variant px-8 py-3 rounded-sm hover:bg-surface-container transition-all lowercase tracking-normal font-normal">
-                    Dismiss
+                    {t('notifications.dismiss')}
                   </button>
                 </div>
               )}

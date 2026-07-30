@@ -68,6 +68,7 @@ export function ProductImage({
       loading={priority ? 'eager' : 'lazy'}
       decoding="async"
       fetchPriority={priority ? 'high' : 'auto'}
+      referrerPolicy="no-referrer"
       className={cn('object-cover', className)}
     />
   );

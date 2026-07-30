@@ -18,6 +18,7 @@ DEFAULT_IMAGE_HOSTS = DEFAULT_SOURCE_HOSTS | frozenset({
     'm.media-amazon.com',
     'images-na.ssl-images-amazon.com',
     'gd.image-gmkt.com',
+    'gd.image-qoo10.jp',
     'image.qoo10.jp',
 })
 

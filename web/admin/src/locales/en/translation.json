@@ -9,7 +9,9 @@
     "profile": "Profile",
     "chat": "Live Chat",
     "pricing": "Pricing",
-    "settings": "Settings"
+    "settings": "Settings",
+    "approvals": "Approvals",
+    "ai_discovery": "AI Discovery"
   },
   "chat": {
     "title": "Live Chat",
@@ -30,7 +32,10 @@
     "admin_reply": "Admin reply",
     "input_admin": "Type your reply...",
     "input_takeover": "Type to take over from AI...",
-    "select_session": "Select a chat session to begin"
+    "select_session": "Select a chat session to begin",
+    "manual_mode_title": "Manual reply mode.",
+    "manual_mode_description": "AI Concierge is off. Website messages will wait for your reply here. Enable AI in Settings for automatic assistance.",
+    "status_waiting_admin": "Waiting for an administrator"
   },
   "dashboard": {
     "title": "Registry Insight",
@@ -39,6 +44,15 @@
     "mode_relative": "Relative Period",
     "mode_specific": "Specific Selection",
     "current_period": "Current Period",
+    "date_range": {
+      "from": "From",
+      "to": "To",
+      "today": "Today",
+      "last_7_days": "Last 7 days",
+      "last_30_days": "Last 30 days",
+      "this_month": "This month",
+      "this_year": "This year"
+    },
     "period_day": "Day",
     "period_week": "Week",
     "period_month": "Month",
@@ -96,6 +110,8 @@
     "search_placeholder": "Search collection by name, ID, or artisan...",
     "loading": "Cataloging collection...",
     "confirm_delete": "Are you sure you want to decommission this artifact?",
+    "filter_by": "Filter by",
+    "all_categories": "All categories",
     "errors": {
       "load_failed": "Failed to load artifacts.",
       "fetch_error": "An error occurred while fetching data."
@@ -121,6 +137,7 @@
       "category_label": "Classification",
       "category_placeholder": "Select Classification",
       "name_label": "Artifact Nomenclature",
+      "languages": { "default": "Original", "en": "English", "ja": "Japanese", "vi": "Vietnamese" },
       "attributes_label": "Collection Attributes",
       "attributes": {
         "featured": "Curated",
@@ -188,7 +205,12 @@
       "stat_created": "Created",
       "stat_skipped": "Skipped",
       "stat_errors": "Errors",
-      "error_list": "Error Details"
+      "error_list": "Error Details",
+      "confirm_delete_all": "Delete all products? This action cannot be undone.",
+      "delete_all_button": "Delete all",
+      "formula_import": "Import cost = (original JPY price + ¥1,000) × 200",
+      "formula_shipping": "Shipping = weight > 0.5 kg ? weight × ₫180,000 : ₫20,000",
+      "formula_selling": "Selling price = import cost × 1.15 + shipping"
     }
   },
   "pricing": {
@@ -198,6 +220,10 @@
     "subtitle": "Land cost → selling price (Japan → Vietnam)",
     "section_costs": "Cost inputs",
     "section_result": "Calculation result",
+    "currencies": {
+      "jpy": "¥ JPY (Japanese yen)",
+      "usd": "$ USD (US dollar)"
+    },
     "fields": {
       "currency": "Input currency",
       "origin_cost": "Origin cost",
@@ -287,6 +313,7 @@
       "save_notes": "Save Notes",
       "view_artifact": "View Full Artifact",
       "no_receipt": "No payment receipt has been uploaded for this transaction yet.",
+      "receipt_alt": "Payment receipt",
       "updating": "Updating...",
       "table": {
         "product": "Product",
@@ -349,6 +376,7 @@
       "update_title": "Update Staff Permissions",
       "new_title": "Register New Staff Member",
       "username": "Username",
+      "username_placeholder": "e.g. curator_john",
       "first_name": "First Name",
       "last_name": "Last Name",
       "email": "Email",
@@ -416,6 +444,9 @@
       "update_title": "Update Category",
       "new_title": "New Taxonomy Entry",
       "name_label": "Category Name",
+      "name_en": "English name",
+      "name_ja": "Japanese name",
+      "name_vi": "Vietnamese name",
       "slug_label": "Slug (URL path)",
       "cancel": "Cancel",
       "update_button": "Update Registry",
@@ -435,7 +466,102 @@
       "notifications": "Notifications",
       "database": "System & Data"
     },
+    "public_site": {
+      "url": "Public Site URL",
+      "url_help": "The URL used for the View Public Site link."
+    },
+    "content": {
+      "title": "Page Content",
+      "description": "Custom text for the website home hero and admin login page. Leave blank to use the default translation.",
+      "website_hero": "Website — Home Hero",
+      "headline": "Headline",
+      "subtitle": "Subtitle",
+      "button_label": "Button label",
+      "admin_login": "Admin — Login Side Panel",
+      "hero_quote": "Hero quote",
+      "headline_placeholder": "Enter a headline",
+      "subtitle_placeholder": "Enter a subtitle",
+      "button_placeholder": "Enter a button label",
+      "quote_placeholder": "Enter a login message",
+      "logo_upload": "Upload logo",
+      "logo_current": "Current logo",
+      "upload_button": "Choose image",
+      "uploading": "Uploading...",
+      "preview": "Preview",
+      "languages": { "en": "English", "ja": "Japanese", "vi": "Vietnamese" }
+    },
+    "media": {
+      "login_background": "Login Background Image",
+      "login_help": "Upload a login background image. Maximum 5 MB; JPEG, PNG, WEBP, or GIF.",
+      "login_preview": "Login background preview",
+      "home_hero": "Home Hero Image",
+      "home_hero_help": "Upload a background image for the website home hero. Maximum 5 MB.",
+      "hero_preview": "Hero background preview",
+      "uploading": "Uploading...",
+      "choose_image": "Choose Image",
+      "default_image": "No image set — using default",
+      "upload_failed": "Upload failed",
+      "login_updated": "Background image updated",
+      "login_upload_failed": "Failed to upload background image",
+      "hero_updated": "Hero image updated",
+      "hero_upload_failed": "Failed to upload hero image"
+    },
+    "integrations": {
+      "title": "AI & Social Integrations",
+      "description": "Connect social networks, AI keys, and the chatbot service. You can add multiple platforms.",
+      "saved": "Integration settings saved",
+      "save_failed": "Failed to save integrations",
+      "social_networks": "Social networks",
+      "social_help": "Add each platform you want the chatbot and auto-repost service to use.",
+      "add_network": "Add network",
+      "no_social_accounts": "No social accounts yet. Add a network to connect Facebook, Instagram, TikTok, Zalo, or LINE.",
+      "display_name": "Display name",
+      "active": "Active",
+      "gemini_key": "Gemini API Key",
+      "serper_key": "Serper API Key (web search)",
+      "ai_service": "AI & Chatbot service",
+      "concierge_title": "AI Concierge (automatic replies)",
+      "concierge_help": "When enabled, AI assists website visitors. When disabled, administrators reply manually in Chat. The Flask URL is only needed for the Facebook bot or realtime notifications.",
+      "repost_enabled": "Enable auto-repost",
+      "repost_help": "Uses the Group IDs from the Facebook accounts above.",
+      "posts_per_day": "Posts per day",
+      "post_delay": "Delay between posts (minutes)",
+      "chatbot_url": "Chatbot service URL",
+      "bot_token": "Internal bot token",
+      "bot_token_help": "Use the same value in Django, Flask, and the newfeed .env file.",
+      "group_ids_placeholder": "[\"123456\",\"789012\"] or comma-separated",
+      "platforms": {
+        "facebook": "Messenger, comments, and fanpage reposting to groups",
+        "instagram": "DM and comment automation via Meta Graph API",
+        "tiktok": "TikTok for Business API",
+        "twitter": "X API v2",
+        "zalo": "Zalo Official Account",
+        "line": "LINE Messaging API",
+        "youtube": "YouTube Data API"
+      },
+      "fields": {
+        "access_token": "Access Token",
+        "page_id": "Page ID",
+        "verify_token": "Webhook Verify Token",
+        "group_ids": "Group IDs (auto-repost)",
+        "account_id": "Instagram Business Account ID",
+        "business_id": "Business ID",
+        "api_key": "API Key",
+        "api_secret": "API Secret",
+        "bearer_token": "Bearer Token",
+        "oa_id": "OA ID",
+        "secret_key": "Secret Key",
+        "channel_token": "Channel Access Token",
+        "channel_secret": "Channel Secret",
+        "channel_id": "Channel ID"
+      },
+      "save": "Save Integrations"
+    },
     "general": {
+      "title": "General Settings",
+      "description": "Customize system configuration parameters",
+      "add_setting": "Add New Setting",
+      "add_button": "Add",
       "gallery_name": "Gallery Name",
       "primary_contact": "Primary Contact",
       "status": "Operational Status",
@@ -474,6 +600,35 @@
     },
     "coming_soon": "Advanced {{section}} controls are currently being provisioned..."
   },
+  "ai_discovery": {
+    "eyebrow": "AI Discovery",
+    "title": "Hot Products on Social",
+    "description": "AI searches Facebook, Instagram, TikTok, and the web for trending products. Import the best leads into your catalog.",
+    "placeholder": "e.g. Japanese cushion foundation, trending skincare...",
+    "search": "Search",
+    "empty": "No leads yet — run a search above",
+    "search_failed": "Search failed",
+    "search_error": "AI search failed — check API keys in Settings",
+    "found_count": "Found {{count}} trending products"
+  },
+  "approval_queue": {
+    "eyebrow": "AI Chatbot",
+    "title": "Approval Queue",
+    "description": "Greetings are sent automatically. All other AI replies require approval before reaching customers.",
+    "refresh": "Refresh",
+    "empty": "No messages waiting for approval",
+    "customer": "Customer",
+    "ai_draft": "AI Draft",
+    "cancel_edit": "Cancel edit",
+    "reject": "Reject",
+    "approve_send": "Approve & Send",
+    "load_failed": "Failed to load approval queue",
+    "approve_failed": "Failed to approve — check that the chatbot service is running",
+    "reject_failed": "Failed to reject",
+    "sent": "Message sent to customer",
+    "rejected": "Rejected",
+    "channels": { "messenger": "Messenger", "comment": "Comment → Inbox", "website": "Website" }
+  },
   "login": {
     "hero_text": "Curating the finest traditions of Japanese craftsmanship for a modern world.",
     "locations": "Tokyo • Kyoto • Osaka",
@@ -483,6 +638,7 @@
     "email_placeholder": "name@kizuna-gallery.jp",
     "password_label": "Password",
     "password_placeholder": "••••••••",
+    "background_alt": "Login background",
     "forgot_password": "Forgot?",
     "authenticate_button": "Authenticate",
     "footer_text_line1": "If you have issues accessing your account,",
@@ -516,7 +672,18 @@
     "loading_logistics": "Synchronizing logistics...",
     "reset": "Reset",
     "save": "Save",
-    "error_occurred": "An error occurred"
+    "error_occurred": "An error occurred",
+    "try_again": "Try again",
+    "cancel": "Cancel",
+    "apply": "Apply",
+    "on": "On",
+    "off": "Off",
+    "yes": "Yes",
+    "no": "No"
+  },
+  "filter": {
+    "show_per_page": "Show per page",
+    "showing_range": "Showing {{start}}–{{end}} of {{total}}"
   },
   "validation": {
     "required": "This field is required",

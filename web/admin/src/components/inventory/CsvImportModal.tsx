@@ -478,9 +478,9 @@ export function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImportModalPro
                       {t('inventory.csv_import.formula_title', 'Pricing Formula')}
                     </p>
                     <div className="text-xs text-brand-ink/60 space-y-1 font-mono">
-                      <p>Giá nhập = (Giá gốc JPY + 1,000¥) × 200</p>
-                      <p>Phí ship = {'weight > 0.5kg ? weight × 180,000₫ : 20,000₫'}</p>
-                      <p>Giá bán = Giá nhập × 1.15 + Phí ship</p>
+                      <p>{t('inventory.csv_import.formula_import')}</p>
+                      <p>{t('inventory.csv_import.formula_shipping')}</p>
+                      <p>{t('inventory.csv_import.formula_selling')}</p>
                     </div>
                   </div>
                 </motion.div>
@@ -579,6 +579,7 @@ export function CsvImportModal({ isOpen, onClose, onSuccess }: CsvImportModalPro
                                     <img
                                       src={row['Main Image']}
                                       alt=""
+                                      referrerPolicy="no-referrer"
                                       className="w-10 h-10 rounded-sm object-cover border border-brand-clay/50 flex-shrink-0"
                                       onError={(e) => {
                                         (e.target as HTMLImageElement).style.display = 'none';

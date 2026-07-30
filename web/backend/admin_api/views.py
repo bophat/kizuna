@@ -22,7 +22,7 @@ import logging
 logger = logging.getLogger(__name__)
 
 class AdminProductViewSet(viewsets.ModelViewSet):
-    queryset = Product.objects.all()
+    queryset = Product.objects.select_related('category', 'source_info').all()
     serializer_class = ProductSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -244,7 +244,7 @@ class DashboardStatsView(APIView):
                     'orders': day_stat['orders']
                 })
 
-        top_selling = Product.objects.all().order_by('-sales')[:5]
+        top_selling = Product.objects.select_related('category', 'source_info').order_by('-sales')[:5]
         top_selling_serializer = ProductSerializer(top_selling, many=True, context={'request': request})
 
         categories = Category.objects.filter(

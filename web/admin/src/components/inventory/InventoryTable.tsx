@@ -45,6 +45,7 @@ export function InventoryTable({ products, onEdit, onDelete }: InventoryTablePro
                   <img
                     src={getMediaUrl(product.image)}
                     alt={product.name}
+                    referrerPolicy="no-referrer"
                     className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-700 ease-out"
                   />
                 ) : (

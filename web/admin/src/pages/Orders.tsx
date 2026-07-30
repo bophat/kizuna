@@ -187,7 +187,7 @@ export default function Orders() {
               <AlertCircle size={24} />
             </div>
             <p className="text-brand-ink/60 font-serif italic">{error}</p>
-            <button onClick={fetchOrders} className="text-brand-red text-sm font-bold hover:underline">Try again</button>
+            <button onClick={fetchOrders} className="text-brand-red text-sm font-bold hover:underline">{t('common.try_again')}</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -402,7 +402,12 @@ export default function Orders() {
                                   <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 bg-brand-paper rounded border border-brand-clay overflow-hidden flex-shrink-0">
                                       {item.product_details?.image && (
-                                        <img src={item.product_details.image} alt="" className="w-full h-full object-cover" />
+                                        <img
+                                          src={item.product_details.image}
+                                          alt=""
+                                          className="w-full h-full object-cover"
+                                          referrerPolicy="no-referrer"
+                                        />
                                       )}
                                     </div>
                                     <p className="font-medium text-brand-ink">{item.product_details?.name}</p>
@@ -470,7 +475,7 @@ export default function Orders() {
                               <>
                                 <img 
                                   src={selectedOrder.payment_receipt} 
-                                  alt="Payment Receipt" 
+                                  alt={t('orders.modal.receipt_alt')}
                                   className="w-full h-full object-contain p-2"
                                 />
                                 <a 

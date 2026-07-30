@@ -7,6 +7,7 @@ from .secrets import (
     is_secret_setting_key,
     prepare_setting_for_storage,
 )
+from shop.image_urls import resolve_image_url, resolve_product_image_url
 
 class UserSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', required=False, allow_null=True, allow_blank=True)
@@ -56,32 +57,27 @@ class CategorySerializer(serializers.ModelSerializer):
     product_count = serializers.IntegerField(source='products.count', read_only=True)
     class Meta:
         model = Category
-        fields = ['id', 'name', 'slug', 'product_count']
+        fields = ['id', 'name', 'name_en', 'name_ja', 'name_vi', 'slug', 'product_count']
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')
     class Meta:
         model = Product
         fields = [
-            'id', 'name', 'price', 'currency', 'category', 'category_name',
-            'brand', 'location', 'description', 'image', 'status',
+            'id', 'name', 'name_en', 'name_ja', 'name_vi',
+            'price', 'currency', 'category', 'category_name',
+            'brand', 'location', 'description', 'description_en',
+            'description_ja', 'description_vi', 'image', 'status',
             'is_limited', 'is_new', 'is_featured', 'is_cheap',
             'likes', 'sales', 'stock', 'weight', 'created_at', 'updated_at'
         ]
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        if instance.image:
-            if instance.image.name.startswith('http'):
-                ret['image'] = instance.image.name
-            else:
-                request = self.context.get('request')
-                if request:
-                    ret['image'] = request.build_absolute_uri(instance.image.url)
-                else:
-                    ret['image'] = instance.image.url
-        else:
-            ret['image'] = None
+        ret['image'] = resolve_product_image_url(
+            instance,
+            self.context.get('request'),
+        )
         return ret
 
 class OrderItemSerializer(serializers.ModelSerializer):
@@ -146,17 +142,7 @@ class ProductImageSerializer(serializers.ModelSerializer):
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)
-        if instance.image:
-            if instance.image.name.startswith('http'):
-                ret['image'] = instance.image.name
-            else:
-                request = self.context.get('request')
-                if request:
-                    ret['image'] = request.build_absolute_uri(instance.image.url)
-                else:
-                    ret['image'] = instance.image.url
-        else:
-            ret['image'] = None
+        ret['image'] = resolve_image_url(instance.image, self.context.get('request'))
         return ret
 
 

@@ -166,7 +166,7 @@ export default function Users() {
               <AlertCircle size={24} />
             </div>
             <p className="text-brand-ink/60 font-serif italic">{error}</p>
-            <button onClick={fetchCustomers} className="text-brand-red text-sm font-bold hover:underline">Try again</button>
+            <button onClick={fetchCustomers} className="text-brand-red text-sm font-bold hover:underline">{t('common.try_again')}</button>
           </div>
         ) : (
           <div className="overflow-x-auto">
