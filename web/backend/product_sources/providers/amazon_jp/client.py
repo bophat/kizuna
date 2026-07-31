@@ -66,6 +66,20 @@ class AmazonCreatorsApiClient:
         )
         self.sleeper = sleeper
 
+    def has_any_credentials(self) -> bool:
+        return any((
+            self.credential_id,
+            self.credential_secret,
+            self.partner_tag,
+        ))
+
+    def is_configured(self) -> bool:
+        return all((
+            self.credential_id,
+            self.credential_secret,
+            self.partner_tag,
+        )) and self.credential_version in TOKEN_ENDPOINTS
+
     def _validate_configuration(self) -> None:
         missing = [
             name

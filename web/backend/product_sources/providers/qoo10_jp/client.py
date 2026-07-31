@@ -49,6 +49,9 @@ class Qoo10ApiClient:
         )
         self.sleeper = sleeper
 
+    def is_configured(self) -> bool:
+        return bool(self.certification_key)
+
     def _request(self, **kwargs) -> httpx.Response:
         last_error: Exception | None = None
         for attempt in range(1, self.max_attempts + 1):

@@ -80,6 +80,11 @@ class SourceImportService:
         )
 
         warnings: list[str] = []
+        if normalized.raw_data.get('source_method') == 'public_page':
+            warnings.append(
+                'Dữ liệu được tự động đọc từ trang sản phẩm công khai vì chưa cấu hình '
+                'API key; hãy kiểm tra preview trước khi nhập.',
+            )
         weight = normalized.weight_kg
         if weight is None and request.default_weight_kg is not None:
             weight = request.default_weight_kg

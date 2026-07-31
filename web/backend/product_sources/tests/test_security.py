@@ -51,7 +51,11 @@ class SecurityTests(SimpleTestCase):
             'https://gd.image-qoo10.jp/li/084/222/example.g_400-w_g.jpg',
         )
 
-    @override_settings(DEBUG=False, SOURCE_IMPORT_USE_FAKE_PROVIDERS=False)
+    @override_settings(
+        DEBUG=False,
+        SOURCE_IMPORT_USE_FAKE_PROVIDERS=False,
+        SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED=False,
+    )
     def test_production_registry_does_not_use_fake_provider(self):
         provider = build_provider_registry().get_by_code('amazon_jp')
         self.assertIsInstance(provider, AmazonJpProvider)

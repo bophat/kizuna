@@ -1,20 +1,25 @@
 # Deploy chức năng nhập sản phẩm tự động từ URL
 
-Chức năng này dùng API được cấp quyền:
+Chức năng ưu tiên API được cấp quyền:
 
 - Amazon Japan: Amazon Creators API `GetItems`.
 - Qoo10 Japan: QAPI `ItemsLookup.GetItemDetailInfo` v1.2.
 
-Không dùng scraping, cookie trình duyệt, CAPTCHA bypass hoặc PA-API credential cũ.
+Khi chưa có key, backend tự đọc metadata/HTML công khai của URL sản phẩm để lấy
+tên, giá, ảnh, mô tả và tình trạng hàng. Luồng này không đăng nhập, không dùng
+cookie trình duyệt và không vượt CAPTCHA/anti-bot.
 
 ## 1. Chuẩn bị credential
 
 ### Không có credential Amazon/Qoo10
 
-Không cần cấu hình provider secret. Backend và chức năng **Nhập thủ công** vẫn
-hoạt động bình thường. Trong Admin → Kho hàng, chọn **Nhập thủ công**, nhập URL
-tham chiếu, tên, giá JPY, danh mục, ảnh và mô tả rồi chạy preview trước khi lưu.
-Luồng này dùng chung công thức giá của hệ thống nhưng không gọi Amazon/Qoo10 API.
+Không cần cấu hình provider secret. Trong Admin → Kho hàng, chọn **Nhập từ URL**,
+dán URL rồi bấm **Preview sản phẩm**. Backend tự lấy thông tin công khai và dùng
+chung công thức giá của hệ thống.
+
+Amazon công khai thường trả đủ dữ liệu. Qoo10 có thể chặn IP máy chủ hoặc trả lỗi
+523; trường hợp đó hệ thống báo rõ URL bị chặn. **Nhập thủ công** chỉ còn là
+phương án dự phòng cho URL bị marketplace chặn, không phải luồng chính.
 
 ### Chỉ dùng Qoo10
 
@@ -81,6 +86,7 @@ EMAIL_HOST="smtp.gmail.com" \
 EMAIL_HOST_USER="bophat9420@gmail.com" \
 DEFAULT_FROM_EMAIL="KIZUNA <bophat9420@gmail.com>" \
 SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED=true \
+SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED=true \
 ./deploy-cloud-run.sh kizuna-shop-503909
 ```
 
@@ -109,21 +115,6 @@ VITE_MEDIA_BASE_URL=https://kizuna-backend-857138195082.asia-southeast1.run.app
 
 ## 4. Sử dụng
 
-### Không có API key
-
-1. Đăng nhập Admin và mở **Kho hàng**.
-2. Chọn **Nhập thủ công**.
-3. Nhập URL nguồn để tham chiếu và các trường sản phẩm. Chọn **Thêm sản phẩm**
-   để tạo tối đa 50 mục trong một lần.
-4. Chọn cách xử lý ảnh rồi bấm **Preview sản phẩm**.
-5. Kiểm tra giao diện danh sách/trang chi tiết, bỏ chọn mục không muốn lưu và
-   chọn **Lưu sản phẩm đã chọn**.
-
-Sản phẩm được tạo với provider `manual`, trạng thái `draft`, có lịch sử giá và
-không yêu cầu credential marketplace.
-
-### Có API key
-
 1. Đăng nhập trang Admin.
 2. Mở **Kho hàng**.
 3. Chọn **Nhập từ URL**.
@@ -138,17 +129,25 @@ không yêu cầu credential marketplace.
    chọn để nhập.
 9. Chọn **Nhập sản phẩm đã chọn** và xem kết quả từng URL.
 
+Các bước trên dùng được cả khi không có API key. Nếu có key hợp lệ, backend tự
+ưu tiên API; nếu hoàn toàn không có key, backend tự dùng trang công khai.
+
 Sản phẩm mới luôn được tạo ở trạng thái `draft`; cần kiểm tra trước khi publish.
 Nếu đổi danh mục, cân nặng, tồn kho hoặc cách xử lý ảnh, preview cũ sẽ bị xóa và
 phải chạy lại để kết quả hiển thị luôn khớp với thiết lập đang chọn.
 
 ## 5. Lỗi cấu hình thường gặp
 
-- `Thiếu QOO10_CERTIFICATION_KEY`: Cloud Run chưa được gắn secret Qoo10.
+- `Thiếu QOO10_CERTIFICATION_KEY`: chỉ xuất hiện khi fallback trang công khai đã
+  bị tắt; bật lại fallback hoặc gắn secret Qoo10.
 - `Certification key ... không hợp lệ hoặc đã hết hạn`: cấp lại key trong Qoo10.
-- `Thiếu cấu hình Amazon Creators API`: thiếu một trong ba secret Amazon hoặc
-  partner tag.
+- `Thiếu cấu hình Amazon Creators API`: credential Amazon đang được cấu hình dở;
+  hoàn thiện đủ ba secret hoặc xóa cấu hình dở để dùng fallback công khai.
 - `Tài khoản Amazon chưa có quyền`: tài khoản Associates/Creators API chưa được
   duyệt cho marketplace Nhật.
+- `Marketplace đang chặn ... CAPTCHA`: trang công khai không cho Cloud Run đọc;
+  thử lại sau, dùng API key khi có, hoặc dùng **Nhập thủ công** cho riêng URL đó.
+- `Không đọc được tên sản phẩm`: cấu trúc trang đã thay đổi hoặc URL không phải
+  trang chi tiết sản phẩm.
 - `Tải ảnh nguồn đang bị tắt`: chọn `Dùng URL ảnh nguồn`, hoặc deploy lại với
   `SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED=true` khi có quyền lưu/phân phối ảnh.

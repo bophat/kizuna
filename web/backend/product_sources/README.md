@@ -16,8 +16,8 @@ and source synchronization. Products created by source or CSV import are saved a
   queries, and CSV generation.
 - Dry-run for bulk import and sync does not write products, jobs, or audit rows.
 
-Production provider API calls are implemented and fail closed when authorized
-credentials are absent:
+Production provider API calls are implemented. When credentials are present,
+the authorized API remains the preferred data source:
 
 - Amazon Japan uses Amazon Creators API `GetItems`. PA-API access keys are not
   supported. Configure `AMAZON_CREATORS_CREDENTIAL_ID`,
@@ -29,8 +29,19 @@ credentials are absent:
 - OAuth tokens are cached, transient network/5xx responses are retried, and
   provider auth/permission/rate-limit/not-found errors are mapped to stable
   source-import errors.
-- With `SOURCE_IMPORT_USE_FAKE_PROVIDERS=False`, missing or invalid credentials
-  return a clear configuration error instead of fake success.
+- With no provider credentials, `SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED=true`
+  reads public JSON-LD/OpenGraph and product-page fields. It does not log in, use
+  browser cookies, solve CAPTCHA, or bypass marketplace access controls. Preview
+  reports that the public-page fallback was used. A blocked/changed page returns
+  a clear provider error instead of fake data.
+- Public-page results are cached for 15 minutes by default so preview followed by
+  import does not normally download the same page twice. Configure the limits
+  with `SOURCE_IMPORT_PUBLIC_PAGE_MAX_BYTES`,
+  `SOURCE_IMPORT_PUBLIC_PAGE_TIMEOUT_SECONDS`,
+  `SOURCE_IMPORT_PUBLIC_PAGE_MAX_REDIRECTS`, and
+  `SOURCE_IMPORT_PUBLIC_PAGE_CACHE_SECONDS`.
+- Partially configured or invalid API credentials still fail closed instead of
+  silently switching data sources.
 - Celery schedules/background workers are not configured in the current project yet.
 
 Safe image download is implemented but disabled by default for compliance:
@@ -82,11 +93,10 @@ products before importing. The preview uses the storefront's card/detail layout
 and price formatter. You can deselect individual products before confirming.
 Imported products always start as `draft`.
 
-When marketplace credentials are unavailable, use **Manual import** instead.
+When a marketplace blocks its public page, **Manual import** remains the fallback.
 It accepts up to 50 manually entered source URLs and product payloads, calculates
 prices with `ProductPricingService`, renders the same storefront preview, and
-stores selected products with provider `manual` and status `draft`. It never
-calls the Amazon or Qoo10 API.
+stores selected products with provider `manual` and status `draft`.
 
 ```bash
 curl -X POST http://localhost:8000/api/admin/products/import-manual/preview/ \
