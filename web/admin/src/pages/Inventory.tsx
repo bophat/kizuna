@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Package, Plus, Search, Filter, Loader2, AlertCircle, FileSpreadsheet, Trash2 } from 'lucide-react';
+import { Package, Plus, Search, Filter, Loader2, AlertCircle, FilePenLine, FileSpreadsheet, Link2, Trash2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../lib/api';
 import { Pagination } from '../components/Pagination';
@@ -8,6 +8,8 @@ import { useProductModal } from '../features/inventory/useProductModal';
 import { ProductFormModal } from '../components/inventory/ProductFormModal';
 import { InventoryTable } from '../components/inventory/InventoryTable';
 import { CsvImportModal } from '../components/inventory/CsvImportModal';
+import { ManualProductImportModal } from '../components/inventory/ManualProductImportModal';
+import { SourceUrlImportModal } from '../components/inventory/SourceUrlImportModal';
 
 export default function InventoryPage() {
   const { t } = useTranslation();
@@ -17,6 +19,8 @@ export default function InventoryPage() {
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [csvImportOpen, setCsvImportOpen] = useState(false);
+  const [manualImportOpen, setManualImportOpen] = useState(false);
+  const [sourceImportOpen, setSourceImportOpen] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -95,7 +99,7 @@ export default function InventoryPage() {
           <h1 className="text-5xl font-serif font-bold text-brand-ink leading-tight">{t('inventory.title')}</h1>
           <p className="text-brand-ink/40 font-serif italic mt-2 text-lg">{t('inventory.description')}</p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-3">
           <button
             onClick={handleDeleteAllQoo10}
             className="flex items-center gap-3 bg-red-50 text-brand-red border border-red-200 px-6 py-4 rounded-sm text-sm font-bold hover:bg-brand-red hover:text-white hover:border-brand-red transition-all shadow-md group"
@@ -109,6 +113,20 @@ export default function InventoryPage() {
           >
             <FileSpreadsheet size={18} className="group-hover:scale-110 transition-transform duration-500" />
             <span className="tracking-widest uppercase">{t('inventory.csv_import.button', 'Import CSV')}</span>
+          </button>
+          <button
+            onClick={() => setManualImportOpen(true)}
+            className="flex items-center gap-3 bg-brand-red text-white border border-brand-red px-6 py-4 rounded-sm text-sm font-bold hover:bg-brand-ink hover:border-brand-ink transition-all shadow-md group"
+          >
+            <FilePenLine size={18} className="group-hover:scale-110 transition-transform duration-500" />
+            <span className="tracking-widest uppercase">{t('inventory.manual_import.button')}</span>
+          </button>
+          <button
+            onClick={() => setSourceImportOpen(true)}
+            className="flex items-center gap-3 bg-white text-brand-ink border border-brand-clay px-6 py-4 rounded-sm text-sm font-bold hover:bg-brand-red hover:text-white hover:border-brand-red transition-all shadow-md hover:shadow-brand-red/20 group"
+          >
+            <Link2 size={18} className="group-hover:scale-110 transition-transform duration-500" />
+            <span className="tracking-widest uppercase">{t('inventory.source_import.button')}</span>
           </button>
           <button
             onClick={() => productModal.handleOpenModal()}
@@ -232,6 +250,18 @@ export default function InventoryPage() {
       <CsvImportModal
         isOpen={csvImportOpen}
         onClose={() => setCsvImportOpen(false)}
+        onSuccess={fetchData}
+      />
+      <ManualProductImportModal
+        isOpen={manualImportOpen}
+        categories={categories}
+        onClose={() => setManualImportOpen(false)}
+        onSuccess={fetchData}
+      />
+      <SourceUrlImportModal
+        isOpen={sourceImportOpen}
+        categories={categories}
+        onClose={() => setSourceImportOpen(false)}
         onSuccess={fetchData}
       />
     </div>

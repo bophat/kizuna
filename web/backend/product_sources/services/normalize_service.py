@@ -34,6 +34,18 @@ def normalize_images(images: list[ProviderImage], *, max_count: int = 10) -> lis
     return result
 
 
+def normalize_description_facts(facts: list[str], *, max_count: int = 5) -> list[str]:
+    result: list[str] = []
+    for fact in facts:
+        cleaned = CONTROL_CHARS.sub('', str(fact).strip())
+        if not cleaned:
+            continue
+        result.append(cleaned[:500])
+        if len(result) >= max_count:
+            break
+    return result
+
+
 def sanitize_raw_data(raw: dict) -> dict:
     return redact_sensitive_data(raw)
 
@@ -42,6 +54,7 @@ def normalize_provider_product(product: ProviderProduct) -> ProviderProduct:
     return product.model_copy(update={
         'name': normalize_name(product.name),
         'brand': normalize_brand(product.brand),
+        'description_facts': normalize_description_facts(product.description_facts),
         'images': normalize_images(product.images),
         'raw_data': sanitize_raw_data(product.raw_data),
     })

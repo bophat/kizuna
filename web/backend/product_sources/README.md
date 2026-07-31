@@ -16,10 +16,21 @@ and source synchronization. Products created by source or CSV import are saved a
   queries, and CSV generation.
 - Dry-run for bulk import and sync does not write products, jobs, or audit rows.
 
-Production provider API calls remain intentionally fail-closed:
+Production provider API calls are implemented and fail closed when authorized
+credentials are absent:
 
-- With `SOURCE_IMPORT_USE_FAKE_PROVIDERS=False`, adapters report a configuration or
-  not-implemented error instead of returning fake success.
+- Amazon Japan uses Amazon Creators API `GetItems`. PA-API access keys are not
+  supported. Configure `AMAZON_CREATORS_CREDENTIAL_ID`,
+  `AMAZON_CREATORS_CREDENTIAL_SECRET`, `AMAZON_CREATORS_CREDENTIAL_VERSION`
+  (`2.3` or `3.3`), and `AMAZON_JP_PARTNER_TAG`.
+- Qoo10 Japan uses QAPI `ItemsLookup.GetItemDetailInfo` v1.2. Configure
+  `QOO10_CERTIFICATION_KEY`; the key is sent in the
+  `GiosisCertificationKey` header and is never added to the request URL.
+- OAuth tokens are cached, transient network/5xx responses are retried, and
+  provider auth/permission/rate-limit/not-found errors are mapped to stable
+  source-import errors.
+- With `SOURCE_IMPORT_USE_FAKE_PROVIDERS=False`, missing or invalid credentials
+  return a clear configuration error instead of fake success.
 - Celery schedules/background workers are not configured in the current project yet.
 
 Safe image download is implemented but disabled by default for compliance:
@@ -64,6 +75,30 @@ python manage.py test product_sources -v 2
 ## REST examples
 
 All endpoints require an authenticated Django admin/staff user.
+
+The Admin inventory screen also has **Import URL**: paste up to 50 Amazon
+JP/Qoo10 JP product URLs, select the target category, and preview all normalized
+products before importing. The preview uses the storefront's card/detail layout
+and price formatter. You can deselect individual products before confirming.
+Imported products always start as `draft`.
+
+When marketplace credentials are unavailable, use **Manual import** instead.
+It accepts up to 50 manually entered source URLs and product payloads, calculates
+prices with `ProductPricingService`, renders the same storefront preview, and
+stores selected products with provider `manual` and status `draft`. It never
+calls the Amazon or Qoo10 API.
+
+```bash
+curl -X POST http://localhost:8000/api/admin/products/import-manual/preview/ \
+  -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"items":[{"source_url":"https://www.amazon.co.jp/dp/B07HG6S41K","sku":"MANUAL-001","name":"Manual product","source_price_jpy":"3980","category_id":1,"weight_kg":"0.30","stock":1}],"image_mode":"remote"}'
+
+curl -X POST http://localhost:8000/api/admin/products/import-manual/bulk/ \
+  -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN" \
+  -H 'Content-Type: application/json' \
+  -d '{"items":[{"source_url":"https://www.amazon.co.jp/dp/B07HG6S41K","sku":"MANUAL-001","name":"Manual product","source_price_jpy":"3980","category_id":1,"weight_kg":"0.30","stock":1}],"image_mode":"remote"}'
+```
 
 ```bash
 curl -X POST http://localhost:8000/api/admin/products/import-source/preview/ \

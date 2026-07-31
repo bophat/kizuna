@@ -5,7 +5,9 @@ from .views_product_images import ProductImageViewSet
 from product_sources.views import (
     BulkImportView,
     BulkSyncSourcesView,
+    ImportManualBulkView,
     ImportSourceProductView,
+    PreviewManualBulkView,
     PreviewImportView,
     SyncSourceProductView,
 )
@@ -44,6 +46,16 @@ urlpatterns = [
     path('products/import-source/preview/', PreviewImportView.as_view(), name='admin-import-source-preview'),
     path('products/import-source/', ImportSourceProductView.as_view(), name='admin-import-source'),
     path('products/import-source/bulk/', BulkImportView.as_view(), name='admin-import-source-bulk'),
+    path(
+        'products/import-manual/preview/',
+        PreviewManualBulkView.as_view(),
+        name='admin-import-manual-preview',
+    ),
+    path(
+        'products/import-manual/bulk/',
+        ImportManualBulkView.as_view(),
+        name='admin-import-manual-bulk',
+    ),
     path('products/sync-sources/', BulkSyncSourcesView.as_view(), name='admin-sync-sources'),
     path(
         'products/<str:product_id>/sync-source/',

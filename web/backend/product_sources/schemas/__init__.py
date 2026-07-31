@@ -15,6 +15,7 @@ from product_sources.schemas.import_result import (
     SourcePreviewInfo,
 )
 from product_sources.schemas.provider_product import ProviderImage, ProviderProduct
+from product_sources.schemas.manual_import import ManualBulkRequest, ManualProductInput
 
 __all__ = [
     'ProviderImage',
@@ -31,4 +32,6 @@ __all__ = [
     'ProductPayloadPreview',
     'SourcePreviewInfo',
     'PricingPreview',
+    'ManualProductInput',
+    'ManualBulkRequest',
 ]

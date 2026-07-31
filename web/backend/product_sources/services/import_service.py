@@ -114,6 +114,7 @@ class SourceImportService:
             brand=normalized.brand,
             provider=provider.provider_code,
             weight_kg=str(weight) if weight is not None else None,
+            facts=normalized.description_facts,
         )
         product_id = generate_product_id(provider.provider_code, source_product_id)
 

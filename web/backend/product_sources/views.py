@@ -4,12 +4,15 @@ from rest_framework import permissions, status
 
 from product_sources.exceptions import SourceImportError
 from product_sources.schemas.import_request import BulkImportRequest, ImportSourceProductRequest, PreviewImportRequest
+from product_sources.schemas.manual_import import ManualBulkRequest
 from product_sources.services.import_service import SourceImportService
+from product_sources.services.manual_import_service import ManualImportService
 from product_sources.services.sync_service import SyncService
 from product_sources.serializers import (
     BulkImportSerializer,
     BulkSyncSerializer,
     ImportSourceProductSerializer,
+    ManualBulkSerializer,
     PreviewImportSerializer,
     SyncSourceSerializer,
 )
@@ -65,6 +68,24 @@ class BulkImportView(BaseImportView):
         service = SourceImportService()
         bulk_res = service.bulk_import(req_schema, request.user)
         return Response(bulk_res.model_dump(mode="json"), status=status.HTTP_200_OK)
+
+
+class PreviewManualBulkView(BaseImportView):
+    def post(self, request, *args, **kwargs):
+        serializer = ManualBulkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        req_schema = ManualBulkRequest(**serializer.validated_data)
+        result = ManualImportService().preview_bulk(req_schema)
+        return Response(result.model_dump(mode='json'), status=status.HTTP_200_OK)
+
+
+class ImportManualBulkView(BaseImportView):
+    def post(self, request, *args, **kwargs):
+        serializer = ManualBulkSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        req_schema = ManualBulkRequest(**serializer.validated_data)
+        result = ManualImportService().import_bulk(req_schema, request.user)
+        return Response(result.model_dump(mode='json'), status=status.HTTP_200_OK)
 
 
 class SyncSourceProductView(BaseImportView):

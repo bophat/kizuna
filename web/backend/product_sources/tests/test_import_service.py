@@ -54,6 +54,7 @@ class SourceImportServiceTests(TestCase):
         self.assertEqual(preview.source_product_id, "B07HG6S41K")
         self.assertEqual(preview.product_payload.id, "AMZ-B07HG6S41K")
         self.assertEqual(preview.product_payload.price, "46.62") # (3980+1000)*200 * 1.15 + 20000 = 1165400 / 25000 = 46.62
+        self.assertIn('Sample fact 1', preview.product_payload.description)
         self.assertFalse(preview.duplicate)
         self.assertFalse(preview.category_required)
 

@@ -1,4 +1,3 @@
-import os
 from datetime import timedelta
 from decimal import Decimal
 
@@ -6,13 +5,15 @@ from django.conf import settings
 from django.utils import timezone as django_tz
 
 from product_sources.enums import SourceProvider
-from product_sources.exceptions import ProviderConfigurationError, ProductNotFoundError
+from product_sources.exceptions import ProductNotFoundError
+from product_sources.providers.amazon_jp.adapter import AmazonJpProvider
 from product_sources.providers.amazon_jp.url_parser import (
     canonicalize_amazon_url,
     extract_amazon_asin,
     supports_amazon_url,
 )
 from product_sources.providers.base import ProductProvider
+from product_sources.providers.qoo10_jp.adapter import Qoo10JpProvider
 from product_sources.providers.registry import ProviderRegistry
 from product_sources.providers.qoo10_jp.url_parser import (
     canonicalize_qoo10_url,
@@ -100,66 +101,6 @@ class FakeQoo10JpProvider(ProductProvider):
             fetched_at=now,
             expires_at=now + timedelta(hours=6),
             raw_data={'fixture': True, 'item_code': source_product_id},
-        )
-
-
-class AmazonJpProvider(ProductProvider):
-    """Production adapter — requires PA-API credentials."""
-
-    provider_code = SourceProvider.AMAZON_JP
-
-    def supports_url(self, url: str) -> bool:
-        return supports_amazon_url(url)
-
-    def canonicalize_url(self, url: str) -> str:
-        return canonicalize_amazon_url(url)
-
-    def extract_source_product_id(self, url: str) -> str:
-        return extract_amazon_asin(url)
-
-    def get_product(self, source_product_id: str, *, canonical_url: str | None = None) -> ProviderProduct:
-        if not self._has_credentials():
-            raise ProviderConfigurationError(
-                'Thiếu credential Amazon JP (AMAZON_JP_API_KEY, AMAZON_JP_API_SECRET).',
-            )
-        raise ProviderConfigurationError(
-            'Amazon JP provider API chưa được triển khai; không trả dữ liệu giả ở production.',
-        )
-
-    @staticmethod
-    def _has_credentials() -> bool:
-        return bool(
-            os.environ.get('AMAZON_JP_API_KEY') and os.environ.get('AMAZON_JP_API_SECRET'),
-        )
-
-
-class Qoo10JpProvider(ProductProvider):
-    provider_code = SourceProvider.QOO10_JP
-
-    def supports_url(self, url: str) -> bool:
-        return supports_qoo10_url(url)
-
-    def canonicalize_url(self, url: str) -> str:
-        return canonicalize_qoo10_url(url)
-
-    def extract_source_product_id(self, url: str) -> str:
-        return extract_qoo10_item_code(url)
-
-    def get_product(self, source_product_id: str, *, canonical_url: str | None = None) -> ProviderProduct:
-        if not self._has_credentials():
-            raise ProviderConfigurationError(
-                'Thiếu credential Qoo10 (QOO10_API_KEY, QOO10_SELLER_ID, QOO10_SELLER_AUTH_KEY).',
-            )
-        raise ProviderConfigurationError(
-            'Qoo10 provider API chưa được triển khai; không trả dữ liệu giả ở production.',
-        )
-
-    @staticmethod
-    def _has_credentials() -> bool:
-        return bool(
-            os.environ.get('QOO10_API_KEY')
-            and os.environ.get('QOO10_SELLER_ID')
-            and os.environ.get('QOO10_SELLER_AUTH_KEY'),
         )
 
 

@@ -29,6 +29,8 @@ class ImportApiViewsTests(APITestCase):
         self.preview_url = reverse("admin-import-source-preview")
         self.import_url = reverse("admin-import-source")
         self.bulk_url = reverse("admin-import-source-bulk")
+        self.manual_preview_url = reverse("admin-import-manual-preview")
+        self.manual_bulk_url = reverse("admin-import-manual-bulk")
 
     def test_permission_denied_for_non_admin(self):
         # Anonymous
@@ -171,6 +173,74 @@ class ImportApiViewsTests(APITestCase):
         self.assertEqual(response.data["total"], 2)
         self.assertEqual(response.data["succeeded"], 2)
         self.assertEqual(response.data["failed"], 0)
+
+    def test_manual_preview_and_import_without_provider_credentials(self):
+        self.client.force_authenticate(user=self.admin_user)
+        payload = {
+            "items": [
+                {
+                    "source_url": "https://www.amazon.co.jp/dp/B07HG6S41K",
+                    "sku": "NO-KEY-001",
+                    "name": "Manual preview product",
+                    "description": "Entered by an administrator.",
+                    "source_price_jpy": "3980",
+                    "category_id": self.category.id,
+                    "weight_kg": "0.30",
+                    "stock": 3,
+                    "brand": "Manual Brand",
+                    "location": "Japan",
+                    "image_url": "https://m.media-amazon.com/images/I/example.jpg",
+                },
+            ],
+            "image_mode": ImageMode.REMOTE,
+        }
+
+        preview_response = self.client.post(
+            self.manual_preview_url,
+            payload,
+            format="json",
+        )
+        self.assertEqual(preview_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(preview_response.data["succeeded"], 1)
+        preview = preview_response.data["items"][0]["preview"]
+        self.assertEqual(preview["provider"], "manual")
+        self.assertEqual(preview["product_payload"]["id"], "MAN-NO-KEY-001")
+        self.assertEqual(Product.objects.count(), 0)
+
+        import_response = self.client.post(
+            self.manual_bulk_url,
+            payload,
+            format="json",
+        )
+        self.assertEqual(import_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(import_response.data["succeeded"], 1)
+
+        product = Product.objects.get(pk="MAN-NO-KEY-001")
+        self.assertEqual(product.status, "draft")
+        self.assertEqual(product.stock, 3)
+        self.assertEqual(product.source_info.provider, "manual")
+        self.assertEqual(
+            product.source_info.external_image_url,
+            "https://m.media-amazon.com/images/I/example.jpg",
+        )
+        self.assertEqual(product.price_history.count(), 1)
+
+    def test_manual_import_requires_admin(self):
+        payload = {
+            "items": [
+                {
+                    "source_url": "https://www.qoo10.jp/item/123456789",
+                    "name": "Manual product",
+                    "source_price_jpy": "1000",
+                    "category_id": self.category.id,
+                },
+            ],
+        }
+        response = self.client.post(self.manual_preview_url, payload, format="json")
+        self.assertIn(
+            response.status_code,
+            (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
+        )
 
     def test_csv_import_with_provider_url(self):
         self.client.force_authenticate(user=self.admin_user)
