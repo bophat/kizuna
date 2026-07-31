@@ -2,6 +2,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.db import IntegrityError, transaction
 from django.utils import timezone
 
@@ -9,7 +10,6 @@ from product_sources.enums import ImageMode, ImportJobStatus, ImportJobType, Sou
 from product_sources.exceptions import (
     CategoryRequiredError,
     DuplicateSourceProductError,
-    ImageValidationError,
     InvalidImportRequestError,
     PriceUnavailableError,
     WeightRequiredError,
@@ -35,6 +35,7 @@ from product_sources.services.audit_service import AuditService
 from product_sources.services.category_mapping_service import CategoryMappingService
 from product_sources.services.compliance_service import get_allowed_source_hosts, validate_external_url
 from product_sources.services.description_service import build_description_draft
+from product_sources.services.image_download_service import ImageDownloadService
 from product_sources.services.normalize_service import normalize_provider_product
 from product_sources.services.pricing_service import ProductPricingService, PricingResult
 from product_sources.services.product_id_generator import generate_product_id, provider_location
@@ -48,8 +49,9 @@ class _PreparedImport:
 
 
 class SourceImportService:
-    def __init__(self, *, provider_registry=None):
+    def __init__(self, *, provider_registry=None, image_download_service=None):
         self.provider_registry = provider_registry or build_provider_registry()
+        self.image_download_service = image_download_service or ImageDownloadService()
         self.pricing_service = ProductPricingService()
         self.category_mapping = CategoryMappingService()
         self.audit_service = AuditService()
@@ -170,11 +172,6 @@ class SourceImportService:
             raise PriceUnavailableError('Provider không cung cấp giá nguồn để import.')
         if preview.product_payload.weight is None:
             raise WeightRequiredError('Cần weight nguồn hoặc default_weight_kg để import.')
-        if request.image_mode == ImageMode.DOWNLOAD:
-            raise ImageValidationError(
-                'image_mode=download chưa được bật; hãy dùng skip hoặc remote.',
-                details={'image_mode': request.image_mode},
-            )
 
         if request.dry_run:
             return ImportResult(
@@ -184,12 +181,26 @@ class SourceImportService:
                 preview=preview,
             )
 
+        downloaded_image = None
+        if request.image_mode == ImageMode.DOWNLOAD:
+            if preview.source.images:
+                downloaded_image = self.image_download_service.download(
+                    preview.source.images[0],
+                    filename_stem=preview.product_payload.id,
+                )
+            else:
+                preview.warnings.append(
+                    'Provider không cung cấp ảnh; sản phẩm được import không có ảnh.',
+                )
+
         if Product.objects.filter(pk=preview.product_payload.id).exists():
             raise DuplicateSourceProductError(
                 'Product ID đã tồn tại và không thể gắn với source mới.',
                 details={'product_id': preview.product_payload.id},
             )
 
+        stored_image_name = None
+        stored_image_storage = None
         try:
             with transaction.atomic():
                 if ProductSource.objects.filter(
@@ -223,8 +234,21 @@ class SourceImportService:
                     is_new=True,
                 )
 
+                if downloaded_image is not None:
+                    product.image.save(
+                        downloaded_image.filename,
+                        ContentFile(downloaded_image.content),
+                        save=False,
+                    )
+                    stored_image_name = product.image.name
+                    stored_image_storage = product.image.storage
+                    product.save(update_fields=['image'])
+
                 external_image_url = None
-                if request.image_mode == ImageMode.REMOTE and preview.source.images:
+                if (
+                    request.image_mode in (ImageMode.REMOTE, ImageMode.DOWNLOAD)
+                    and preview.source.images
+                ):
                     external_image_url = preview.source.images[0]
 
                 product_source = ProductSource.objects.create(
@@ -270,6 +294,7 @@ class SourceImportService:
                     result_summary={'product_id': product.id, 'source_id': product_source.id},
                 )
         except IntegrityError as exc:
+            self._delete_stored_image(stored_image_storage, stored_image_name)
             if (
                 ProductSource.objects.filter(
                     provider=preview.provider,
@@ -285,6 +310,9 @@ class SourceImportService:
                         'product_id': preview.product_payload.id,
                     },
                 ) from exc
+            raise
+        except Exception:
+            self._delete_stored_image(stored_image_storage, stored_image_name)
             raise
 
         return ImportResult(
@@ -380,3 +408,14 @@ class SourceImportService:
             failed=failed,
             items=items,
         )
+
+    @staticmethod
+    def _delete_stored_image(storage, name: str | None) -> None:
+        if storage is None or not name:
+            return
+        try:
+            storage.delete(name)
+        except Exception:
+            # Preserve the original database/import error. Storage cleanup can be
+            # retried separately if the backend is temporarily unavailable.
+            pass

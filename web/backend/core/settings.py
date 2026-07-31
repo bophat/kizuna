@@ -254,6 +254,26 @@ SOURCE_IMPORT_ALLOWED_IMAGE_HOSTS = [
     for host in os.environ.get('SOURCE_IMPORT_ALLOWED_IMAGE_HOSTS', '').split(',')
     if host.strip()
 ]
+SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED = os.environ.get(
+    'SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED',
+    'false',
+).lower() in ('1', 'true', 'yes')
+SOURCE_IMPORT_IMAGE_MAX_BYTES = int(os.environ.get(
+    'SOURCE_IMPORT_IMAGE_MAX_BYTES',
+    str(10 * 1024 * 1024),
+))
+SOURCE_IMPORT_IMAGE_MAX_PIXELS = int(os.environ.get(
+    'SOURCE_IMPORT_IMAGE_MAX_PIXELS',
+    '40000000',
+))
+SOURCE_IMPORT_IMAGE_TIMEOUT_SECONDS = float(os.environ.get(
+    'SOURCE_IMPORT_IMAGE_TIMEOUT_SECONDS',
+    '10',
+))
+SOURCE_IMPORT_IMAGE_MAX_REDIRECTS = int(os.environ.get(
+    'SOURCE_IMPORT_IMAGE_MAX_REDIRECTS',
+    '3',
+))
 AUTO_UPDATE_MAX_INCREASE_PERCENT = os.environ.get('AUTO_UPDATE_MAX_INCREASE_PERCENT', '5')
 REVIEW_PRICE_INCREASE_PERCENT = os.environ.get('REVIEW_PRICE_INCREASE_PERCENT', '15')
 MCP_SYSTEM_USERNAME = os.environ.get('MCP_SYSTEM_USERNAME', 'mcp_system_user')

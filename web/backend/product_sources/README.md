@@ -16,13 +16,25 @@ and source synchronization. Products created by source or CSV import are saved a
   queries, and CSV generation.
 - Dry-run for bulk import and sync does not write products, jobs, or audit rows.
 
-Production provider API calls and safe image download are intentionally fail-closed:
+Production provider API calls remain intentionally fail-closed:
 
 - With `SOURCE_IMPORT_USE_FAKE_PROVIDERS=False`, adapters report a configuration or
   not-implemented error instead of returning fake success.
-- `image_mode=download` returns `IMAGE_VALIDATION_ERROR`; use `skip` or `remote`.
-  Remote mode stores the URL only in `ProductSource.external_image_url`.
 - Celery schedules/background workers are not configured in the current project yet.
+
+Safe image download is implemented but disabled by default for compliance:
+
+- `remote` stores the provider URL in `ProductSource.external_image_url`.
+- `download` first validates the hostname and every redirect against the SSRF
+  whitelist, limits download bytes and pixels, verifies MIME against image magic
+  bytes, accepts JPEG/PNG/WebP only, and then stores the image through Django
+  storage. The original provider URL is retained as source metadata.
+- Enable `SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED=true` only when you have permission
+  to store and redistribute the provider image. Otherwise `download` fails closed
+  with `IMAGE_VALIDATION_ERROR`.
+- Optional limits are `SOURCE_IMPORT_IMAGE_MAX_BYTES`,
+  `SOURCE_IMPORT_IMAGE_MAX_PIXELS`, `SOURCE_IMPORT_IMAGE_TIMEOUT_SECONDS`, and
+  `SOURCE_IMPORT_IMAGE_MAX_REDIRECTS`.
 
 ## Local setup
 
@@ -62,7 +74,7 @@ curl -X POST http://localhost:8000/api/admin/products/import-source/preview/ \
 curl -X POST http://localhost:8000/api/admin/products/import-source/ \
   -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"url":"https://www.qoo10.jp/item/123456789","category_id":1,"default_weight_kg":"0.30","image_mode":"remote","dry_run":false}'
+  -d '{"url":"https://www.qoo10.jp/item/123456789","category_id":1,"default_weight_kg":"0.30","image_mode":"download","dry_run":false}'
 
 curl -X POST http://localhost:8000/api/admin/products/AMZ-B07HG6S41K/sync-source/ \
   -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN" \

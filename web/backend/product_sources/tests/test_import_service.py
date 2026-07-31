@@ -1,5 +1,8 @@
+import tempfile
 from decimal import Decimal
+from pathlib import Path
 from unittest.mock import Mock, patch
+
 from django.contrib.auth import get_user_model
 from django.test import TestCase, override_settings
 
@@ -18,6 +21,7 @@ from product_sources.models import (
     SourceImportJob,
 )
 from product_sources.schemas.import_request import BulkImportRequest, ImportSourceProductRequest, PreviewImportRequest
+from product_sources.services.image_download_service import DownloadedImage
 from product_sources.services.import_service import SourceImportService
 from product_sources.tests.utils import deterministic_public_dns
 from shop.models import Category, Product
@@ -109,6 +113,66 @@ class SourceImportServiceTests(TestCase):
             self.service.import_product(req, self.user)
         self.assertEqual(Product.objects.count(), 0)
         self.assertEqual(ProductSource.objects.count(), 0)
+
+    def test_import_download_mode_saves_local_image_and_source_url(self):
+        image_download_service = Mock()
+        image_download_service.download.return_value = DownloadedImage(
+            content=b'validated-image-content',
+            filename='AMZ-B07HG6S41K-deadbeef1234.jpg',
+            content_type='image/jpeg',
+        )
+        service = SourceImportService(image_download_service=image_download_service)
+        req = ImportSourceProductRequest(
+            url='https://www.amazon.co.jp/dp/B07HG6S41K',
+            category_id=self.category.id,
+            image_mode=ImageMode.DOWNLOAD,
+        )
+
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                result = service.import_product(req, self.user)
+                product = Product.objects.get(pk=result.product_id)
+                self.assertTrue(product.image.name.startswith('products/'))
+                self.assertTrue(product.image.storage.exists(product.image.name))
+
+        image_download_service.download.assert_called_once_with(
+            'https://m.media-amazon.com/images/I/sample.jpg',
+            filename_stem='AMZ-B07HG6S41K',
+        )
+        source = ProductSource.objects.get(pk=result.source_id)
+        self.assertEqual(
+            source.external_image_url,
+            'https://m.media-amazon.com/images/I/sample.jpg',
+        )
+
+    def test_downloaded_image_is_deleted_when_database_import_rolls_back(self):
+        image_download_service = Mock()
+        image_download_service.download.return_value = DownloadedImage(
+            content=b'validated-image-content',
+            filename='AMZ-B07HG6S41K-deadbeef1234.jpg',
+            content_type='image/jpeg',
+        )
+        service = SourceImportService(image_download_service=image_download_service)
+        req = ImportSourceProductRequest(
+            url='https://www.amazon.co.jp/dp/B07HG6S41K',
+            category_id=self.category.id,
+            image_mode=ImageMode.DOWNLOAD,
+        )
+
+        with tempfile.TemporaryDirectory() as media_root:
+            with override_settings(MEDIA_ROOT=media_root):
+                with patch.object(
+                    ProductSource.objects,
+                    'create',
+                    side_effect=RuntimeError('DB fail'),
+                ):
+                    with self.assertRaises(RuntimeError):
+                        service.import_product(req, self.user)
+                self.assertEqual(list(Product.objects.values_list('id', flat=True)), [])
+                self.assertEqual(
+                    [path for path in Path(media_root).rglob('*') if path.is_file()],
+                    [],
+                )
 
     def test_bulk_dry_run_does_not_write_database(self):
         req = BulkImportRequest(
