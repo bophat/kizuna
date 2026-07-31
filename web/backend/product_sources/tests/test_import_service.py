@@ -8,7 +8,6 @@ from django.test import TestCase, override_settings
 
 from product_sources.enums import ImageMode, SourceSyncStatus
 from product_sources.exceptions import (
-    CategoryRequiredError,
     DuplicateSourceProductError,
     ImageValidationError,
     SSRFBlockedError,
@@ -24,7 +23,7 @@ from product_sources.schemas.import_request import BulkImportRequest, ImportSour
 from product_sources.services.image_download_service import DownloadedImage
 from product_sources.services.import_service import SourceImportService
 from product_sources.tests.utils import deterministic_public_dns
-from shop.models import Category, Product
+from shop.models import Category, Product, ProductStatus
 
 User = get_user_model()
 
@@ -203,14 +202,16 @@ class SourceImportServiceTests(TestCase):
         with self.assertRaises(DuplicateSourceProductError):
             self.service.import_product(req, self.user)
 
-    def test_import_requires_category(self):
+    def test_import_without_category_creates_uncategorized_draft(self):
         req = ImportSourceProductRequest(
             url='https://www.amazon.co.jp/dp/B07HG6S41K',
             category_id=None,
         )
-        with self.assertRaises(CategoryRequiredError):
-            self.service.import_product(req, self.user)
-        self.assertEqual(Product.objects.count(), 0)
+        result = self.service.import_product(req, self.user)
+
+        product = Product.objects.get(pk=result.product_id)
+        self.assertIsNone(product.category)
+        self.assertEqual(product.status, ProductStatus.DRAFT)
 
     def test_preview_uses_saved_category_mapping(self):
         SourceCategoryMapping.objects.create(

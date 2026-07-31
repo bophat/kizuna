@@ -376,8 +376,11 @@ export function SourceUrlImportModal({
   }, [isOpen]);
 
   const categoryName = useMemo(
-    () => categories.find((category) => String(category.id) === categoryId)?.name || '—',
-    [categories, categoryId],
+    () => (
+      categories.find((category) => String(category.id) === categoryId)?.name
+      || t('inventory.source_import.uncategorized')
+    ),
+    [categories, categoryId, t],
   );
 
   const activePreview = useMemo(
@@ -463,11 +466,6 @@ export function SourceUrlImportModal({
       setError(t('inventory.source_import.url_required'));
       return;
     }
-    if (!categoryId) {
-      setError(t('inventory.source_import.category_required'));
-      return;
-    }
-
     const slots: PreviewEntry[] = urls.map((url) => ({ url, status: 'loading' }));
     setPreviewEntries(slots);
     setPreviewProgress(0);
@@ -544,7 +542,7 @@ export function SourceUrlImportModal({
         method: 'POST',
         body: JSON.stringify({
           urls: importUrls,
-          category_id: Number(categoryId),
+          category_id: categoryId ? Number(categoryId) : null,
           default_weight_kg: weight === '' ? null : weight,
           default_stock: Math.max(0, Number(stock) || 0),
           image_mode: imageMode,
@@ -750,11 +748,12 @@ export function SourceUrlImportModal({
                     </span>
                     <select
                       value={categoryId}
+                      disabled={categories.length === 0}
                       onChange={(event) => {
                         setCategoryId(event.target.value);
                         invalidatePreview();
                       }}
-                      className="w-full border border-brand-clay bg-white px-3 py-3 text-sm outline-none focus:border-brand-red"
+                      className="w-full border border-brand-clay bg-white px-3 py-3 text-sm outline-none focus:border-brand-red disabled:cursor-not-allowed disabled:bg-brand-paper/50 disabled:text-brand-ink/50"
                     >
                       <option value="">{t('inventory.source_import.category_placeholder')}</option>
                       {categories.map((category) => (
@@ -763,6 +762,9 @@ export function SourceUrlImportModal({
                         </option>
                       ))}
                     </select>
+                    <span className="block text-[11px] leading-relaxed text-brand-ink/45">
+                      {t('inventory.source_import.category_help')}
+                    </span>
                   </label>
                   <label className="space-y-2">
                     <span className="text-xs font-bold uppercase tracking-wider text-brand-ink/50">

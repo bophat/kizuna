@@ -120,7 +120,8 @@ VITE_MEDIA_BASE_URL=https://kizuna-backend-857138195082.asia-southeast1.run.app
 3. Chọn **Nhập từ URL**.
 4. Dán một hoặc nhiều URL Amazon Japan/Qoo10 Japan, mỗi URL một dòng, rồi chọn
    **Thêm URL**. Có thể thêm tối đa 50 URL trong một lần.
-5. Chọn danh mục, cân nặng mặc định, tồn kho và cách xử lý ảnh.
+5. Chọn danh mục nếu đã có; nếu chưa có thì để **Chưa phân loại**. Thiết lập cân
+   nặng mặc định, tồn kho và cách xử lý ảnh.
 6. Chọn **Preview sản phẩm**. Tool sẽ tải tối đa 3 URL đồng thời và hiển thị
    tiến độ.
 7. Kiểm tra thẻ sản phẩm và phần chi tiết mô phỏng website: ảnh, tên, danh mục,
@@ -133,6 +134,8 @@ Các bước trên dùng được cả khi không có API key. Nếu có key h�
 ưu tiên API; nếu hoàn toàn không có key, backend tự dùng trang công khai.
 
 Sản phẩm mới luôn được tạo ở trạng thái `draft`; cần kiểm tra trước khi publish.
+Danh mục không bắt buộc; sản phẩm chưa có danh mục vẫn được nhập và có thể chỉnh
+lại trong Admin sau.
 Nếu đổi danh mục, cân nặng, tồn kho hoặc cách xử lý ảnh, preview cũ sẽ bị xóa và
 phải chạy lại để kết quả hiển thị luôn khớp với thiết lập đang chọn.
 

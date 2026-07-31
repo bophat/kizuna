@@ -170,8 +170,6 @@ class SourceImportService:
                     'source_product_id': preview.source_product_id,
                 },
             )
-        if preview.category_required or preview.product_payload.category is None:
-            raise CategoryRequiredError('Yêu cầu chọn Category trước khi import.')
         if prepared.product.source_price is None or prepared.pricing is None:
             if preview.product_payload.weight is None:
                 raise WeightRequiredError('Cần weight nguồn hoặc default_weight_kg để tính giá.')
@@ -220,10 +218,14 @@ class SourceImportService:
                         details={'product_id': preview.product_payload.id},
                     )
 
-                try:
-                    category = Category.objects.get(pk=preview.product_payload.category)
-                except Category.DoesNotExist as exc:
-                    raise CategoryRequiredError('Category đã chọn không còn tồn tại.') from exc
+                category = None
+                if preview.product_payload.category is not None:
+                    try:
+                        category = Category.objects.get(pk=preview.product_payload.category)
+                    except Category.DoesNotExist as exc:
+                        raise CategoryRequiredError(
+                            'Category đã chọn không còn tồn tại.',
+                        ) from exc
 
                 product = Product.objects.create(
                     id=preview.product_payload.id,

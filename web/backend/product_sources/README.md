@@ -88,10 +88,11 @@ python manage.py test product_sources -v 2
 All endpoints require an authenticated Django admin/staff user.
 
 The Admin inventory screen also has **Import URL**: paste up to 50 Amazon
-JP/Qoo10 JP product URLs, select the target category, and preview all normalized
-products before importing. The preview uses the storefront's card/detail layout
-and price formatter. You can deselect individual products before confirming.
-Imported products always start as `draft`.
+JP/Qoo10 JP product URLs and preview all normalized products before importing.
+Category is optional; when no category exists, products are saved as
+uncategorized drafts and can be categorized later. The preview uses the
+storefront's card/detail layout and price formatter. You can deselect individual
+products before confirming. Imported products always start as `draft`.
 
 When a marketplace blocks its public page, **Manual import** remains the fallback.
 It accepts up to 50 manually entered source URLs and product payloads, calculates

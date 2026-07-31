@@ -15,7 +15,8 @@ class CategoryMappingService:
     ) -> tuple[Category | None, bool]:
         """
         Returns (category, category_required).
-        category_required=True when admin must pick a category before import.
+        Category is optional for source imports. Products without a resolved
+        category remain draft and can be categorized later in Admin.
         """
         if category_id is not None:
             try:
@@ -34,7 +35,7 @@ class CategoryMappingService:
             if mapping:
                 return mapping.target_category, False
 
-        return None, True
+        return None, False
 
     def get_or_create_from_name(self, name: str) -> Category | None:
         if not name or not name.strip():
