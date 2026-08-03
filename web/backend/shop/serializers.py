@@ -144,7 +144,11 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'status', 'payment_method', 'total_amount', 'items', 'created_at', 'updated_at']
+        fields = [
+            'id', 'status', 'payment_method', 'subtotal_amount',
+            'shipping_amount', 'discount_amount', 'total_amount',
+            'coupon_code', 'items', 'created_at', 'updated_at',
+        ]
 
 class FavoriteSerializer(serializers.ModelSerializer):
     product = PublicProductSerializer(read_only=True)

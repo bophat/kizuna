@@ -1,3 +1,6 @@
+from decimal import Decimal
+
+from django.core.exceptions import ValidationError
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -105,6 +108,75 @@ class UserProfile(models.Model):
     def __str__(self):
         return f"Profile for {self.user.username}"
 
+
+class Coupon(models.Model):
+    class DiscountType(models.TextChoices):
+        PERCENTAGE = 'percentage', 'Percentage'
+        FIXED = 'fixed', 'Fixed amount'
+
+    code = models.CharField(max_length=50, unique=True, db_index=True)
+    description = models.CharField(max_length=255, blank=True, default='')
+    discount_type = models.CharField(max_length=12, choices=DiscountType.choices)
+    discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    minimum_order_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, default=Decimal('0.00')
+    )
+    maximum_discount_amount = models.DecimalField(
+        max_digits=10, decimal_places=2, null=True, blank=True
+    )
+    usage_limit = models.PositiveIntegerField(null=True, blank=True)
+    per_user_limit = models.PositiveIntegerField(default=1)
+    used_count = models.PositiveIntegerField(default=0)
+    starts_at = models.DateTimeField(null=True, blank=True)
+    expires_at = models.DateTimeField(null=True, blank=True)
+    is_active = models.BooleanField(default=True)
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_coupons',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def clean(self):
+        errors = {}
+        if self.discount_value is not None and self.discount_value <= 0:
+            errors['discount_value'] = 'Discount value must be greater than zero.'
+        if (
+            self.discount_type == self.DiscountType.PERCENTAGE
+            and self.discount_value is not None
+            and self.discount_value > 100
+        ):
+            errors['discount_value'] = 'Percentage discount cannot exceed 100.'
+        if self.minimum_order_amount is not None and self.minimum_order_amount < 0:
+            errors['minimum_order_amount'] = 'Minimum order amount cannot be negative.'
+        if (
+            self.maximum_discount_amount is not None
+            and self.maximum_discount_amount <= 0
+        ):
+            errors['maximum_discount_amount'] = 'Maximum discount must be greater than zero.'
+        if self.usage_limit is not None and self.usage_limit < 1:
+            errors['usage_limit'] = 'Usage limit must be at least one.'
+        if self.per_user_limit is not None and self.per_user_limit < 1:
+            errors['per_user_limit'] = 'Per-user limit must be at least one.'
+        if self.starts_at and self.expires_at and self.starts_at >= self.expires_at:
+            errors['expires_at'] = 'Expiry time must be after the start time.'
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.code = self.code.strip().upper()
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.code
+
 class Order(models.Model):
     STATUS_CHOICES = (
         ('pending', 'Pending'),
@@ -120,7 +192,18 @@ class Order(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
     payment_method = models.CharField(max_length=20, choices=PAYMENT_CHOICES)
+    subtotal_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    shipping_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
     total_amount = models.DecimalField(max_digits=10, decimal_places=2, default=0.00)
+    coupon = models.ForeignKey(
+        Coupon,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders',
+    )
+    coupon_code = models.CharField(max_length=50, blank=True, default='')
     payment_receipt = models.ImageField(upload_to='receipts/', null=True, blank=True)
     admin_notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -138,6 +221,26 @@ class OrderItem(models.Model):
 
     def __str__(self):
         return f"{self.quantity} x {self.product_name} (Order #{self.order.id})"
+
+
+class CouponRedemption(models.Model):
+    coupon = models.ForeignKey(
+        Coupon, on_delete=models.PROTECT, related_name='redemptions'
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='coupon_redemptions'
+    )
+    order = models.OneToOneField(
+        Order, on_delete=models.CASCADE, related_name='coupon_redemption'
+    )
+    discount_amount = models.DecimalField(max_digits=10, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.coupon.code} - Order #{self.order_id}'
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')

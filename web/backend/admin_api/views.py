@@ -7,6 +7,7 @@ from shop.models import (
     Category,
     ContactInfo,
     ContactMessage,
+    Coupon,
     Order,
     Product,
     ProductStatus,
@@ -30,6 +31,7 @@ from .serializers import (
     AdminContactMessageSerializer,
     AdminStorePageSerializer,
     CategorySerializer,
+    CouponSerializer,
     OrderSerializer,
     ProductSerializer,
     SettingSerializer,
@@ -131,6 +133,24 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.annotate(product_count=Count('products')).all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+class AdminCouponViewSet(viewsets.ModelViewSet):
+    queryset = Coupon.objects.select_related('created_by').all().order_by('-created_at')
+    serializer_class = CouponSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        coupon = self.get_object()
+        if coupon.used_count or coupon.redemptions.exists():
+            return Response(
+                {'detail': 'Used coupons cannot be deleted. Disable this coupon instead.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
 
 
 class AdminStorePageViewSet(

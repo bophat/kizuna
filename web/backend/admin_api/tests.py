@@ -2,7 +2,7 @@ from django.contrib.auth.models import User
 from django.test import TestCase
 from rest_framework.test import APIClient
 
-from shop.models import ContactInfo, ContactMessage, StorePage
+from shop.models import ContactInfo, ContactMessage, Coupon, StorePage
 
 
 class AdminStoreContentTests(TestCase):
@@ -105,3 +105,54 @@ class AdminStoreContentTests(TestCase):
         self.assertEqual(update_response.status_code, 200)
         message.refresh_from_db()
         self.assertEqual(message.status, ContactMessage.Status.READ)
+
+
+class AdminCouponTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_user(
+            username='coupon-admin', password='test-password-123', is_staff=True
+        )
+        self.client.force_authenticate(user=self.admin)
+
+    def test_admin_can_create_and_normalize_coupon(self):
+        response = self.client.post(
+            '/api/admin/coupons/',
+            {
+                'code': ' welcome10 ',
+                'description': 'Welcome discount',
+                'discount_type': 'percentage',
+                'discount_value': '10.00',
+                'minimum_order_amount': '20.00',
+                'maximum_discount_amount': '50.00',
+                'usage_limit': 100,
+                'per_user_limit': 1,
+                'is_active': True,
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 201)
+        coupon = Coupon.objects.get()
+        self.assertEqual(coupon.code, 'WELCOME10')
+        self.assertEqual(coupon.created_by, self.admin)
+        self.assertEqual(response.data['used_count'], 0)
+
+    def test_percentage_cannot_exceed_one_hundred(self):
+        response = self.client.post(
+            '/api/admin/coupons/',
+            {
+                'code': 'BAD-PERCENT',
+                'discount_type': 'percentage',
+                'discount_value': '101.00',
+                'per_user_limit': 1,
+            },
+            format='json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('discount_value', response.data)
+
+    def test_customer_cannot_manage_coupons(self):
+        self.client.force_authenticate(user=User.objects.create_user('regular-customer'))
+        response = self.client.get('/api/admin/coupons/')
+        self.assertEqual(response.status_code, 403)

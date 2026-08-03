@@ -187,6 +187,25 @@
     "fill_required": "Vui lòng điền đầy đủ các thông tin bắt buộc",
     "secure_checkout": "Thanh toán an toàn",
     "bank_qr_alt": "Mã QR chuyển khoản ngân hàng",
+    "coupon_label": "Mã giảm giá",
+    "coupon_placeholder": "Nhập mã giảm giá",
+    "coupon_apply": "Áp dụng",
+    "coupon_applying": "Đang kiểm tra...",
+    "coupon_remove": "Gỡ mã",
+    "coupon_discount": "Giảm giá coupon",
+    "coupon_savings": "Bạn được giảm {{amount}}",
+    "coupon_errors": {
+      "required": "Vui lòng nhập mã giảm giá.",
+      "invalid": "Mã giảm giá không hợp lệ.",
+      "inactive": "Mã giảm giá hiện đang bị tắt.",
+      "not_started": "Mã giảm giá chưa đến thời gian áp dụng.",
+      "expired": "Mã giảm giá đã hết hạn.",
+      "usage_limit_reached": "Mã giảm giá đã hết lượt sử dụng.",
+      "per_user_limit_reached": "Bạn đã dùng mã này đủ số lần cho phép.",
+      "minimum_order_not_met": "Tổng tiền sản phẩm phải từ {{amount}} để dùng mã này.",
+      "empty_cart": "Giỏ hàng đang trống.",
+      "connection": "Không thể kiểm tra mã giảm giá. Vui lòng thử lại."
+    },
     "errors": {
       "failed": "Thanh toán thất bại. Vui lòng thử lại."
     }
@@ -208,6 +227,7 @@
     "placed_on": "Đặt ngày {{date}}",
     "total": "Tổng cộng: {{amount}}",
     "payment": "Thanh toán: {{method}}",
+    "coupon_applied": "Mã {{code}} đã giảm {{amount}}",
     "track_package": "Theo dõi đơn hàng",
     "product_id": "Mã sản phẩm: {{id}}",
     "qty": "Số lượng: {{count}}",

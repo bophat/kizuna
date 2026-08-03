@@ -3,6 +3,7 @@ from shop.models import (
     Category,
     ContactInfo,
     ContactMessage,
+    Coupon,
     Order,
     OrderItem,
     Product,
@@ -74,6 +75,77 @@ class CategorySerializer(serializers.ModelSerializer):
     def get_product_count(self, obj):
         annotated_count = getattr(obj, 'product_count', None)
         return annotated_count if annotated_count is not None else obj.products.count()
+
+
+class CouponSerializer(serializers.ModelSerializer):
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = Coupon
+        fields = [
+            'id', 'code', 'description', 'discount_type', 'discount_value',
+            'minimum_order_amount', 'maximum_discount_amount', 'usage_limit',
+            'per_user_limit', 'used_count', 'starts_at', 'expires_at',
+            'is_active', 'created_by_name', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'used_count', 'created_by_name', 'created_at', 'updated_at']
+
+    def get_created_by_name(self, obj):
+        if not obj.created_by:
+            return ''
+        return obj.created_by.get_full_name().strip() or obj.created_by.username
+
+    def validate_code(self, value):
+        code = value.strip().upper()
+        queryset = Coupon.objects.filter(code__iexact=code)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError('A coupon with this code already exists.')
+        return code
+
+    def validate(self, attrs):
+        discount_type = attrs.get(
+            'discount_type', getattr(self.instance, 'discount_type', None)
+        )
+        discount_value = attrs.get(
+            'discount_value', getattr(self.instance, 'discount_value', None)
+        )
+        starts_at = attrs.get('starts_at', getattr(self.instance, 'starts_at', None))
+        expires_at = attrs.get('expires_at', getattr(self.instance, 'expires_at', None))
+        maximum = attrs.get(
+            'maximum_discount_amount',
+            getattr(self.instance, 'maximum_discount_amount', None),
+        )
+
+        errors = {}
+        if discount_value is not None and discount_value <= 0:
+            errors['discount_value'] = 'Discount value must be greater than zero.'
+        elif (
+            discount_type == Coupon.DiscountType.PERCENTAGE
+            and discount_value is not None
+            and discount_value > 100
+        ):
+            errors['discount_value'] = 'Percentage discount cannot exceed 100.'
+        if attrs.get('minimum_order_amount', 0) is not None and attrs.get(
+            'minimum_order_amount', getattr(self.instance, 'minimum_order_amount', 0)
+        ) < 0:
+            errors['minimum_order_amount'] = 'Minimum order amount cannot be negative.'
+        if maximum is not None and maximum <= 0:
+            errors['maximum_discount_amount'] = 'Maximum discount must be greater than zero.'
+        usage_limit = attrs.get('usage_limit', getattr(self.instance, 'usage_limit', None))
+        per_user_limit = attrs.get(
+            'per_user_limit', getattr(self.instance, 'per_user_limit', 1)
+        )
+        if usage_limit is not None and usage_limit < 1:
+            errors['usage_limit'] = 'Usage limit must be at least one.'
+        if per_user_limit is not None and per_user_limit < 1:
+            errors['per_user_limit'] = 'Per-user limit must be at least one.'
+        if starts_at and expires_at and starts_at >= expires_at:
+            errors['expires_at'] = 'Expiry time must be after the start time.'
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')

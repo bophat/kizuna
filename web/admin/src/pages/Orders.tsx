@@ -420,6 +420,24 @@ export default function Orders() {
                             ))}
                           </tbody>
                           <tfoot className="bg-brand-paper/10">
+                            {selectedOrder.subtotal_amount !== undefined && (
+                              <tr>
+                                <td colSpan={3} className="px-4 pt-4 text-right text-xs text-brand-ink/55">{t('orders.modal.subtotal')}</td>
+                                <td className="px-4 pt-4 text-right text-sm tabular-nums">{formatPrice(selectedOrder.subtotal_amount)}</td>
+                              </tr>
+                            )}
+                            {parseFloat(selectedOrder.shipping_amount || '0') > 0 && (
+                              <tr>
+                                <td colSpan={3} className="px-4 pt-2 text-right text-xs text-brand-ink/55">{t('orders.modal.shipping')}</td>
+                                <td className="px-4 pt-2 text-right text-sm tabular-nums">{formatPrice(selectedOrder.shipping_amount)}</td>
+                              </tr>
+                            )}
+                            {parseFloat(selectedOrder.discount_amount || '0') > 0 && (
+                              <tr className="text-emerald-700">
+                                <td colSpan={3} className="px-4 pt-2 text-right text-xs font-semibold">{t('orders.modal.coupon_discount', { code: selectedOrder.coupon_code })}</td>
+                                <td className="px-4 pt-2 text-right text-sm font-semibold tabular-nums">-{formatPrice(selectedOrder.discount_amount)}</td>
+                              </tr>
+                            )}
                             <tr>
                               <td colSpan={3} className="px-4 py-4 text-right font-serif italic text-brand-ink/60">{t('orders.modal.total_value')}</td>
                               <td className="px-4 py-4 text-right text-lg font-serif font-bold text-brand-red tabular-nums">{formatPrice(selectedOrder.total_amount)}</td>

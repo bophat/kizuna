@@ -187,6 +187,25 @@
     "fill_required": "必須項目をすべて入力してください",
     "secure_checkout": "安全な決済",
     "bank_qr_alt": "銀行振込用QRコード",
+    "coupon_label": "クーポンコード",
+    "coupon_placeholder": "クーポンコードを入力",
+    "coupon_apply": "適用",
+    "coupon_applying": "確認中...",
+    "coupon_remove": "削除",
+    "coupon_discount": "クーポン割引",
+    "coupon_savings": "{{amount}} お得になりました",
+    "coupon_errors": {
+      "required": "クーポンコードを入力してください。",
+      "invalid": "このクーポンコードは無効です。",
+      "inactive": "このクーポンは現在利用できません。",
+      "not_started": "このクーポンはまだ利用開始前です。",
+      "expired": "このクーポンは有効期限切れです。",
+      "usage_limit_reached": "このクーポンは利用上限に達しました。",
+      "per_user_limit_reached": "このクーポンはすでに利用上限回数まで使用されています。",
+      "minimum_order_not_met": "このクーポンの利用には商品小計が {{amount}} 以上必要です。",
+      "empty_cart": "カートは空です。",
+      "connection": "クーポンを確認できませんでした。もう一度お試しください。"
+    },
     "errors": {
       "failed": "決済に失敗しました。もう一度お試しください。"
     }
@@ -208,6 +227,7 @@
     "placed_on": "注文日: {{date}}",
     "total": "合計: {{amount}}",
     "payment": "お支払い: {{method}}",
+    "coupon_applied": "クーポン {{code}} で {{amount}} 割引",
     "track_package": "配送状況を追跡",
     "product_id": "商品ID: {{id}}",
     "qty": "数量: {{count}}",

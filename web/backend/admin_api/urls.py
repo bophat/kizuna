@@ -4,6 +4,7 @@ from .views import (
     AdminCategoryViewSet,
     AdminContactInfoView,
     AdminContactMessageViewSet,
+    AdminCouponViewSet,
     AdminOrderViewSet,
     AdminProductViewSet,
     AdminStorePageViewSet,
@@ -46,6 +47,7 @@ router.register(r'products', AdminProductViewSet)
 router.register(r'orders', AdminOrderViewSet)
 router.register(r'users', AdminUserViewSet)
 router.register(r'categories', AdminCategoryViewSet)
+router.register(r'coupons', AdminCouponViewSet)
 router.register(r'settings', SettingViewSet)
 router.register(r'product-images', ProductImageViewSet)
 router.register(r'pending-replies', PendingReplyViewSet, basename='pending-replies')

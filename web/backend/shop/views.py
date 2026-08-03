@@ -13,8 +13,13 @@ from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
-from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, ProductStatus, Category, Favorite
+from .models import (
+    Cart, CartItem, Coupon, CouponRedemption, Order, OrderItem, UserProfile,
+    Product, ProductStatus, Category, Favorite,
+)
 from .serializers import CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer, CategorySerializer, FavoriteSerializer
+from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
+from .shipping import calculate_shipping_amount
 
 
 PUBLIC_API_CACHE_SECONDS = getattr(settings, 'PUBLIC_API_CACHE_SECONDS', 60)
@@ -166,10 +171,9 @@ class CartViewSet(viewsets.ViewSet):
         cart = self._get_cart(request)
         product_id = request.data.get('product_id')
         quantity = int(request.data.get('quantity', 1))
-        price = request.data.get('price')
 
-        if not product_id or not price:
-            return Response({"error": "product_id and price are required"}, status=status.HTTP_400_BAD_REQUEST)
+        if not product_id:
+            return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
 
         try:
             product = Product.objects.get(pk=product_id, status=ProductStatus.PUBLISHED)
@@ -179,12 +183,13 @@ class CartViewSet(viewsets.ViewSet):
         cart_item, created = CartItem.objects.get_or_create(
             cart=cart,
             product=product,
-            defaults={'price': product.price}
+            defaults={'quantity': quantity, 'price': product.price}
         )
 
         if not created:
             cart_item.quantity += quantity
-            cart_item.save()
+            cart_item.price = product.price
+            cart_item.save(update_fields=['quantity', 'price'])
 
         serializer = CartSerializer(cart)
         return Response(serializer.data)
@@ -247,6 +252,7 @@ class CheckoutViewSet(viewsets.ViewSet):
         last_name = request.data.get('last_name')
         phone = request.data.get('phone')
         address = request.data.get('address')
+        coupon_code = normalize_coupon_code(request.data.get('coupon_code'))
 
         # Fallback to user data if authenticated
         if user.is_authenticated:
@@ -273,20 +279,60 @@ class CheckoutViewSet(viewsets.ViewSet):
         db_payment_method = 'transfer' if payment_method == 'bank_transfer' else 'cash'
 
         with transaction.atomic():
-            # Update user profile info with what was provided in checkout
-            if user.is_authenticated:
-                if first_name: user.first_name = first_name
-                if last_name: user.last_name = last_name
-                if email: user.email = email
-                user.save()
+            try:
+                cart = Cart.objects.select_for_update().get(pk=cart.pk, user=user)
+            except Cart.DoesNotExist:
+                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-                profile, _ = UserProfile.objects.get_or_create(user=user)
-                if phone: profile.phone = phone
-                if address: profile.address = address
-                profile.save()
+            cart_items = list(
+                CartItem.objects.select_for_update()
+                .filter(cart=cart)
+                .order_by('id')
+            )
+            if not cart_items:
+                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
-            # 1. Validate Stock first
-            for item in cart.items.all():
+            product_ids = [item.product_id for item in cart_items if item.product_id]
+            products = {
+                product.pk: product
+                for product in Product.objects.select_for_update().filter(pk__in=product_ids)
+            }
+            if len(products) != len(set(product_ids)):
+                return Response(
+                    {"error": "A product in your cart is no longer available"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+
+            # Always calculate prices from the current product records. Cart prices are
+            # only display snapshots and must never be trusted for payment totals.
+            subtotal_amount = sum(
+                (products[item.product_id].price * item.quantity for item in cart_items),
+                0,
+            )
+            for item in cart_items:
+                item.product = products[item.product_id]
+            shipping_amount = calculate_shipping_amount(cart_items)
+
+            coupon = None
+            discount_amount = 0
+            if coupon_code:
+                try:
+                    coupon = Coupon.objects.select_for_update().get(code=coupon_code)
+                except Coupon.DoesNotExist:
+                    return Response(
+                        {"error": "Coupon is invalid", "coupon_error_code": "invalid"},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+                try:
+                    discount_amount = validate_coupon(coupon, user, subtotal_amount)
+                except CouponValidationError as exc:
+                    return Response(
+                        {"error": "Coupon cannot be applied", "coupon_error_code": exc.code},
+                        status=status.HTTP_400_BAD_REQUEST,
+                    )
+
+            # Validate stock after all totals and coupon conditions are known.
+            for item in cart_items:
                 if item.product.status != ProductStatus.PUBLISHED:
                     return Response({
                         "error": f"Product {item.product.name} is not available for checkout"
@@ -296,22 +342,42 @@ class CheckoutViewSet(viewsets.ViewSet):
                         "error": f"Insufficient stock for {item.product.name}. Available: {item.product.stock}"
                     }, status=status.HTTP_400_BAD_REQUEST)
 
-            # 2. Create Order
+            # Update profile only after the complete order has passed validation.
+            if first_name:
+                user.first_name = first_name
+            if last_name:
+                user.last_name = last_name
+            if email:
+                user.email = email
+            user.save()
+
+            profile, _ = UserProfile.objects.get_or_create(user=user)
+            if phone:
+                profile.phone = phone
+            if address:
+                profile.address = address
+            profile.save()
+
+            total_amount = subtotal_amount + shipping_amount - discount_amount
             order = Order.objects.create(
-                user=user if user.is_authenticated else None,
-                total_amount=cart.total_amount,
+                user=user,
+                subtotal_amount=subtotal_amount,
+                shipping_amount=shipping_amount,
+                discount_amount=discount_amount,
+                total_amount=total_amount,
+                coupon=coupon,
+                coupon_code=coupon.code if coupon else '',
                 payment_method=db_payment_method,
                 status='pending'
             )
 
-            # 3. Create OrderItems and Update Stock/Sales
-            for item in cart.items.all():
+            for item in cart_items:
                 OrderItem.objects.create(
                     order=order,
                     product=item.product,
                     product_name=item.product.name,
                     quantity=item.quantity,
-                    price=item.price
+                    price=item.product.price
                 )
                 
                 # Update Inventory
@@ -320,16 +386,32 @@ class CheckoutViewSet(viewsets.ViewSet):
                 product.sales += item.quantity
                 product.save()
 
-            # 4. Clear Cart
+            if coupon:
+                CouponRedemption.objects.create(
+                    coupon=coupon,
+                    user=user,
+                    order=order,
+                    discount_amount=discount_amount,
+                )
+                coupon.used_count += 1
+                coupon.save(update_fields=['used_count', 'updated_at'])
+
             cart.delete()
 
         response_data = {
             "message": "Order placed successfully",
-            "order": OrderSerializer(order).data,
+            "order": OrderSerializer(order, context={'request': request}).data,
         }
 
         # Send Email
-        invoice_content = f"Order #{order.id}\nTotal: {order.total_amount}\nPayment Method: {order.payment_method}\n"
+        invoice_content = (
+            f"Order #{order.id}\n"
+            f"Subtotal: {order.subtotal_amount}\n"
+            f"Shipping: {order.shipping_amount}\n"
+        )
+        if order.coupon_code:
+            invoice_content += f"Coupon: {order.coupon_code}\nDiscount: -{order.discount_amount}\n"
+        invoice_content += f"Total: {order.total_amount}\nPayment Method: {order.payment_method}\n"
         for item in order.items.all():
             invoice_content += f"- Product: {item.product_name}, Qty: {item.quantity}, Price: {item.price}\n"
 
@@ -337,7 +419,7 @@ class CheckoutViewSet(viewsets.ViewSet):
             send_mail(
                 'Your Invoice',
                 invoice_content,
-                'from@example.com',
+                settings.DEFAULT_FROM_EMAIL,
                 [email],
                 fail_silently=True,
             )

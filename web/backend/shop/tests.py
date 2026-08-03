@@ -1,12 +1,27 @@
 from unittest.mock import patch
+from datetime import timedelta
+from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.test import TestCase
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .concierge_store import sessions_for_admin
-from .models import Category, ConciergeSession, ContactInfo, ContactMessage, Product, StorePage
+from .models import (
+    Cart,
+    CartItem,
+    Category,
+    ConciergeSession,
+    ContactInfo,
+    ContactMessage,
+    Coupon,
+    CouponRedemption,
+    Order,
+    Product,
+    StorePage,
+)
 
 
 class PublicCatalogLocalizationTests(TestCase):
@@ -147,7 +162,8 @@ class ConciergeCustomerIdentityTests(TestCase):
         self.assertEqual(session.user, self.user)
 
         admin_session = sessions_for_admin()['web_authenticated']
-        self.assertEqual(admin_session['customer_name'], 'Hanako Yamada')
+        self.assertEqual(admin_session['customer_name'], 'hanako@example.com')
+        self.assertEqual(admin_session['customer_display_name'], 'Hanako Yamada')
         self.assertEqual(admin_session['customer_email'], 'hanako@example.com')
         self.assertEqual(admin_session['customer_username'], 'hanako')
 
@@ -155,7 +171,8 @@ class ConciergeCustomerIdentityTests(TestCase):
     def test_customer_name_falls_back_to_username(self, _mock_ai):
         self.user.first_name = ''
         self.user.last_name = ''
-        self.user.save(update_fields=['first_name', 'last_name'])
+        self.user.email = ''
+        self.user.save(update_fields=['first_name', 'last_name', 'email'])
         self.client.force_authenticate(user=self.user)
 
         self.client.post(
@@ -166,6 +183,50 @@ class ConciergeCustomerIdentityTests(TestCase):
 
         admin_session = sessions_for_admin()['web_username']
         self.assertEqual(admin_session['customer_name'], 'hanako')
+
+    @patch('shop.concierge_store.is_ai_enabled', return_value=False)
+    def test_authenticated_history_claims_existing_guest_session(self, _mock_ai):
+        self.client.post(
+            '/api/shop/concierge/message/',
+            {'session_id': 'web_guest_then_login', 'message': 'hello'},
+            format='json',
+        )
+        session = ConciergeSession.objects.get(session_id='web_guest_then_login')
+        self.assertIsNone(session.user_id)
+
+        self.client.force_authenticate(user=self.user)
+        response = self.client.get(
+            '/api/shop/concierge/history/?session_id=web_guest_then_login'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        session.refresh_from_db()
+        self.assertEqual(session.user, self.user)
+        self.assertEqual(
+            sessions_for_admin()['web_guest_then_login']['customer_name'],
+            'hanako@example.com',
+        )
+
+    @patch('shop.concierge_store.is_ai_enabled', return_value=False)
+    def test_login_cookie_identifies_concierge_customer(self, _mock_ai):
+        login = self.client.post(
+            '/api/login/',
+            {'email': 'hanako@example.com', 'password': 'test-password-123'},
+            format='json',
+        )
+        self.assertEqual(login.status_code, 200)
+
+        response = self.client.post(
+            '/api/shop/concierge/message/',
+            {'session_id': 'web_cookie_authenticated', 'message': 'hello'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            sessions_for_admin()['web_cookie_authenticated']['customer_email'],
+            'hanako@example.com',
+        )
 
 
 class PublicStoreContentTests(TestCase):
@@ -257,3 +318,107 @@ class PublicStoreContentTests(TestCase):
         )
         self.assertEqual(response.status_code, 400)
         self.assertFalse(ContactMessage.objects.exists())
+
+
+class CouponCheckoutTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='coupon-customer',
+            email='coupon@example.com',
+            password='test-password-123',
+        )
+        self.client.force_authenticate(user=self.user)
+        self.product = Product.objects.create(
+            id='COUPON-PRODUCT',
+            name='Coupon product',
+            description='Product for coupon tests',
+            price=Decimal('100.00'),
+            stock=10,
+            weight=Decimal('0.30'),
+            status='published',
+        )
+        self.cart = Cart.objects.create(user=self.user)
+        # Deliberately use a forged cart price. Checkout must ignore it.
+        CartItem.objects.create(
+            cart=self.cart,
+            product=self.product,
+            quantity=2,
+            price=Decimal('1.00'),
+        )
+        self.coupon = Coupon.objects.create(
+            code='save10',
+            discount_type=Coupon.DiscountType.PERCENTAGE,
+            discount_value=Decimal('10.00'),
+            minimum_order_amount=Decimal('50.00'),
+            usage_limit=10,
+            per_user_limit=1,
+        )
+
+    def test_coupon_preview_uses_current_product_price(self):
+        response = self.client.post(
+            '/api/shop/coupons/validate/', {'code': ' save10 '}, format='json'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['code'], 'SAVE10')
+        self.assertEqual(response.data['subtotal_amount'], Decimal('200.00'))
+        self.assertEqual(response.data['discount_amount'], Decimal('20.00'))
+
+    @patch('shop.shipping.get_exchange_rates', return_value={'usd_to_vnd': 25000})
+    def test_checkout_applies_coupon_and_recalculates_complete_total(self, _rates):
+        response = self.client.post(
+            '/api/shop/checkout/process_checkout/',
+            {
+                'email': self.user.email,
+                'first_name': 'Coupon',
+                'last_name': 'Customer',
+                'phone': '0900000000',
+                'address': 'Tokyo',
+                'payment_method': 'cash',
+                'coupon_code': 'save10',
+            },
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get()
+        self.assertEqual(order.subtotal_amount, Decimal('200.00'))
+        self.assertEqual(order.shipping_amount, Decimal('4.00'))
+        self.assertEqual(order.discount_amount, Decimal('20.00'))
+        self.assertEqual(order.total_amount, Decimal('184.00'))
+        self.assertEqual(order.coupon_code, 'SAVE10')
+        self.assertEqual(order.items.get().price, Decimal('100.00'))
+        self.assertTrue(CouponRedemption.objects.filter(order=order, user=self.user).exists())
+        self.coupon.refresh_from_db()
+        self.assertEqual(self.coupon.used_count, 1)
+
+    def test_coupon_rejects_minimum_order_and_expired_period(self):
+        self.coupon.minimum_order_amount = Decimal('250.00')
+        self.coupon.save()
+        minimum_response = self.client.post(
+            '/api/shop/coupons/validate/', {'code': 'SAVE10'}, format='json'
+        )
+        self.assertEqual(minimum_response.status_code, 400)
+        self.assertEqual(minimum_response.data['error_code'], 'minimum_order_not_met')
+
+        self.coupon.minimum_order_amount = Decimal('0.00')
+        self.coupon.expires_at = timezone.now() - timedelta(minutes=1)
+        self.coupon.save()
+        expired_response = self.client.post(
+            '/api/shop/coupons/validate/', {'code': 'SAVE10'}, format='json'
+        )
+        self.assertEqual(expired_response.status_code, 400)
+        self.assertEqual(expired_response.data['error_code'], 'expired')
+
+    def test_fixed_discount_never_reduces_subtotal_below_zero(self):
+        self.coupon.discount_type = Coupon.DiscountType.FIXED
+        self.coupon.discount_value = Decimal('500.00')
+        self.coupon.save()
+
+        response = self.client.post(
+            '/api/shop/coupons/validate/', {'code': 'SAVE10'}, format='json'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['discount_amount'], Decimal('200.00'))
+        self.assertEqual(response.data['total_after_discount'], Decimal('0.00'))

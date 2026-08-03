@@ -17,6 +17,10 @@ interface Order {
   id: number;
   status: string;
   payment_method: string;
+  subtotal_amount: string;
+  shipping_amount: string;
+  discount_amount: string;
+  coupon_code: string;
   total_amount: string;
   items: OrderItem[];
   created_at: string;
@@ -114,6 +118,14 @@ export function OrderHistoryPage() {
                       {' · '}
                       {t('order.payment', { method: order.payment_method })}
                     </p>
+                    {order.coupon_code && parseFloat(order.discount_amount || '0') > 0 && (
+                      <p className="mt-2 inline-flex rounded-sm bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
+                        {t('order.coupon_applied', {
+                          code: order.coupon_code,
+                          amount: formatPrice(order.discount_amount),
+                        })}
+                      </p>
+                    )}
                   </div>
                   <div className="flex flex-wrap gap-3">
                     <button className="flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-sm hover:opacity-90 transition-all label-md tracking-normal normal-case">

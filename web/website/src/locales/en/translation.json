@@ -187,6 +187,25 @@
     "fill_required": "Please fill in all required fields",
     "secure_checkout": "Secure Checkout",
     "bank_qr_alt": "Bank transfer QR code",
+    "coupon_label": "Coupon code",
+    "coupon_placeholder": "Enter coupon code",
+    "coupon_apply": "Apply",
+    "coupon_applying": "Checking...",
+    "coupon_remove": "Remove",
+    "coupon_discount": "Coupon discount",
+    "coupon_savings": "You save {{amount}}",
+    "coupon_errors": {
+      "required": "Enter a coupon code.",
+      "invalid": "This coupon code is invalid.",
+      "inactive": "This coupon is currently inactive.",
+      "not_started": "This coupon is not available yet.",
+      "expired": "This coupon has expired.",
+      "usage_limit_reached": "This coupon has reached its usage limit.",
+      "per_user_limit_reached": "You have already used this coupon the maximum number of times.",
+      "minimum_order_not_met": "Your product subtotal must be at least {{amount}} to use this coupon.",
+      "empty_cart": "Your cart is empty.",
+      "connection": "Coupon could not be checked. Please try again."
+    },
     "errors": {
       "failed": "Checkout failed. Please try again."
     }
@@ -208,6 +227,7 @@
     "placed_on": "Placed on {{date}}",
     "total": "Total: {{amount}}",
     "payment": "Payment: {{method}}",
+    "coupon_applied": "Coupon {{code}} saved {{amount}}",
     "track_package": "Track Package",
     "product_id": "Product ID: {{id}}",
     "qty": "Qty: {{count}}",
