@@ -2,6 +2,7 @@ from django.contrib.auth.models import User
 from decimal import Decimal
 
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from shop.models import (
@@ -12,6 +13,8 @@ from shop.models import (
     ContactMessage,
     Coupon,
     Order,
+    PaymentMethodConfig,
+    PaymentTransaction,
     StorePage,
 )
 from shop.affiliate_payout_details import encrypt_payout_details
@@ -267,3 +270,83 @@ class AdminAffiliateTests(TestCase):
         self.assertEqual(payout.status, AffiliatePayout.Status.PAID)
         self.assertEqual(commission.status, AffiliateCommission.Status.PAID)
         self.assertEqual(payout.transaction_reference, 'BANK-TX-001')
+
+
+class AdminPaymentTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_user(
+            username='payment-admin',
+            email='payment-admin@example.com',
+            password='test-password-123',
+            is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username='payment-buyer', email='payment-buyer@example.com'
+        )
+        self.client.force_authenticate(user=self.admin)
+
+    def create_bank_order(self, payment_status=PaymentTransaction.Status.PROOF_SUBMITTED):
+        order = Order.objects.create(
+            user=self.customer,
+            payment_method='bank_transfer',
+            status='pending',
+            total_amount=Decimal('25.00'),
+        )
+        payment = PaymentTransaction.objects.create(
+            order=order,
+            method='bank_transfer',
+            status=payment_status,
+            amount_usd=Decimal('25.00'),
+            settlement_amount=Decimal('625000'),
+            settlement_currency='VND',
+            exchange_rate=Decimal('25000'),
+            reference=f'KZ{order.id:010d}',
+            method_snapshot={},
+            proof_submitted_at=(
+                timezone.now()
+                if payment_status == PaymentTransaction.Status.PROOF_SUBMITTED
+                else None
+            ),
+        )
+        return order, payment
+
+    def test_bank_method_requires_complete_configuration_when_enabled(self):
+        method = PaymentMethodConfig.objects.get(code='bank_transfer')
+        response = self.client.patch(
+            f'/api/admin/payment-methods/{method.id}/',
+            {'enabled': True},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('bank_name', response.data)
+
+    def test_admin_verifies_transfer_and_releases_order_for_packing(self):
+        order, payment = self.create_bank_order()
+        response = self.client.post(
+            f'/api/admin/orders/{order.id}/verify-payment/',
+            {'admin_notes': 'Bank statement matched.'},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        order.refresh_from_db()
+        payment.refresh_from_db()
+        self.assertEqual(order.status, 'processing')
+        self.assertEqual(order.admin_notes, 'Bank statement matched.')
+        self.assertEqual(payment.status, PaymentTransaction.Status.PAID)
+        self.assertEqual(payment.verified_by, self.admin)
+
+    def test_notification_feed_reports_receipt_and_confirmed_payment(self):
+        _order, payment = self.create_bank_order()
+        proof_response = self.client.get('/api/admin/notifications/feed/')
+        proof_events = {item.get('event') for item in proof_response.data}
+        self.assertIn('payment_proof_submitted', proof_events)
+
+        now = timezone.now()
+        payment.status = PaymentTransaction.Status.PAID
+        payment.paid_at = now
+        payment.save(update_fields=['status', 'paid_at', 'updated_at'])
+        paid_response = self.client.get('/api/admin/notifications/feed/')
+        paid_events = {item.get('event') for item in paid_response.data}
+        self.assertIn('payment_succeeded', paid_events)

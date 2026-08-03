@@ -25,6 +25,17 @@ interface Order {
   items: OrderItem[];
   created_at: string;
   updated_at: string;
+  payment: null | {
+    status: string;
+    method: string;
+    settlement_amount: string;
+    settlement_currency: string;
+    reference: string;
+    receipt_url: string | null;
+    proof_submitted_at: string | null;
+    paid_at: string | null;
+    expires_at: string | null;
+  };
 }
 
 const STATUS_STEPS = ['pending', 'processing', 'shipped', 'delivered'];
@@ -44,6 +55,8 @@ export function OrderHistoryPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [uploadingOrderId, setUploadingOrderId] = useState<number | null>(null);
+  const [uploadError, setUploadError] = useState<Record<number, string>>({});
 
   useEffect(() => {
     const fetchOrders = async () => {
@@ -64,6 +77,31 @@ export function OrderHistoryPage() {
 
 
   const getStatusStep = (status: string) => STATUS_STEPS.indexOf(status);
+
+  const uploadReceipt = async (orderId: number, file: File) => {
+    setUploadingOrderId(orderId);
+    setUploadError((current) => ({ ...current, [orderId]: '' }));
+    try {
+      const body = new FormData();
+      body.append('receipt', file);
+      const response = await apiFetch(`/shop/orders/${orderId}/payment-proof/`, {
+        method: 'POST',
+        body,
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(t('order.receipt_upload_error'));
+      setOrders((current) => current.map((order) => (
+        order.id === orderId ? { ...order, payment: data } : order
+      )));
+    } catch (err) {
+      setUploadError((current) => ({
+        ...current,
+        [orderId]: err instanceof Error ? err.message : t('order.receipt_upload_error'),
+      }));
+    } finally {
+      setUploadingOrderId(null);
+    }
+  };
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
@@ -116,8 +154,13 @@ export function OrderHistoryPage() {
                     <p className="body-md text-secondary mt-1">
                       {t('order.total', { amount: formatPrice(order.total_amount) })}
                       {' · '}
-                      {t('order.payment', { method: order.payment_method })}
+                      {t('order.payment', { method: t(`checkout.${order.payment_method}`, { defaultValue: order.payment_method }) })}
                     </p>
+                    {order.payment && (
+                      <p className="mt-1 body-md text-secondary">
+                        {t('order.payment_status')}: <strong className="text-on-surface">{t(`order.payment_statuses.${order.payment.status}`)}</strong>
+                      </p>
+                    )}
                     {order.coupon_code && parseFloat(order.discount_amount || '0') > 0 && (
                       <p className="mt-2 inline-flex rounded-sm bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-700">
                         {t('order.coupon_applied', {
@@ -153,6 +196,38 @@ export function OrderHistoryPage() {
                         </div>
                       ))}
                     </div>
+                  </div>
+                )}
+
+                {order.payment?.method === 'bank_transfer' && (
+                  <div className="mb-8 rounded-sm border border-surface-variant bg-surface-container-lowest p-5">
+                    <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+                      <div>
+                        <p className="label-md normal-case tracking-normal">{t('order.bank_payment_reference', { reference: order.payment.reference })}</p>
+                        {order.payment.expires_at && order.payment.status === 'pending' && (
+                          <p className="mt-1 text-sm text-secondary">{t('order.payment_expires', { date: new Date(order.payment.expires_at).toLocaleString(i18n.language) })}</p>
+                        )}
+                        {order.payment.status === 'proof_submitted' && <p className="mt-1 text-sm text-amber-700">{t('order.receipt_waiting_review')}</p>}
+                        {order.payment.status === 'paid' && <p className="mt-1 text-sm text-emerald-700">{t('order.payment_verified')}</p>}
+                      </div>
+                      {['pending', 'proof_submitted'].includes(order.payment.status) && (
+                        <label className="cursor-pointer rounded-sm bg-primary px-5 py-3 text-center text-sm font-bold text-white transition hover:opacity-90">
+                          {uploadingOrderId === order.id ? t('order.uploading_receipt') : t(order.payment.status === 'proof_submitted' ? 'order.replace_receipt' : 'order.upload_receipt')}
+                          <input
+                            type="file"
+                            accept="image/jpeg,image/png,image/webp"
+                            className="hidden"
+                            disabled={uploadingOrderId === order.id}
+                            onChange={(event) => {
+                              const file = event.target.files?.[0];
+                              if (file) void uploadReceipt(order.id, file);
+                              event.target.value = '';
+                            }}
+                          />
+                        </label>
+                      )}
+                    </div>
+                    {uploadError[order.id] && <p className="mt-3 text-sm text-red-600">{uploadError[order.id]}</p>}
                   </div>
                 )}
 

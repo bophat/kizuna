@@ -24,6 +24,13 @@ type AppliedCoupon = {
   total_after_discount: string;
 };
 
+type PaymentMethod = {
+  code: 'cod' | 'bank_transfer';
+  instructions: string;
+  currency: string;
+  expiry_minutes: number;
+};
+
 type InformationFormProps = {
   email: string;
   setEmail: (value: string) => void;
@@ -48,8 +55,14 @@ export function CheckoutPage() {
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [address, setAddress] = useState('');
-  const [paymentMethod, setPaymentMethod] = useState('cash');
+  const [paymentMethod, setPaymentMethod] = useState('');
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethod[]>([]);
+  const [paymentMethodsLoading, setPaymentMethodsLoading] = useState(true);
+  const [paymentMethodsError, setPaymentMethodsError] = useState('');
   const [orderData, setOrderData] = useState<any>(null);
+  const [receiptFile, setReceiptFile] = useState<File | null>(null);
+  const [receiptUploading, setReceiptUploading] = useState(false);
+  const [receiptError, setReceiptError] = useState('');
   const [isLoadingUser, setIsLoadingUser] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [productCache, setProductCache] = useState<Record<string, any>>({});
@@ -89,6 +102,32 @@ export function CheckoutPage() {
       fetchUserData();
     }
   }, [authLoading, isAuthenticated, navigate]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setPaymentMethodsLoading(true);
+    setPaymentMethodsError('');
+    apiFetch('/shop/payment-methods/')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('payment methods');
+        const data = await response.json();
+        if (cancelled) return;
+        const methods = Array.isArray(data) ? data : [];
+        setPaymentMethods(methods);
+        setPaymentMethod((current) => (
+          methods.some((method: PaymentMethod) => method.code === current)
+            ? current
+            : methods[0]?.code || ''
+        ));
+      })
+      .catch(() => {
+        if (!cancelled) setPaymentMethodsError(t('checkout.payment_methods_error'));
+      })
+      .finally(() => {
+        if (!cancelled) setPaymentMethodsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [i18n.language, t]);
 
   const nextStep = () => {
     if (step < STEPS.length - 1) setStep(step + 1);
@@ -139,7 +178,7 @@ export function CheckoutPage() {
   };
 
   const handleCheckout = async () => {
-    if (isSubmitting) return;
+    if (isSubmitting || !paymentMethod) return;
     setIsSubmitting(true);
     try {
       const response = await apiFetch('/shop/checkout/process_checkout/', {
@@ -166,6 +205,8 @@ export function CheckoutPage() {
           setAppliedCoupon(null);
           setCouponError(couponErrorText(data.coupon_error_code));
           alert(couponErrorText(data.coupon_error_code));
+        } else if (data.payment_error_code) {
+          alert(t(`checkout.errors.${data.payment_error_code}`));
         } else {
           alert(data.error || t('checkout.errors.failed'));
         }
@@ -175,6 +216,32 @@ export function CheckoutPage() {
       alert(t('checkout.errors.failed'));
     } finally {
       setIsSubmitting(false);
+    }
+  };
+
+  const uploadReceipt = async () => {
+    if (!receiptFile || !orderData?.order?.id || receiptUploading) return;
+    setReceiptUploading(true);
+    setReceiptError('');
+    try {
+      const body = new FormData();
+      body.append('receipt', receiptFile);
+      const response = await apiFetch(
+        `/shop/orders/${orderData.order.id}/payment-proof/`,
+        { method: 'POST', body },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(t('checkout.receipt_upload_error'));
+      setOrderData((current: any) => ({
+        ...current,
+        payment: data,
+        order: { ...current.order, payment: data },
+      }));
+      setReceiptFile(null);
+    } catch (error) {
+      setReceiptError(error instanceof Error ? error.message : t('checkout.receipt_upload_error'));
+    } finally {
+      setReceiptUploading(false);
     }
   };
 
@@ -244,6 +311,13 @@ export function CheckoutPage() {
 
   if (step === 3 && orderData) {
     const orderTotal = parseFloat(orderData.order.total_amount);
+    const payment = orderData.payment || orderData.order.payment;
+    const isBankTransfer = payment?.method === 'bank_transfer';
+    const settlementAmount = new Intl.NumberFormat(i18n.language, {
+      style: 'currency',
+      currency: payment?.settlement_currency || 'VND',
+      maximumFractionDigits: 0,
+    }).format(Number(payment?.settlement_amount || 0));
     return (
       <div className=" md:py-10 px-4 flex items-center justify-center">
         <motion.div
@@ -263,10 +337,10 @@ export function CheckoutPage() {
             </motion.div>
 
             <h1 className="text-xl md:text-2xl font-black text-white mb-4 tracking-tight leading-tight">
-              {t('checkout.success_title')}
+              {t(isBankTransfer ? 'checkout.bank_pending_title' : 'checkout.success_title')}
             </h1>
             <p className="text-base md:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-              {t('checkout.success_message', { id: orderData.order.id })} <br className="hidden md:block" />
+              {t(isBankTransfer ? 'checkout.bank_pending_message' : 'checkout.success_message', { id: orderData.order.id })} <br className="hidden md:block" />
               {t('checkout.invoice_sent', { email: email })}
             </p>
           </div>
@@ -280,7 +354,7 @@ export function CheckoutPage() {
                     <Icons.Landmark size={18} />
                     <span className="text-[10px] md:label-sm uppercase tracking-widest font-bold">{t('checkout.bank_details_title')}</span>
                   </div>
-                  <p className="text-3xl md:text-4xl font-black text-black tracking-tighter">{formatPrice(orderTotal)}</p>
+                  <p className="text-3xl md:text-4xl font-black text-black tracking-tighter">{settlementAmount}</p>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -319,6 +393,44 @@ export function CheckoutPage() {
                     <p className="text-xs text-zinc-500 italic text-center">{t('checkout.scan_to_pay')}</p>
                   </div>
                 )}
+
+                <div className="rounded-2xl border border-zinc-700 bg-zinc-800 p-5 text-sm text-zinc-200 space-y-2">
+                  <p><span className="text-zinc-500">{t('checkout.payment_reference')}:</span> <strong className="font-mono text-white">{payment?.reference}</strong></p>
+                  {payment?.expires_at && <p><span className="text-zinc-500">{t('checkout.payment_expires')}:</span> {new Date(payment.expires_at).toLocaleString(i18n.language)}</p>}
+                  {payment?.bank_details?.instructions && <p className="whitespace-pre-wrap text-zinc-300">{payment.bank_details.instructions}</p>}
+                </div>
+
+                <div className="rounded-2xl border border-zinc-700 bg-zinc-800 p-5 space-y-4">
+                  <div>
+                    <h3 className="font-bold text-white">{t('checkout.upload_receipt')}</h3>
+                    <p className="mt-1 text-xs text-zinc-400">{t('checkout.upload_receipt_help')}</p>
+                  </div>
+                  {payment?.status === 'proof_submitted' ? (
+                    <p className="rounded-xl bg-amber-500/10 p-3 text-sm text-amber-300">{t('checkout.receipt_submitted')}</p>
+                  ) : payment?.status === 'paid' ? (
+                    <p className="rounded-xl bg-emerald-500/10 p-3 text-sm text-emerald-300">{t('checkout.payment_verified')}</p>
+                  ) : (
+                    <div className="flex flex-col gap-3 sm:flex-row">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/webp"
+                        onChange={(event) => {
+                          setReceiptFile(event.target.files?.[0] || null);
+                          setReceiptError('');
+                        }}
+                        className="min-w-0 flex-1 rounded-xl border border-zinc-600 bg-zinc-900 px-3 py-2 text-sm text-zinc-300"
+                      />
+                      <button
+                        onClick={() => void uploadReceipt()}
+                        disabled={!receiptFile || receiptUploading}
+                        className="rounded-xl bg-primary px-5 py-3 text-sm font-bold text-white disabled:opacity-50"
+                      >
+                        {receiptUploading ? t('checkout.uploading_receipt') : t('checkout.submit_receipt')}
+                      </button>
+                    </div>
+                  )}
+                  {receiptError && <p className="text-sm text-red-400">{receiptError}</p>}
+                </div>
               </div>
             ) : (
               <div className="space-y-1 md:space-y-2">
@@ -393,7 +505,7 @@ export function CheckoutPage() {
                 />
               )}
               {step === 1 && <ShippingMethodForm email={email} onNext={nextStep} onPrev={prevStep} shipping={shipping} />}
-              {step === 2 && <PaymentMethodForm isSubmitting={isSubmitting} paymentMethod={paymentMethod} setPaymentMethod={setPaymentMethod} onPrev={prevStep} onSubmit={handleCheckout} />}
+              {step === 2 && <PaymentMethodForm isSubmitting={isSubmitting} paymentMethod={paymentMethod} paymentMethods={paymentMethods} loading={paymentMethodsLoading} error={paymentMethodsError} setPaymentMethod={setPaymentMethod} onPrev={prevStep} onSubmit={handleCheckout} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -650,7 +762,7 @@ function ShippingMethodForm({ email, onNext, onPrev, shipping }: { email: string
   );
 }
 
-function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPrev, onSubmit }: { isSubmitting: boolean, paymentMethod: string, setPaymentMethod: (v: string) => void, onPrev: () => void, onSubmit: () => void }) {
+function PaymentMethodForm({ isSubmitting, paymentMethod, paymentMethods, loading, error, setPaymentMethod, onPrev, onSubmit }: { isSubmitting: boolean, paymentMethod: string, paymentMethods: PaymentMethod[], loading: boolean, error: string, setPaymentMethod: (v: string) => void, onPrev: () => void, onSubmit: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-10">
@@ -660,39 +772,31 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPr
       </div>
 
       <div className="flex flex-col border border-surface-variant rounded-sm bg-white overflow-hidden">
-        {/* Cash on Delivery */}
-        <label
-          className={cn(
-            "p-6 flex justify-between items-center cursor-pointer transition-colors border-b border-surface-variant",
-            paymentMethod === 'cash' ? "bg-surface-container-low" : "hover:bg-surface-container-lowest"
-          )}
-          onClick={() => setPaymentMethod('cash')}
-        >
-          <div className="flex items-center gap-4">
-            <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", paymentMethod === 'cash' ? "border-primary" : "border-outline")}>
-              {paymentMethod === 'cash' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+        {loading && <p className="p-6 text-secondary">{t('checkout.loading_payment_methods')}</p>}
+        {!loading && error && <p className="p-6 text-red-600">{error}</p>}
+        {!loading && !error && paymentMethods.length === 0 && <p className="p-6 text-red-600">{t('checkout.no_payment_methods')}</p>}
+        {paymentMethods.map((method, index) => (
+          <label
+            key={method.code}
+            className={cn(
+              "p-6 flex justify-between items-start cursor-pointer transition-colors",
+              index < paymentMethods.length - 1 && "border-b border-surface-variant",
+              paymentMethod === method.code ? "bg-surface-container-low" : "hover:bg-surface-container-lowest",
+            )}
+            onClick={() => setPaymentMethod(method.code)}
+          >
+            <div className="flex items-start gap-4">
+              <div className={cn("mt-0.5 w-5 h-5 rounded-full border flex items-center justify-center", paymentMethod === method.code ? "border-primary" : "border-outline")}>
+                {paymentMethod === method.code && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
+              </div>
+              <div>
+                <span className="label-md">{t(`checkout.${method.code}`)}</span>
+                {method.instructions && <p className="mt-1 whitespace-pre-wrap text-sm text-secondary">{method.instructions}</p>}
+              </div>
             </div>
-            <span className="label-md">{t('checkout.cod')}</span>
-          </div>
-          <Icons.Banknote size={18} className="text-secondary" />
-        </label>
-
-        {/* Bank Transfer */}
-        <label
-          className={cn(
-            "p-6 flex items-center justify-between cursor-pointer transition-colors",
-            paymentMethod === 'bank_transfer' ? "bg-surface-container-low" : "hover:bg-surface-container-lowest"
-          )}
-          onClick={() => setPaymentMethod('bank_transfer')}
-        >
-          <div className="flex items-center gap-4">
-            <div className={cn("w-5 h-5 rounded-full border flex items-center justify-center", paymentMethod === 'bank_transfer' ? "border-primary" : "border-outline")}>
-              {paymentMethod === 'bank_transfer' && <div className="w-2.5 h-2.5 bg-primary rounded-full" />}
-            </div>
-            <span className="label-md">{t('checkout.bank_transfer')}</span>
-          </div>
-          <Icons.Landmark size={18} className="text-secondary" />
-        </label>
+            {method.code === 'cod' ? <Icons.Banknote size={18} className="text-secondary" /> : <Icons.Landmark size={18} className="text-secondary" />}
+          </label>
+        ))}
       </div>
 
       <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 border-t border-surface-variant gap-4">
@@ -702,7 +806,7 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, setPaymentMethod, onPr
         </button>
         <button
           onClick={onSubmit}
-          disabled={isSubmitting}
+          disabled={isSubmitting || loading || Boolean(error) || !paymentMethod}
           className={cn(
             "w-full md:w-auto bg-primary text-white label-md px-16 py-4 rounded-sm transition-all duration-300 flex items-center justify-center gap-2",
             isSubmitting ? "opacity-70 cursor-not-allowed" : "hover:-translate-y-0.5 active:scale-[0.98] hover:shadow-lg hover:shadow-primary/20"

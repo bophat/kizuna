@@ -487,7 +487,22 @@
     "errors": {
       "load_failed": "Tải dữ liệu vận chuyển thất bại.",
       "fetch_error": "Đã xảy ra lỗi khi lấy thông tin đơn hàng.",
-      "update_failed": "Cập nhật đơn hàng thất bại"
+      "update_failed": "Cập nhật đơn hàng thất bại",
+      "payment_update_failed": "Không thể cập nhật thanh toán"
+    },
+    "payment_method": {
+      "cod": "Thanh toán khi nhận hàng",
+      "bank_transfer": "Chuyển khoản ngân hàng"
+    },
+    "payment_status": {
+      "pending": "Chờ thanh toán",
+      "proof_submitted": "Biên lai chờ duyệt",
+      "paid": "Đã thanh toán",
+      "failed": "Thất bại",
+      "expired": "Hết hạn",
+      "refunded": "Đã hoàn tiền",
+      "cod_pending": "Thu tiền khi giao",
+      "cod_collected": "Đã thu tiền COD"
     },
     "table": {
       "id": "Mã đơn hàng",
@@ -520,6 +535,13 @@
       "admin_notes": "Ghi chú quản trị",
       "admin_notes_placeholder": "Ghi lại chi tiết xác minh, mã giao dịch hoặc vấn đề...",
       "verify_button": "Xác minh & Xử lý",
+      "reject_button": "Từ chối",
+      "reject_confirm": "Từ chối biên lai và hủy đơn hàng này? Tồn kho sẽ được hoàn lại.",
+      "mark_cod_collected": "Xác nhận đã thu tiền COD",
+      "payment_status": "Trạng thái thanh toán",
+      "reference": "Nội dung chuyển khoản",
+      "settlement_amount": "Số tiền cần xác minh",
+      "expires_at": "Hạn thanh toán",
       "save_notes": "Lưu ghi chú",
       "view_artifact": "Xem toàn bộ hiện vật",
       "no_receipt": "Chưa có biên lai thanh toán nào được tải lên cho giao dịch này.",
@@ -680,6 +702,29 @@
     "public_site": {
       "url": "URL website công khai",
       "url_help": "URL được sử dụng cho liên kết Xem trang công khai."
+    },
+    "payments": {
+      "title": "Phương thức thanh toán",
+      "description": "Bật phương thức thanh toán và cấu hình thông tin chuyển khoản hiển thị ở trang checkout.",
+      "cod": "Thanh toán khi nhận hàng (COD)",
+      "bank_transfer": "Chuyển khoản thủ công",
+      "enabled": "Đang bật",
+      "disabled": "Đang tắt",
+      "bank_name": "Tên ngân hàng",
+      "bank_bin": "Mã BIN VietQR",
+      "account_name": "Tên chủ tài khoản",
+      "account_number": "Số tài khoản",
+      "currency": "Tiền tệ thanh toán",
+      "expiry": "Thời hạn thanh toán (phút)",
+      "instructions_en": "Hướng dẫn tiếng Anh",
+      "instructions_ja": "Hướng dẫn tiếng Nhật",
+      "instructions_vi": "Hướng dẫn tiếng Việt",
+      "save": "Lưu cài đặt thanh toán",
+      "saved": "Đã lưu cài đặt thanh toán",
+      "load_failed": "Không thể tải cài đặt thanh toán",
+      "save_failed": "Không thể lưu cài đặt thanh toán",
+      "required_bank_fields": "Hãy nhập đủ thông tin ngân hàng trước khi bật chuyển khoản",
+      "invalid_expiry": "Thời hạn thanh toán phải từ 5 phút đến 7 ngày"
     },
     "content": {
       "title": "Nội dung trang",
@@ -865,6 +910,13 @@
     "title": "Thông báo",
     "mark_all_read": "Đánh dấu đã đọc",
     "empty": "Không có thông báo nào",
+    "polling_mode": "Tin nhắn website và đơn hàng được cập nhật khoảng 20 giây một lần. Bật dịch vụ AI trong Cài đặt để trả lời tự động.",
+    "live_sync": "Đồng bộ trực tiếp đang bật",
+    "events": {
+      "order_cod_ready": { "title": "Đơn COD cần đóng gói", "message": "Đơn #{{id}} đã sẵn sàng đóng gói. Tổng: {{amount}} USD." },
+      "payment_proof_submitted": { "title": "Khách đã gửi biên lai", "message": "Đơn #{{id}} cần xác minh thanh toán ({{amount}} {{currency}})." },
+      "payment_succeeded": { "title": "Thanh toán thành công", "message": "Đơn #{{id}} đã thanh toán và sẵn sàng đóng gói." }
+    },
     "new_order": "Đơn hàng mới",
     "new_order_message": "Bạn có một đơn mua hàng mới từ khách hàng #{{id}}",
     "new_chat": "Tin nhắn mới",

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { apiFetch, API_BASE_URL } from '../lib/api';
 import { useChatbot } from './ChatbotContext';
 
-export type NotificationType = 'ORDER' | 'CHAT';
+export type NotificationType = 'ORDER' | 'CHAT' | 'PAYMENT';
 
 export interface AppNotification {
   id: string;
@@ -11,6 +11,9 @@ export interface AppNotification {
   message: string;
   read: boolean;
   timestamp: Date;
+  event?: string;
+  order_id?: number;
+  data?: Record<string, unknown>;
 }
 
 interface NotificationContextType {
@@ -36,6 +39,9 @@ function mergeFeedItems(
     title: string;
     message: string;
     timestamp: string;
+    event?: string;
+    order_id?: number;
+    data?: Record<string, unknown>;
   }>
 ): AppNotification[] {
   if (!incoming.length) return prev;
@@ -47,6 +53,9 @@ function mergeFeedItems(
       type: item.type,
       title: item.title,
       message: item.message,
+      event: item.event,
+      order_id: item.order_id,
+      data: item.data,
       read: false,
       timestamp: new Date(item.timestamp),
     });
@@ -162,6 +171,9 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
                   title: data.title,
                   message: data.message,
                   timestamp: data.timestamp || new Date().toISOString(),
+                  event: data.event,
+                  order_id: data.order_id,
+                  data: data.data,
                 },
               ])
             );

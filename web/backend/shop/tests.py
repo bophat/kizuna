@@ -1,9 +1,11 @@
 from unittest.mock import patch
 from datetime import timedelta
 from decimal import Decimal
+import base64
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
+from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -22,10 +24,17 @@ from .models import (
     Coupon,
     CouponRedemption,
     Order,
+    PaymentMethodConfig,
+    PaymentTransaction,
     Product,
     StorePage,
 )
 from .affiliates import refresh_available_commissions, sync_order_commission
+
+
+ONE_PIXEL_PNG = base64.b64decode(
+    'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
+)
 
 
 class PublicCatalogLocalizationTests(TestCase):
@@ -591,3 +600,105 @@ class AffiliateProgramTests(TestCase):
         sync_order_commission(order, 'delivered')
         commission.refresh_from_db()
         self.assertEqual(commission.status, AffiliateCommission.Status.REVERSED)
+
+
+class PaymentCheckoutTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='payment-customer',
+            email='payment@example.com',
+            password='test-password-123',
+        )
+        self.product = Product.objects.create(
+            id='PAYMENT-PRODUCT',
+            name='Payment product',
+            price=Decimal('10.00'),
+            stock=5,
+            weight=Decimal('0.30'),
+            status='published',
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def create_cart(self):
+        cart = Cart.objects.create(user=self.user)
+        CartItem.objects.create(
+            cart=cart,
+            product=self.product,
+            quantity=1,
+            price=self.product.price,
+        )
+
+    def checkout(self, method):
+        return self.client.post(
+            '/api/shop/checkout/process_checkout/',
+            {
+                'email': self.user.email,
+                'first_name': 'Payment',
+                'last_name': 'Customer',
+                'phone': '0900000000',
+                'address': 'Tokyo',
+                'payment_method': method,
+            },
+            format='json',
+        )
+
+    def enable_bank_transfer(self):
+        method = PaymentMethodConfig.objects.get(code='bank_transfer')
+        method.enabled = True
+        method.bank_name = 'Test Bank'
+        method.bank_bin = '970436'
+        method.account_name = 'KIZUNA SHOP'
+        method.account_number = '123456789'
+        method.currency = 'VND'
+        method.save()
+        return method
+
+    def test_public_endpoint_only_returns_enabled_methods(self):
+        response = self.client.get(
+            '/api/shop/payment-methods/', HTTP_ACCEPT_LANGUAGE='vi'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual([item['code'] for item in response.data], ['cod'])
+        self.assertIn('Thanh toán', response.data[0]['instructions'])
+
+    def test_cod_checkout_is_ready_for_fulfillment(self):
+        self.create_cart()
+        response = self.checkout('cash')
+
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get()
+        self.assertEqual(order.payment_method, 'cod')
+        self.assertEqual(order.status, 'processing')
+        self.assertEqual(order.payment.status, PaymentTransaction.Status.COD_PENDING)
+
+    def test_disabled_bank_transfer_is_rejected_without_creating_order(self):
+        self.create_cart()
+        response = self.checkout('bank_transfer')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(Order.objects.exists())
+
+    @patch('shop.payments.get_exchange_rates', return_value={'usd_to_vnd': 25000})
+    def test_bank_transfer_checkout_and_receipt_upload(self, _rates):
+        self.enable_bank_transfer()
+        self.create_cart()
+        response = self.checkout('bank_transfer')
+
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get()
+        self.assertEqual(order.status, 'pending')
+        self.assertEqual(order.payment.status, PaymentTransaction.Status.PENDING)
+        self.assertEqual(order.payment.settlement_currency, 'VND')
+        self.assertTrue(response.data['payment']['qr_code_url'].startswith('https://img.vietqr.io/'))
+
+        receipt = SimpleUploadedFile('receipt.png', ONE_PIXEL_PNG, content_type='image/png')
+        uploaded = self.client.post(
+            f'/api/shop/orders/{order.id}/payment-proof/',
+            {'receipt': receipt},
+            format='multipart',
+        )
+        self.assertEqual(uploaded.status_code, 200)
+        order.payment.refresh_from_db()
+        self.assertEqual(order.payment.status, PaymentTransaction.Status.PROOF_SUBMITTED)
+        self.assertIsNotNone(order.payment.proof_submitted_at)

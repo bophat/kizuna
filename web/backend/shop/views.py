@@ -15,15 +15,25 @@ from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from .models import (
     AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
-    OrderItem, UserProfile, Product, ProductStatus, Category, Favorite,
+    OrderItem, PaymentMethodConfig, UserProfile, Product, ProductStatus,
+    Category, Favorite,
 )
-from .serializers import CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer, CategorySerializer, FavoriteSerializer
+from .serializers import (
+    CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer,
+    CategorySerializer, FavoriteSerializer, PaymentTransactionPublicSerializer,
+)
 from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
 from .shipping import calculate_shipping_amount
 from .affiliates import (
     create_order_commission,
     normalize_affiliate_code,
     resolve_active_affiliate,
+)
+from .payments import (
+    create_payment_transaction,
+    enabled_payment_method,
+    expire_pending_payments,
+    normalize_payment_method,
 )
 
 
@@ -151,9 +161,14 @@ class OrderHistoryViewSet(viewsets.ReadOnlyModelViewSet):
     permission_classes = [IsAuthenticated]
     serializer_class = OrderSerializer
 
+    def list(self, request, *args, **kwargs):
+        expire_pending_payments()
+        return super().list(request, *args, **kwargs)
+
     def get_queryset(self):
         return (
             Order.objects.filter(user=self.request.user)
+            .select_related('payment')
             .prefetch_related('items__product__category', 'items__product__source_info')
             .order_by('-created_at')
         )
@@ -251,7 +266,7 @@ class CheckoutViewSet(viewsets.ViewSet):
             return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
 
         user = request.user
-        payment_method = request.data.get('payment_method')
+        payment_method = normalize_payment_method(request.data.get('payment_method'))
         email = request.data.get('email')
         first_name = request.data.get('first_name')
         last_name = request.data.get('last_name')
@@ -278,13 +293,25 @@ class CheckoutViewSet(viewsets.ViewSet):
         if not email:
             return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
 
-        if payment_method not in ['cash', 'bank_transfer']:
-            return Response({"error": "Invalid payment method. Use 'cash' or 'bank_transfer'"}, status=status.HTTP_400_BAD_REQUEST)
-
-        # Map frontend payment method to model choices
-        db_payment_method = 'transfer' if payment_method == 'bank_transfer' else 'cash'
+        if payment_method not in PaymentMethodConfig.Code.values:
+            return Response(
+                {
+                    "error": "Invalid payment method",
+                    "payment_error_code": "invalid_payment_method",
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         with transaction.atomic():
+            method_config = enabled_payment_method(payment_method, for_update=True)
+            if not method_config:
+                return Response(
+                    {
+                        "error": "This payment method is currently unavailable",
+                        "payment_error_code": "payment_method_unavailable",
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             try:
                 cart = Cart.objects.select_for_update().get(pk=cart.pk, user=user)
             except Cart.DoesNotExist:
@@ -400,9 +427,15 @@ class CheckoutViewSet(viewsets.ViewSet):
                 affiliate_commission_rate=(
                     affiliate.commission_rate if affiliate else 0
                 ),
-                payment_method=db_payment_method,
-                status='pending'
+                payment_method=payment_method,
+                status=(
+                    'processing'
+                    if payment_method == PaymentMethodConfig.Code.COD
+                    else 'pending'
+                ),
             )
+
+            payment = create_payment_transaction(order, method_config)
 
             for item in cart_items:
                 OrderItem.objects.create(
@@ -438,6 +471,10 @@ class CheckoutViewSet(viewsets.ViewSet):
             "message": "Order placed successfully",
             "order": OrderSerializer(order, context={'request': request}).data,
         }
+        payment_data = PaymentTransactionPublicSerializer(
+            payment, context={'request': request}
+        ).data
+        response_data['payment'] = payment_data
 
         # Send Email
         invoice_content = (
@@ -462,16 +499,19 @@ class CheckoutViewSet(viewsets.ViewSet):
         except Exception as e:
             print(f"Failed to send email: {e}")
 
-        if payment_method == 'bank_transfer':
+        if payment_method == PaymentMethodConfig.Code.BANK_TRANSFER:
             response_data['bank_details'] = {
-                "bank_name": "Vietcombank",
-                "account_number": "0123456789",
-                "account_name": "NGUYEN VAN A",
-                "qr_code_url": f"https://img.vietqr.io/image/vcb-0123456789-compact.png?amount={order.total_amount}&addInfo=ORDER{order.id}"
+                **(payment_data.get('bank_details') or {}),
+                'qr_code_url': payment_data.get('qr_code_url'),
+                'amount': payment_data.get('settlement_amount'),
+                'currency': payment_data.get('settlement_currency'),
+                'reference': payment.reference,
+                'expires_at': payment_data.get('expires_at'),
             }
 
         from admin_api.chat_proxy import notify_order_placed
-        notify_order_placed(order.id, order.total_amount)
+        if payment_method == PaymentMethodConfig.Code.COD:
+            notify_order_placed(order.id, order.total_amount)
 
         return Response(response_data)
 

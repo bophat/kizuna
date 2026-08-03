@@ -14,6 +14,8 @@ from shop.models import (
     ContactMessage,
     Coupon,
     Order,
+    PaymentMethodConfig,
+    PaymentTransaction,
     Product,
     ProductStatus,
     StorePage,
@@ -44,8 +46,10 @@ from .serializers import (
     AffiliateCommissionSerializer,
     AffiliatePayoutSerializer,
     AffiliateProfileSerializer,
+    PaymentMethodConfigSerializer,
 )
 from shop.affiliates import refresh_available_commissions, sync_order_commission
+from shop.payments import expire_payment, expire_pending_payments, restore_order_inventory
 
 import logging
 logger = logging.getLogger(__name__)
@@ -91,7 +95,7 @@ class AdminProductViewSet(viewsets.ModelViewSet):
 
 class AdminOrderViewSet(viewsets.ModelViewSet):
     queryset = (
-        Order.objects.select_related('user', 'user__profile')
+        Order.objects.select_related('user', 'user__profile', 'payment', 'payment__verified_by')
         .prefetch_related(
             'items__product__category',
             'items__product__source_info',
@@ -101,21 +105,48 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
     serializer_class = OrderSerializer
     permission_classes = [permissions.IsAdminUser]
 
+    def list(self, request, *args, **kwargs):
+        expire_pending_payments()
+        return super().list(request, *args, **kwargs)
+
     def perform_update(self, serializer):
         instance = serializer.instance
         old_status = instance.status
         new_status = serializer.validated_data.get('status', old_status)
+
+        try:
+            payment = instance.payment
+        except PaymentTransaction.DoesNotExist:
+            payment = None
+
+        if new_status in {'processing', 'shipped', 'delivered'}:
+            if (
+                payment
+                and payment.method == PaymentMethodConfig.Code.BANK_TRANSFER
+                and payment.status != PaymentTransaction.Status.PAID
+            ):
+                raise serializers.ValidationError({
+                    'status': 'Bank transfer must be verified before fulfillment.'
+                })
         
         if old_status != new_status:
             logger.info(f"[ORDER_STATUS_CHANGE] Order ID: {instance.id} | {old_status} -> {new_status} | User: {self.request.user}")
             with transaction.atomic():
                 if new_status == 'cancelled' and old_status != 'cancelled':
-                    for item in instance.items.all():
-                        if item.product:
-                            product = item.product
-                            product.stock += item.quantity
-                            product.sales -= item.quantity
-                            product.save()
+                    restore_order_inventory(instance)
+                    if payment and payment.status in {
+                        PaymentTransaction.Status.PENDING,
+                        PaymentTransaction.Status.PROOF_SUBMITTED,
+                        PaymentTransaction.Status.COD_PENDING,
+                    }:
+                        payment.status = PaymentTransaction.Status.FAILED
+                        payment.failure_reason = 'Order cancelled by administrator.'
+                        payment.verified_at = timezone.now()
+                        payment.verified_by = self.request.user
+                        payment.save(update_fields=[
+                            'status', 'failure_reason', 'verified_at',
+                            'verified_by', 'updated_at',
+                        ])
                 elif old_status == 'cancelled' and new_status != 'cancelled':
                     for item in instance.items.all():
                         if item.product:
@@ -128,6 +159,110 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             return
         serializer.save()
 
+    @action(detail=True, methods=['post'], url_path='verify-payment')
+    def verify_payment(self, request, pk=None):
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=self.get_object().pk)
+            try:
+                payment = PaymentTransaction.objects.select_for_update().get(order=order)
+            except PaymentTransaction.DoesNotExist:
+                return Response(
+                    {'detail': 'Payment transaction not found.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            expire_payment(payment)
+            if payment.method != PaymentMethodConfig.Code.BANK_TRANSFER:
+                return Response(
+                    {'detail': 'Only bank transfers require verification.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if payment.status not in {
+                PaymentTransaction.Status.PENDING,
+                PaymentTransaction.Status.PROOF_SUBMITTED,
+            }:
+                return Response(
+                    {'detail': 'This payment cannot be verified.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            now = timezone.now()
+            payment.status = PaymentTransaction.Status.PAID
+            payment.paid_at = now
+            payment.verified_at = now
+            payment.verified_by = request.user
+            payment.failure_reason = ''
+            payment.save(update_fields=[
+                'status', 'paid_at', 'verified_at', 'verified_by',
+                'failure_reason', 'updated_at',
+            ])
+            if order.status == 'pending':
+                order.status = 'processing'
+            if 'admin_notes' in request.data:
+                order.admin_notes = str(request.data.get('admin_notes') or '').strip()
+            order.save(update_fields=['status', 'admin_notes', 'updated_at'])
+        return Response(self.get_serializer(order).data)
+
+    @action(detail=True, methods=['post'], url_path='reject-payment')
+    def reject_payment(self, request, pk=None):
+        reason = str(request.data.get('reason') or '').strip()
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=self.get_object().pk)
+            try:
+                payment = PaymentTransaction.objects.select_for_update().get(order=order)
+            except PaymentTransaction.DoesNotExist:
+                return Response(
+                    {'detail': 'Payment transaction not found.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if payment.status not in {
+                PaymentTransaction.Status.PENDING,
+                PaymentTransaction.Status.PROOF_SUBMITTED,
+            }:
+                return Response(
+                    {'detail': 'This payment cannot be rejected.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            old_status = order.status
+            payment.status = PaymentTransaction.Status.FAILED
+            payment.failure_reason = reason or 'Payment proof was rejected.'
+            payment.verified_at = timezone.now()
+            payment.verified_by = request.user
+            payment.save(update_fields=[
+                'status', 'failure_reason', 'verified_at', 'verified_by', 'updated_at'
+            ])
+            if order.status != 'cancelled':
+                restore_order_inventory(order)
+                order.status = 'cancelled'
+                order.admin_notes = str(request.data.get('admin_notes') or order.admin_notes or '').strip()
+                order.save(update_fields=['status', 'admin_notes', 'updated_at'])
+                sync_order_commission(order, old_status)
+        return Response(self.get_serializer(order).data)
+
+    @action(detail=True, methods=['post'], url_path='mark-cod-collected')
+    def mark_cod_collected(self, request, pk=None):
+        with transaction.atomic():
+            order = Order.objects.select_for_update().get(pk=self.get_object().pk)
+            try:
+                payment = PaymentTransaction.objects.select_for_update().get(order=order)
+            except PaymentTransaction.DoesNotExist:
+                return Response(
+                    {'detail': 'Payment transaction not found.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            if payment.status != PaymentTransaction.Status.COD_PENDING:
+                return Response(
+                    {'detail': 'COD payment is not awaiting collection.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            now = timezone.now()
+            payment.status = PaymentTransaction.Status.COD_COLLECTED
+            payment.paid_at = now
+            payment.verified_at = now
+            payment.verified_by = request.user
+            payment.save(update_fields=[
+                'status', 'paid_at', 'verified_at', 'verified_by', 'updated_at'
+            ])
+        return Response(self.get_serializer(order).data)
+
 class AdminUserViewSet(viewsets.ModelViewSet):
     queryset = User.objects.select_related('profile').all().order_by('-date_joined')
     serializer_class = UserSerializer
@@ -139,6 +274,21 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         if is_staff is not None:
             queryset = queryset.filter(is_staff=is_staff.lower() == 'true')
         return queryset
+
+
+class AdminPaymentMethodViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = PaymentMethodConfig.objects.all()
+    serializer_class = PaymentMethodConfigSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def list(self, request, *args, **kwargs):
+        expire_pending_payments()
+        return super().list(request, *args, **kwargs)
 
 class AdminCategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.annotate(product_count=Count('products')).all()

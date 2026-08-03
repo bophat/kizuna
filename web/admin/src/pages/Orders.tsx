@@ -105,6 +105,31 @@ export default function Orders() {
     }
   };
 
+  const handlePaymentAction = async (
+    orderId: number,
+    action: 'verify-payment' | 'reject-payment' | 'mark-cod-collected',
+  ) => {
+    if (action === 'reject-payment' && !window.confirm(t('orders.modal.reject_confirm'))) return;
+    setIsUpdating(true);
+    try {
+      const response = await apiFetch(`/orders/${orderId}/${action}/`, {
+        method: 'POST',
+        body: JSON.stringify({
+          admin_notes: adminNotes,
+          reason: action === 'reject-payment' ? adminNotes : '',
+        }),
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(t('orders.errors.payment_update_failed'));
+      setOrders((current) => current.map((order) => order.id === orderId ? data : order));
+      setSelectedOrder(data);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : t('orders.errors.payment_update_failed'));
+    } finally {
+      setIsUpdating(false);
+    }
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = 
       order.id.toString().includes(searchQuery) ||
@@ -236,6 +261,11 @@ export default function Orders() {
                             <statusInfo.icon size={10} className={order.status === 'processing' ? 'animate-spin' : ''} />
                             {t(`orders.status.${order.status}`)}
                           </div>
+                          {order.payment && (
+                            <p className="mt-1 text-[10px] font-bold uppercase tracking-wider text-brand-ink/45">
+                              {t(`orders.payment_status.${order.payment.status}`)}
+                            </p>
+                          )}
                         </td>
                         <td className="px-6 py-4 text-sm font-bold text-brand-ink">
                           <ValuationCell amountUsd={order.total_amount} />
@@ -365,14 +395,14 @@ export default function Orders() {
                       </div>
                       <div className="bg-brand-paper/30 p-4 rounded-xl border border-brand-clay flex items-center justify-between">
                         <div>
-                          <p className="text-sm font-bold text-brand-ink capitalize">{selectedOrder.payment_method?.replace('_', ' ')}</p>
+                          <p className="text-sm font-bold text-brand-ink">{t(`orders.payment_method.${selectedOrder.payment_method}`, { defaultValue: selectedOrder.payment_method })}</p>
                           <p className="text-[10px] text-brand-ink/40 font-bold uppercase">{t('orders.modal.transaction_channel')}</p>
                         </div>
                         <div className={cn(
                           "px-3 py-1 rounded-full text-[10px] font-bold text-white",
                           STATUS_CONFIG[selectedOrder.status]?.color
                         )}>
-                          {selectedOrder.status}
+                          {t(`orders.payment_status.${selectedOrder.payment?.status}`, { defaultValue: selectedOrder.payment?.status || selectedOrder.status })}
                         </div>
                       </div>
                     </section>
@@ -458,6 +488,15 @@ export default function Orders() {
                             <p className="text-xs text-brand-ink/60 leading-relaxed font-serif italic">
                               {t('orders.modal.verify_help')}
                             </p>
+                            {selectedOrder.payment && (
+                              <div className="rounded-lg border border-brand-clay bg-brand-paper/30 p-3 text-xs space-y-1">
+                                <p><strong>{t('orders.modal.payment_status')}:</strong> {t(`orders.payment_status.${selectedOrder.payment.status}`)}</p>
+                                <p><strong>{t('orders.modal.reference')}:</strong> <span className="font-mono">{selectedOrder.payment.reference}</span></p>
+                                <p><strong>{t('orders.modal.settlement_amount')}:</strong> {Number(selectedOrder.payment.settlement_amount).toLocaleString(i18n.language)} {selectedOrder.payment.settlement_currency}</p>
+                                {selectedOrder.payment.expires_at && <p><strong>{t('orders.modal.expires_at')}:</strong> {new Date(selectedOrder.payment.expires_at).toLocaleString(i18n.language)}</p>}
+                                {selectedOrder.payment.failure_reason && <p className="text-red-600">{selectedOrder.payment.failure_reason}</p>}
+                              </div>
+                            )}
                             <div className="space-y-2">
                               <label className="text-[10px] uppercase font-bold text-brand-ink/40">{t('orders.modal.admin_notes')}</label>
                               <textarea 
@@ -469,14 +508,18 @@ export default function Orders() {
                             </div>
                             <div className="flex gap-3">
                               <button 
-                                disabled={isUpdating || selectedOrder.status !== 'pending'}
-                                onClick={() => handleUpdateOrder(selectedOrder.id, { 
-                                  status: 'processing', 
-                                  admin_notes: adminNotes 
-                                })}
+                                disabled={isUpdating || !['pending', 'proof_submitted'].includes(selectedOrder.payment?.status)}
+                                onClick={() => void handlePaymentAction(selectedOrder.id, 'verify-payment')}
                                 className="flex-1 bg-brand-ink text-white py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest hover:bg-brand-red transition-all disabled:opacity-50 disabled:bg-brand-clay"
                               >
                                 {isUpdating ? t('orders.modal.updating') : t('orders.modal.verify_button')}
+                              </button>
+                              <button
+                                disabled={isUpdating || !['pending', 'proof_submitted'].includes(selectedOrder.payment?.status)}
+                                onClick={() => void handlePaymentAction(selectedOrder.id, 'reject-payment')}
+                                className="px-4 border border-red-200 bg-red-50 text-red-700 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all disabled:opacity-50"
+                              >
+                                {t('orders.modal.reject_button')}
                               </button>
                               <button 
                                 disabled={isUpdating}
@@ -541,6 +584,15 @@ export default function Orders() {
                                 </button>
                               ))}
                             </div>
+                            {selectedOrder.payment?.status === 'cod_pending' && (
+                              <button
+                                disabled={isUpdating}
+                                onClick={() => void handlePaymentAction(selectedOrder.id, 'mark-cod-collected')}
+                                className="mt-4 rounded-lg bg-emerald-700 px-5 py-2.5 text-xs font-bold uppercase tracking-widest text-white disabled:opacity-50"
+                              >
+                                {t('orders.modal.mark_cod_collected')}
+                              </button>
+                            )}
                           </div>
                         </div>
                       </section>

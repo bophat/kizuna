@@ -9,12 +9,15 @@ from .models import (
     Favorite,
     Order,
     OrderItem,
+    PaymentMethodConfig,
+    PaymentTransaction,
     Product,
     ProductImage,
     StorePage,
     UserProfile,
 )
 from .image_urls import resolve_image_url, resolve_product_image_url
+from .payments import localized_instructions, payment_qr_url
 
 
 SUPPORTED_CONTENT_LANGUAGES = frozenset({'en', 'ja', 'vi'})
@@ -141,6 +144,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
@@ -148,7 +152,76 @@ class OrderSerializer(serializers.ModelSerializer):
             'id', 'status', 'payment_method', 'subtotal_amount',
             'shipping_amount', 'discount_amount', 'total_amount',
             'coupon_code', 'items', 'created_at', 'updated_at',
+            'payment',
         ]
+
+    def get_payment(self, obj):
+        try:
+            payment = obj.payment
+        except PaymentTransaction.DoesNotExist:
+            return None
+        return PaymentTransactionPublicSerializer(payment, context=self.context).data
+
+
+class PaymentMethodPublicSerializer(serializers.ModelSerializer):
+    instructions = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PaymentMethodConfig
+        fields = ['code', 'instructions', 'currency', 'expiry_minutes']
+
+    def get_instructions(self, obj):
+        return localized_instructions(obj, request_language(self.context))
+
+
+class PaymentTransactionPublicSerializer(serializers.ModelSerializer):
+    receipt_url = serializers.SerializerMethodField()
+    bank_details = serializers.SerializerMethodField()
+    qr_code_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = PaymentTransaction
+        fields = [
+            'status', 'method', 'amount_usd', 'settlement_amount',
+            'settlement_currency', 'reference', 'receipt_url', 'bank_details',
+            'qr_code_url', 'proof_submitted_at', 'paid_at', 'expires_at',
+        ]
+
+    def get_receipt_url(self, obj):
+        if not obj.receipt:
+            return None
+        request = self.context.get('request')
+        return request.build_absolute_uri(obj.receipt.url) if request else obj.receipt.url
+
+    def get_bank_details(self, obj):
+        if obj.method != PaymentMethodConfig.Code.BANK_TRANSFER:
+            return None
+        details = obj.method_snapshot or {}
+        return {
+            'bank_name': details.get('bank_name', ''),
+            'account_name': details.get('account_name', ''),
+            'account_number': details.get('account_number', ''),
+            'instructions': localized_instructions_from_snapshot(
+                details, request_language(self.context)
+            ),
+        }
+
+    def get_qr_code_url(self, obj):
+        return payment_qr_url(obj)
+
+
+def localized_instructions_from_snapshot(snapshot, language):
+    language = language if language in {'en', 'ja', 'vi'} else 'en'
+    return snapshot.get(f'instructions_{language}') or snapshot.get('instructions_en', '')
+
+
+class PaymentProofUploadSerializer(serializers.Serializer):
+    receipt = serializers.ImageField()
+
+    def validate_receipt(self, value):
+        if value.size > 5 * 1024 * 1024:
+            raise serializers.ValidationError('Receipt image must not exceed 5 MB.')
+        return value
 
 class FavoriteSerializer(serializers.ModelSerializer):
     product = PublicProductSerializer(read_only=True)

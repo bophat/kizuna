@@ -247,8 +247,8 @@ class Order(models.Model):
         ('cancelled', 'Cancelled'),
     )
     PAYMENT_CHOICES = (
-        ('cash', 'Cash'),
-        ('transfer', 'Bank Transfer'),
+        ('cod', 'Cash on delivery'),
+        ('bank_transfer', 'Bank transfer'),
     )
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='orders')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='pending')
@@ -284,6 +284,99 @@ class Order(models.Model):
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
+
+
+class PaymentMethodConfig(models.Model):
+    class Code(models.TextChoices):
+        COD = 'cod', 'Cash on delivery'
+        BANK_TRANSFER = 'bank_transfer', 'Bank transfer'
+
+    code = models.CharField(max_length=30, choices=Code.choices, unique=True)
+    enabled = models.BooleanField(default=False, db_index=True)
+    instructions_en = models.TextField(blank=True, default='')
+    instructions_ja = models.TextField(blank=True, default='')
+    instructions_vi = models.TextField(blank=True, default='')
+    bank_name = models.CharField(max_length=120, blank=True, default='')
+    bank_bin = models.CharField(max_length=12, blank=True, default='')
+    account_name = models.CharField(max_length=150, blank=True, default='')
+    account_number = models.CharField(max_length=50, blank=True, default='')
+    currency = models.CharField(max_length=3, default='VND')
+    expiry_minutes = models.PositiveIntegerField(default=60)
+    sort_order = models.PositiveSmallIntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['sort_order', 'code']
+
+    def clean(self):
+        errors = {}
+        if self.expiry_minutes < 5 or self.expiry_minutes > 10080:
+            errors['expiry_minutes'] = 'Payment expiry must be between 5 minutes and 7 days.'
+        if self.enabled and self.code == self.Code.BANK_TRANSFER:
+            if self.currency != 'VND':
+                errors['currency'] = 'Manual bank transfer currently supports VND only.'
+            for field in ('bank_name', 'bank_bin', 'account_name', 'account_number'):
+                if not str(getattr(self, field, '') or '').strip():
+                    errors[field] = 'This field is required when bank transfer is enabled.'
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.currency = str(self.currency or 'VND').strip().upper()
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return self.get_code_display()
+
+
+class PaymentTransaction(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending payment'
+        PROOF_SUBMITTED = 'proof_submitted', 'Proof submitted'
+        PAID = 'paid', 'Paid'
+        FAILED = 'failed', 'Failed'
+        EXPIRED = 'expired', 'Expired'
+        REFUNDED = 'refunded', 'Refunded'
+        COD_PENDING = 'cod_pending', 'Collect on delivery'
+        COD_COLLECTED = 'cod_collected', 'COD collected'
+
+    order = models.OneToOneField(
+        Order, on_delete=models.CASCADE, related_name='payment'
+    )
+    method = models.CharField(max_length=30, choices=PaymentMethodConfig.Code.choices)
+    provider = models.CharField(max_length=30, default='manual')
+    status = models.CharField(
+        max_length=20, choices=Status.choices, db_index=True
+    )
+    amount_usd = models.DecimalField(max_digits=12, decimal_places=2)
+    settlement_amount = models.DecimalField(max_digits=14, decimal_places=0)
+    settlement_currency = models.CharField(max_length=3, default='VND')
+    exchange_rate = models.DecimalField(max_digits=14, decimal_places=4)
+    reference = models.CharField(max_length=50, unique=True)
+    method_snapshot = models.JSONField(default=dict, blank=True)
+    receipt = models.ImageField(upload_to='payment_receipts/', null=True, blank=True)
+    proof_submitted_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    verified_at = models.DateTimeField(null=True, blank=True)
+    verified_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='verified_payments',
+    )
+    expires_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    failure_reason = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.reference} - {self.status}'
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

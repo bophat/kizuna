@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Bell, Search, Globe, ShoppingCart, MessageCircle, CheckCheck, Trash } from 'lucide-react';
+import { Bell, Search, Globe, ShoppingCart, MessageCircle, CheckCheck, Trash, BadgeDollarSign } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { LanguageSwitcher } from './LanguageSwitcher';
 import { useTranslation } from 'react-i18next';
@@ -19,6 +19,20 @@ export function TopBar() {
   const notificationRef = useRef<HTMLDivElement>(null);
 
   const publicSiteUrl = settings['PUBLIC_SITE_URL'] || 'http://localhost:3000';
+
+  const notificationText = (notification: typeof notifications[number]) => {
+    if (!notification.event) return { title: notification.title, message: notification.message };
+    const orderId = notification.order_id || notification.data?.order_id;
+    return {
+      title: t(`notifications.events.${notification.event}.title`, { defaultValue: notification.title }),
+      message: t(`notifications.events.${notification.event}.message`, {
+        id: orderId,
+        amount: notification.data?.amount,
+        currency: notification.data?.currency,
+        defaultValue: notification.message,
+      }),
+    };
+  };
 
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
@@ -95,12 +109,12 @@ export function TopBar() {
 
                 {!chatbotEnabled && (
                   <p className="px-4 py-2 text-[10px] text-brand-ink/50 bg-amber-50 border-b border-amber-100 leading-relaxed">
-                    Tin Concierge website &amp; đơn hàng: cập nhật ~20s. Bật AI/Flask trong Settings để bot tự trả lời.
+                    {t('notifications.polling_mode')}
                   </p>
                 )}
                 {chatbotEnabled && liveSync && (
                   <p className="px-4 py-1.5 text-[10px] text-green-700/80 bg-green-50 border-b border-green-100">
-                    Live sync đang bật
+                    {t('notifications.live_sync')}
                   </p>
                 )}
                 
@@ -111,14 +125,16 @@ export function TopBar() {
                     </div>
                   ) : (
                     <div className="flex flex-col divide-y divide-brand-clay">
-                      {notifications.map(notification => (
+                      {notifications.map(notification => {
+                        const text = notificationText(notification);
+                        return (
                         <div 
                           key={notification.id} 
                           className={`p-4 flex gap-3 transition-colors hover:bg-brand-paper/50 cursor-pointer ${notification.read ? 'opacity-70' : 'bg-brand-red/5'}`}
                           onClick={() => {
                             if (!notification.read) markAsRead(notification.id);
                             setShowNotifications(false);
-                            if (notification.type === 'ORDER') {
+                            if (notification.type === 'ORDER' || notification.type === 'PAYMENT') {
                               navigate('/orders');
                             } else if (notification.type === 'CHAT') {
                               navigate(
@@ -127,15 +143,15 @@ export function TopBar() {
                             }
                           }}
                         >
-                          <div className={`mt-0.5 p-2 rounded-full h-fit ${notification.type === 'ORDER' ? 'bg-blue-100 text-blue-600' : 'bg-green-100 text-green-600'}`}>
-                            {notification.type === 'ORDER' ? <ShoppingCart size={16} /> : <MessageCircle size={16} />}
+                          <div className={`mt-0.5 p-2 rounded-full h-fit ${notification.type === 'ORDER' ? 'bg-blue-100 text-blue-600' : notification.type === 'PAYMENT' ? 'bg-amber-100 text-amber-700' : 'bg-green-100 text-green-600'}`}>
+                            {notification.type === 'ORDER' ? <ShoppingCart size={16} /> : notification.type === 'PAYMENT' ? <BadgeDollarSign size={16} /> : <MessageCircle size={16} />}
                           </div>
                           <div className="flex-1">
                             <h4 className={`text-sm font-medium ${!notification.read ? 'text-brand-ink' : 'text-brand-ink/70'}`}>
-                              {notification.title}
+                              {text.title}
                             </h4>
                             <p className="text-xs text-brand-ink/60 mt-1 whitespace-pre-wrap">
-                              {notification.message}
+                              {text.message}
                             </p>
                             <span className="text-[10px] text-brand-ink/40 mt-2 block">
                               {new Date(notification.timestamp).toLocaleTimeString()}
@@ -151,7 +167,8 @@ export function TopBar() {
                             <Trash size={14} />
                           </button>
                         </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   )}
                 </div>

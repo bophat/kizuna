@@ -487,7 +487,22 @@
     "errors": {
       "load_failed": "Failed to load logistics data.",
       "fetch_error": "An error occurred while fetching orders.",
-      "update_failed": "Failed to update order"
+      "update_failed": "Failed to update order",
+      "payment_update_failed": "Failed to update payment"
+    },
+    "payment_method": {
+      "cod": "Cash on delivery",
+      "bank_transfer": "Bank transfer"
+    },
+    "payment_status": {
+      "pending": "Awaiting payment",
+      "proof_submitted": "Receipt awaiting review",
+      "paid": "Paid",
+      "failed": "Failed",
+      "expired": "Expired",
+      "refunded": "Refunded",
+      "cod_pending": "Collect on delivery",
+      "cod_collected": "COD collected"
     },
     "table": {
       "id": "Order ID",
@@ -520,6 +535,13 @@
       "admin_notes": "Administrative Notes",
       "admin_notes_placeholder": "Record verification details, transaction IDs, or issues...",
       "verify_button": "Verify & Process",
+      "reject_button": "Reject",
+      "reject_confirm": "Reject this receipt and cancel the order? Inventory will be restored.",
+      "mark_cod_collected": "Mark COD as collected",
+      "payment_status": "Payment status",
+      "reference": "Reference",
+      "settlement_amount": "Amount to verify",
+      "expires_at": "Expires at",
       "save_notes": "Save Notes",
       "view_artifact": "View Full Artifact",
       "no_receipt": "No payment receipt has been uploaded for this transaction yet.",
@@ -680,6 +702,29 @@
     "public_site": {
       "url": "Public Site URL",
       "url_help": "The URL used for the View Public Site link."
+    },
+    "payments": {
+      "title": "Payment methods",
+      "description": "Enable payment options and configure the bank transfer details shown at checkout.",
+      "cod": "Cash on delivery (COD)",
+      "bank_transfer": "Manual bank transfer",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "bank_name": "Bank name",
+      "bank_bin": "VietQR bank BIN",
+      "account_name": "Account name",
+      "account_number": "Account number",
+      "currency": "Settlement currency",
+      "expiry": "Payment window (minutes)",
+      "instructions_en": "English instructions",
+      "instructions_ja": "Japanese instructions",
+      "instructions_vi": "Vietnamese instructions",
+      "save": "Save payment settings",
+      "saved": "Payment settings saved",
+      "load_failed": "Could not load payment settings",
+      "save_failed": "Could not save payment settings",
+      "required_bank_fields": "Complete all bank fields before enabling bank transfer",
+      "invalid_expiry": "The payment window must be between 5 minutes and 7 days"
     },
     "content": {
       "title": "Page Content",
@@ -865,6 +910,13 @@
     "title": "Notifications",
     "mark_all_read": "Mark all as read",
     "empty": "No notifications yet",
+    "polling_mode": "Website messages and orders refresh about every 20 seconds. Enable the AI service in Settings for automatic replies.",
+    "live_sync": "Live sync is enabled",
+    "events": {
+      "order_cod_ready": { "title": "COD order ready", "message": "Order #{{id}} is ready for packing. Total: {{amount}} USD." },
+      "payment_proof_submitted": { "title": "Payment receipt received", "message": "Order #{{id}} needs payment verification ({{amount}} {{currency}})." },
+      "payment_succeeded": { "title": "Payment confirmed", "message": "Order #{{id}} is paid and ready for packing." }
+    },
     "new_order": "New Order",
     "new_order_message": "You have a new order from customer #{{id}}",
     "new_chat": "New Message",

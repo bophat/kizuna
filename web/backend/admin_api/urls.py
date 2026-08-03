@@ -9,6 +9,7 @@ from .views import (
     AdminContactMessageViewSet,
     AdminCouponViewSet,
     AdminOrderViewSet,
+    AdminPaymentMethodViewSet,
     AdminProductViewSet,
     AdminStorePageViewSet,
     AdminUserViewSet,
@@ -51,6 +52,7 @@ router.register(r'affiliate-commissions', AdminAffiliateCommissionViewSet, basen
 router.register(r'affiliate-payouts', AdminAffiliatePayoutViewSet, basename='affiliate-payouts')
 router.register(r'products', AdminProductViewSet)
 router.register(r'orders', AdminOrderViewSet)
+router.register(r'payment-methods', AdminPaymentMethodViewSet, basename='payment-methods')
 router.register(r'users', AdminUserViewSet)
 router.register(r'categories', AdminCategoryViewSet)
 router.register(r'coupons', AdminCouponViewSet)

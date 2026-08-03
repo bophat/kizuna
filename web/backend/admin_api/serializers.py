@@ -10,6 +10,8 @@ from shop.models import (
     ContactMessage,
     Coupon,
     Order,
+    PaymentMethodConfig,
+    PaymentTransaction,
     OrderItem,
     Product,
     ProductImage,
@@ -338,18 +340,88 @@ class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = UserSerializer(source='user', read_only=True)
     payment_receipt = serializers.SerializerMethodField()
+    payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = '__all__'
 
     def get_payment_receipt(self, obj):
-        if obj.payment_receipt:
+        receipt = None
+        try:
+            receipt = obj.payment.receipt
+        except PaymentTransaction.DoesNotExist:
+            receipt = obj.payment_receipt
+        if receipt:
             request = self.context.get('request')
             if request:
-                return request.build_absolute_uri(obj.payment_receipt.url)
-            return obj.payment_receipt.url
+                return request.build_absolute_uri(receipt.url)
+            return receipt.url
         return None
+
+    def get_payment(self, obj):
+        try:
+            return PaymentTransactionAdminSerializer(
+                obj.payment, context=self.context
+            ).data
+        except PaymentTransaction.DoesNotExist:
+            return None
+
+
+class PaymentTransactionAdminSerializer(serializers.ModelSerializer):
+    receipt_url = serializers.SerializerMethodField()
+    verified_by_email = serializers.EmailField(
+        source='verified_by.email', read_only=True
+    )
+
+    class Meta:
+        model = PaymentTransaction
+        fields = [
+            'id', 'method', 'provider', 'status', 'amount_usd',
+            'settlement_amount', 'settlement_currency', 'exchange_rate',
+            'reference', 'method_snapshot', 'receipt_url', 'proof_submitted_at',
+            'paid_at', 'verified_at', 'verified_by_email', 'expires_at',
+            'failure_reason', 'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
+
+    def get_receipt_url(self, obj):
+        if not obj.receipt:
+            return None
+        request = self.context.get('request')
+        return request.build_absolute_uri(obj.receipt.url) if request else obj.receipt.url
+
+
+class PaymentMethodConfigSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = PaymentMethodConfig
+        fields = [
+            'id', 'code', 'enabled', 'instructions_en', 'instructions_ja',
+            'instructions_vi', 'bank_name', 'bank_bin', 'account_name',
+            'account_number', 'currency', 'expiry_minutes', 'sort_order',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'code', 'created_at', 'updated_at']
+
+    def validate(self, attrs):
+        instance = self.instance
+        code = instance.code if instance else attrs.get('code')
+        enabled = attrs.get('enabled', getattr(instance, 'enabled', False))
+        expiry = attrs.get('expiry_minutes', getattr(instance, 'expiry_minutes', 60))
+        errors = {}
+        if expiry < 5 or expiry > 10080:
+            errors['expiry_minutes'] = 'Payment expiry must be between 5 minutes and 7 days.'
+        if enabled and code == PaymentMethodConfig.Code.BANK_TRANSFER:
+            currency = attrs.get('currency', getattr(instance, 'currency', 'VND'))
+            if str(currency or '').upper() != 'VND':
+                errors['currency'] = 'Manual bank transfer currently supports VND only.'
+            for field in ('bank_name', 'bank_bin', 'account_name', 'account_number'):
+                value = attrs.get(field, getattr(instance, field, '') if instance else '')
+                if not str(value or '').strip():
+                    errors[field] = 'This field is required when bank transfer is enabled.'
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
 
 class SettingSerializer(serializers.ModelSerializer):
     is_secret = serializers.SerializerMethodField()

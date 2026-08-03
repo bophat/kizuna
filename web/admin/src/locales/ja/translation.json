@@ -487,7 +487,22 @@
     "errors": {
       "load_failed": "物流データの読み込みに失敗しました。",
       "fetch_error": "注文の取得中にエラーが発生しました。",
-      "update_failed": "注文の更新に失敗しました"
+      "update_failed": "注文の更新に失敗しました",
+      "payment_update_failed": "支払い情報を更新できませんでした"
+    },
+    "payment_method": {
+      "cod": "代金引換",
+      "bank_transfer": "銀行振込"
+    },
+    "payment_status": {
+      "pending": "入金待ち",
+      "proof_submitted": "領収書確認待ち",
+      "paid": "支払い済み",
+      "failed": "失敗",
+      "expired": "期限切れ",
+      "refunded": "返金済み",
+      "cod_pending": "配達時に回収",
+      "cod_collected": "代金回収済み"
     },
     "table": {
       "id": "注文ID",
@@ -520,6 +535,13 @@
       "admin_notes": "管理メモ",
       "admin_notes_placeholder": "確認の詳細、トランザクションID、または問題を記録します...",
       "verify_button": "確認して処理",
+      "reject_button": "却下",
+      "reject_confirm": "この領収書を却下して注文をキャンセルしますか？在庫は戻されます。",
+      "mark_cod_collected": "代金回収済みにする",
+      "payment_status": "支払い状況",
+      "reference": "振込参照番号",
+      "settlement_amount": "確認金額",
+      "expires_at": "支払期限",
       "save_notes": "メモを保存",
       "view_artifact": "フルアーティファクトを表示",
       "no_receipt": "この取引の支払い領収書はまだアップロードされていません。",
@@ -680,6 +702,29 @@
     "public_site": {
       "url": "公開サイトURL",
       "url_help": "「サイトを表示」リンクで使用するURLです。"
+    },
+    "payments": {
+      "title": "支払い方法",
+      "description": "チェックアウトに表示する支払い方法と銀行振込情報を設定します。",
+      "cod": "代金引換（COD）",
+      "bank_transfer": "手動銀行振込",
+      "enabled": "有効",
+      "disabled": "無効",
+      "bank_name": "銀行名",
+      "bank_bin": "VietQR銀行BIN",
+      "account_name": "口座名義",
+      "account_number": "口座番号",
+      "currency": "決済通貨",
+      "expiry": "支払期限（分）",
+      "instructions_en": "英語の案内",
+      "instructions_ja": "日本語の案内",
+      "instructions_vi": "ベトナム語の案内",
+      "save": "支払い設定を保存",
+      "saved": "支払い設定を保存しました",
+      "load_failed": "支払い設定を読み込めませんでした",
+      "save_failed": "支払い設定を保存できませんでした",
+      "required_bank_fields": "銀行振込を有効にする前に、すべての銀行情報を入力してください",
+      "invalid_expiry": "支払期限は5分から7日の間で設定してください"
     },
     "content": {
       "title": "ページコンテンツ",
@@ -865,6 +910,13 @@
     "title": "通知",
     "mark_all_read": "すべて既読にする",
     "empty": "通知はありません",
+    "polling_mode": "サイトのメッセージと注文は約20秒ごとに更新されます。自動返信には設定でAIサービスを有効にしてください。",
+    "live_sync": "ライブ同期が有効です",
+    "events": {
+      "order_cod_ready": { "title": "代金引換注文", "message": "注文 #{{id}} は梱包可能です。合計: {{amount}} USD。" },
+      "payment_proof_submitted": { "title": "振込明細を受信", "message": "注文 #{{id}} の支払い確認が必要です（{{amount}} {{currency}}）。" },
+      "payment_succeeded": { "title": "支払い確認済み", "message": "注文 #{{id}} は支払い済みで梱包可能です。" }
+    },
     "new_order": "新規注文",
     "new_order_message": "お客様 #{{id}} からの新規注文があります",
     "new_chat": "新着メッセージ",

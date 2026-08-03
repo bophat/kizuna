@@ -14,6 +14,7 @@ import {
 import { INTEGRATION_KEYS, migrateLegacySocialSettings, serializeSocialIntegrations, type SocialAccount } from '@izuna/shared/lib/integrationSettings';
 import { secretFieldPlaceholder } from '@izuna/shared/lib/secretMask';
 import { SocialAccountsSection } from '../components/settings/SocialAccountsSection';
+import { PaymentSettingsSection } from '../components/settings/PaymentSettingsSection';
 import { apiFetch, getMediaUrl } from '../lib/api';
 import { useChatbot } from '../contexts/ChatbotContext';
 
@@ -233,6 +234,8 @@ export default function Settings() {
           </div>
         </div>
       </motion.form>
+
+      <PaymentSettingsSection />
 
       <motion.form
         initial={{ opacity: 0, y: 20 }}
