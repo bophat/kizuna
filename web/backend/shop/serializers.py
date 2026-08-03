@@ -155,12 +155,24 @@ class FavoriteSerializer(serializers.ModelSerializer):
 
 
 class StorePagePublicSerializer(serializers.ModelSerializer):
+    title = serializers.SerializerMethodField()
+    content = serializers.SerializerMethodField()
+
     class Meta:
         model = StorePage
         fields = ['slug', 'title', 'content', 'content_type', 'updated_at']
 
+    def get_title(self, obj):
+        return localized_value(obj, 'title', self.context)
+
+    def get_content(self, obj):
+        return localized_value(obj, 'content', self.context)
+
 
 class ContactInfoPublicSerializer(serializers.ModelSerializer):
+    address = serializers.SerializerMethodField()
+    working_hours = serializers.SerializerMethodField()
+
     class Meta:
         model = ContactInfo
         fields = [
@@ -168,6 +180,12 @@ class ContactInfoPublicSerializer(serializers.ModelSerializer):
             'facebook_url', 'zalo_url', 'instagram_url', 'tiktok_url',
             'updated_at',
         ]
+
+    def get_address(self, obj):
+        return localized_value(obj, 'address', self.context)
+
+    def get_working_hours(self, obj):
+        return localized_value(obj, 'working_hours', self.context)
 
 
 class ContactMessageSubmitSerializer(serializers.ModelSerializer):

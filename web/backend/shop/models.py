@@ -202,7 +202,13 @@ class StorePage(models.Model):
 
     slug = models.SlugField(max_length=50, unique=True)
     title = models.CharField(max_length=255)
+    title_en = models.CharField(max_length=255, blank=True, default='')
+    title_ja = models.CharField(max_length=255, blank=True, default='')
+    title_vi = models.CharField(max_length=255, blank=True, default='')
     content = models.TextField(blank=True, default='')
+    content_en = models.TextField(blank=True, default='')
+    content_ja = models.TextField(blank=True, default='')
+    content_vi = models.TextField(blank=True, default='')
     content_type = models.CharField(
         max_length=10,
         choices=ContentType.choices,
@@ -230,7 +236,13 @@ class ContactInfo(models.Model):
     phone = models.CharField(max_length=30, blank=True, default='')
     email = models.EmailField(blank=True, default='')
     address = models.TextField(blank=True, default='')
+    address_en = models.TextField(blank=True, default='')
+    address_ja = models.TextField(blank=True, default='')
+    address_vi = models.TextField(blank=True, default='')
     working_hours = models.CharField(max_length=255, blank=True, default='')
+    working_hours_en = models.CharField(max_length=255, blank=True, default='')
+    working_hours_ja = models.CharField(max_length=255, blank=True, default='')
+    working_hours_vi = models.CharField(max_length=255, blank=True, default='')
     facebook_url = models.URLField(max_length=500, blank=True, default='')
     zalo_url = models.URLField(max_length=500, blank=True, default='')
     instagram_url = models.URLField(max_length=500, blank=True, default='')

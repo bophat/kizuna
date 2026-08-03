@@ -26,7 +26,7 @@
     "preview": "Preview",
     "show_preview": "Show preview",
     "hide_preview": "Hide preview",
-    "fields": { "title": "Page title", "content_type": "Content format", "published": "Published", "content": "Content" },
+    "fields": { "title": "Page title", "content_type": "Content format", "published": "Published", "content": "Content", "language": "Content language" },
     "contact_title": "Structured contact information",
     "contact_description": "These details are displayed with icons on the contact page.",
     "contact_fields": { "phone": "Phone", "email": "Email", "address": "Address", "working_hours": "Working hours", "facebook_url": "Facebook URL", "zalo_url": "Zalo URL", "instagram_url": "Instagram URL", "tiktok_url": "TikTok URL" },

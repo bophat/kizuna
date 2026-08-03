@@ -36,7 +36,13 @@ class AdminStoreContentTests(TestCase):
             '/api/admin/pages/privacy-policy/',
             {
                 'title': 'Safe privacy policy',
+                'title_en': 'Safe privacy policy',
+                'title_ja': '安全なプライバシーポリシー',
+                'title_vi': 'Chính sách bảo mật an toàn',
                 'content': '<h2 onclick="bad()">Title</h2><script>alert(1)</script><a href="javascript:bad()">bad</a><a href="https://example.com" target="_blank">safe</a>',
+                'content_en': '<p onclick="bad()">English</p>',
+                'content_ja': '<script>bad()</script><p>日本語</p>',
+                'content_vi': '<p>Tiếng Việt</p>',
                 'content_type': 'html',
                 'is_published': True,
             },
@@ -48,6 +54,8 @@ class AdminStoreContentTests(TestCase):
         self.assertNotIn('onclick', self.page.content.lower())
         self.assertNotIn('javascript:', self.page.content.lower())
         self.assertIn('rel="noopener noreferrer"', self.page.content)
+        self.assertNotIn('onclick', self.page.content_en.lower())
+        self.assertNotIn('script', self.page.content_ja.lower())
         self.assertEqual(self.page.updated_by, self.admin)
 
     def test_non_admin_cannot_access_content_management(self):
@@ -62,7 +70,13 @@ class AdminStoreContentTests(TestCase):
                 'phone': '+81 3 1234 5678',
                 'email': 'hello@example.com',
                 'address': 'Tokyo',
+                'address_en': 'Tokyo, Japan',
+                'address_ja': '日本、東京',
+                'address_vi': 'Tokyo, Nhật Bản',
                 'working_hours': '09:00 - 18:00',
+                'working_hours_en': 'Monday - Friday',
+                'working_hours_ja': '月曜日〜金曜日',
+                'working_hours_vi': 'Thứ Hai - Thứ Sáu',
                 'facebook_url': 'https://facebook.com/example',
                 'zalo_url': 'https://zalo.me/example',
                 'instagram_url': 'https://instagram.com/example',
@@ -74,6 +88,7 @@ class AdminStoreContentTests(TestCase):
         self.assertEqual(ContactInfo.objects.order_by('id').first().address, 'Tokyo')
         self.assertEqual(response.data['instagram_url'], 'https://instagram.com/example')
         self.assertEqual(response.data['tiktok_url'], 'https://tiktok.com/@example')
+        self.assertEqual(response.data['address_ja'], '日本、東京')
 
     def test_admin_can_read_and_update_contact_message_status(self):
         message = ContactMessage.objects.create(

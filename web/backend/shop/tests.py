@@ -176,6 +176,12 @@ class PublicStoreContentTests(TestCase):
             defaults={
                 'title': 'Privacy policy',
                 'content': '## Safe content',
+                'title_en': 'Privacy Policy',
+                'title_ja': 'プライバシーポリシー',
+                'title_vi': 'Chính sách bảo mật',
+                'content_en': '## Safe English content',
+                'content_ja': '## 安全な日本語コンテンツ',
+                'content_vi': '## Nội dung tiếng Việt an toàn',
                 'content_type': StorePage.ContentType.MARKDOWN,
                 'is_published': True,
             },
@@ -185,8 +191,24 @@ class PublicStoreContentTests(TestCase):
         response = self.client.get('/api/pages/privacy-policy/')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['slug'], 'privacy-policy')
-        self.assertEqual(response.data['content'], '## Safe content')
+        self.assertEqual(response.data['title'], 'Privacy Policy')
+        self.assertEqual(response.data['content'], '## Safe English content')
         self.assertNotIn('is_published', response.data)
+
+    def test_page_content_follows_accept_language(self):
+        expected = {
+            'en': ('Privacy Policy', '## Safe English content'),
+            'ja': ('プライバシーポリシー', '## 安全な日本語コンテンツ'),
+            'vi': ('Chính sách bảo mật', '## Nội dung tiếng Việt an toàn'),
+        }
+        for language, values in expected.items():
+            with self.subTest(language=language):
+                response = self.client.get(
+                    '/api/pages/privacy-policy/',
+                    HTTP_ACCEPT_LANGUAGE=language,
+                )
+                self.assertEqual(response.status_code, 200)
+                self.assertEqual((response.data['title'], response.data['content']), values)
 
     def test_unpublished_page_returns_404(self):
         self.page.is_published = False
@@ -200,13 +222,21 @@ class PublicStoreContentTests(TestCase):
         info.email = 'hello@example.com'
         info.instagram_url = 'https://www.instagram.com/kizuna'
         info.tiktok_url = 'https://www.tiktok.com/@kizuna'
+        info.address_en = 'Tokyo, Japan'
+        info.address_ja = '日本、東京'
+        info.address_vi = 'Tokyo, Nhật Bản'
+        info.working_hours_en = 'Monday - Friday'
+        info.working_hours_ja = '月曜日〜金曜日'
+        info.working_hours_vi = 'Thứ Hai - Thứ Sáu'
         info.save()
-        response = self.client.get('/api/contact-info/')
+        response = self.client.get('/api/contact-info/', HTTP_ACCEPT_LANGUAGE='ja')
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['phone'], '+84 123 456 789')
         self.assertEqual(response.data['email'], 'hello@example.com')
         self.assertEqual(response.data['instagram_url'], 'https://www.instagram.com/kizuna')
         self.assertEqual(response.data['tiktok_url'], 'https://www.tiktok.com/@kizuna')
+        self.assertEqual(response.data['address'], '日本、東京')
+        self.assertEqual(response.data['working_hours'], '月曜日〜金曜日')
 
     def test_contact_form_saves_message(self):
         response = self.client.post(

@@ -26,7 +26,7 @@
     "preview": "Xem trước",
     "show_preview": "Hiện xem trước",
     "hide_preview": "Ẩn xem trước",
-    "fields": { "title": "Tiêu đề trang", "content_type": "Định dạng nội dung", "published": "Đã xuất bản", "content": "Nội dung" },
+    "fields": { "title": "Tiêu đề trang", "content_type": "Định dạng nội dung", "published": "Đã xuất bản", "content": "Nội dung", "language": "Ngôn ngữ nội dung" },
     "contact_title": "Thông tin liên hệ có cấu trúc",
     "contact_description": "Các thông tin này được hiển thị kèm biểu tượng trên trang Liên hệ.",
     "contact_fields": { "phone": "Số điện thoại", "email": "Email", "address": "Địa chỉ", "working_hours": "Giờ làm việc", "facebook_url": "Liên kết Facebook", "zalo_url": "Liên kết Zalo", "instagram_url": "Liên kết Instagram", "tiktok_url": "Liên kết TikTok" },

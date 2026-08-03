@@ -189,7 +189,9 @@ class AdminStorePageSerializer(serializers.ModelSerializer):
     class Meta:
         model = StorePage
         fields = [
-            'id', 'slug', 'title', 'content', 'content_type', 'is_published',
+            'id', 'slug', 'title', 'title_en', 'title_ja', 'title_vi',
+            'content', 'content_en', 'content_ja', 'content_vi',
+            'content_type', 'is_published',
             'updated_by_name', 'created_at', 'updated_at',
         ]
         read_only_fields = ['id', 'slug', 'updated_by_name', 'created_at', 'updated_at']
@@ -200,15 +202,19 @@ class AdminStorePageSerializer(serializers.ModelSerializer):
         return obj.updated_by.get_full_name().strip() or obj.updated_by.username
 
     def validate(self, attrs):
-        content = attrs.get('content', getattr(self.instance, 'content', ''))
         content_type = attrs.get(
             'content_type',
             getattr(self.instance, 'content_type', StorePage.ContentType.MARKDOWN),
         )
-        if len(content) > 100_000:
-            raise serializers.ValidationError({'content': 'Content must not exceed 100000 characters.'})
-        if content_type == StorePage.ContentType.HTML:
-            attrs['content'] = sanitize_store_page_html(content)
+        errors = {}
+        for field_name in ('content', 'content_en', 'content_ja', 'content_vi'):
+            content = attrs.get(field_name, getattr(self.instance, field_name, ''))
+            if len(content) > 100_000:
+                errors[field_name] = 'Content must not exceed 100000 characters.'
+            elif content_type == StorePage.ContentType.HTML:
+                attrs[field_name] = sanitize_store_page_html(content)
+        if errors:
+            raise serializers.ValidationError(errors)
         return attrs
 
 
@@ -216,7 +222,10 @@ class AdminContactInfoSerializer(serializers.ModelSerializer):
     class Meta:
         model = ContactInfo
         fields = [
-            'phone', 'email', 'address', 'working_hours',
+            'phone', 'email',
+            'address', 'address_en', 'address_ja', 'address_vi',
+            'working_hours', 'working_hours_en', 'working_hours_ja',
+            'working_hours_vi',
             'facebook_url', 'zalo_url', 'instagram_url', 'tiktok_url',
             'updated_at',
         ]

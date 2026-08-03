@@ -48,7 +48,12 @@ class ContactInfoView(APIView):
                 'tiktok_url': '',
                 'updated_at': None,
             })
-        return Response(ContactInfoPublicSerializer(contact_info).data)
+        return Response(
+            ContactInfoPublicSerializer(
+                contact_info,
+                context={'request': request},
+            ).data
+        )
 
 
 class ContactSubmitView(generics.CreateAPIView):

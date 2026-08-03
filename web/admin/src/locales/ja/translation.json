@@ -26,7 +26,7 @@
     "preview": "プレビュー",
     "show_preview": "プレビューを表示",
     "hide_preview": "プレビューを非表示",
-    "fields": { "title": "ページタイトル", "content_type": "コンテンツ形式", "published": "公開済み", "content": "コンテンツ" },
+    "fields": { "title": "ページタイトル", "content_type": "コンテンツ形式", "published": "公開済み", "content": "コンテンツ", "language": "コンテンツ言語" },
     "contact_title": "連絡先情報",
     "contact_description": "この情報はお問い合わせページにアイコン付きで表示されます。",
     "contact_fields": { "phone": "電話番号", "email": "メール", "address": "住所", "working_hours": "営業時間", "facebook_url": "Facebook URL", "zalo_url": "Zalo URL", "instagram_url": "Instagram URL", "tiktok_url": "TikTok URL" },

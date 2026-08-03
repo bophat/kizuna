@@ -9,7 +9,13 @@ interface StorePage {
   id: number;
   slug: string;
   title: string;
+  title_en: string;
+  title_ja: string;
+  title_vi: string;
   content: string;
+  content_en: string;
+  content_ja: string;
+  content_vi: string;
   content_type: 'markdown' | 'html';
   is_published: boolean;
   updated_by_name: string;
@@ -20,7 +26,13 @@ interface ContactInfo {
   phone: string;
   email: string;
   address: string;
+  address_en: string;
+  address_ja: string;
+  address_vi: string;
   working_hours: string;
+  working_hours_en: string;
+  working_hours_ja: string;
+  working_hours_vi: string;
   facebook_url: string;
   zalo_url: string;
   instagram_url: string;
@@ -38,9 +50,23 @@ interface ContactMessage {
 }
 
 const emptyContact: ContactInfo = {
-  phone: '', email: '', address: '', working_hours: '', facebook_url: '', zalo_url: '',
+  phone: '', email: '', address: '', address_en: '', address_ja: '', address_vi: '',
+  working_hours: '', working_hours_en: '', working_hours_ja: '', working_hours_vi: '',
+  facebook_url: '', zalo_url: '',
   instagram_url: '', tiktok_url: '',
 };
+
+type ContentLanguage = 'en' | 'ja' | 'vi';
+type TitleField = 'title_en' | 'title_ja' | 'title_vi';
+type ContentField = 'content_en' | 'content_ja' | 'content_vi';
+type AddressField = 'address_en' | 'address_ja' | 'address_vi';
+type WorkingHoursField = 'working_hours_en' | 'working_hours_ja' | 'working_hours_vi';
+
+const contentLanguages: Array<{ code: ContentLanguage; label: string }> = [
+  { code: 'en', label: 'English' },
+  { code: 'ja', label: '日本語' },
+  { code: 'vi', label: 'Tiếng Việt' },
+];
 
 export default function ContentPages() {
   const { t, i18n } = useTranslation();
@@ -53,6 +79,12 @@ export default function ContentPages() {
   const [savingPage, setSavingPage] = useState(false);
   const [savingContact, setSavingContact] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
+  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>('vi');
+
+  const titleField = `title_${contentLanguage}` as TitleField;
+  const contentField = `content_${contentLanguage}` as ContentField;
+  const addressField = `address_${contentLanguage}` as AddressField;
+  const workingHoursField = `working_hours_${contentLanguage}` as WorkingHoursField;
 
   const selectedPage = useMemo(
     () => pages.find((page) => page.slug === selectedSlug) || pages[0],
@@ -72,7 +104,7 @@ export default function ContentPages() {
         pagesResponse.json(), contactResponse.json(), messagesResponse.json(),
       ]);
       setPages(pagesData);
-      setContact(contactData);
+      setContact({ ...emptyContact, ...contactData });
       setMessages(messagesData);
     } catch {
       toast.error(t('content_pages.load_failed'));
@@ -93,8 +125,14 @@ export default function ContentPages() {
       const response = await apiFetch(`/pages/${draft.slug}/`, {
         method: 'PUT',
         body: JSON.stringify({
-          title: draft.title,
-          content: draft.content,
+          title: draft.title_vi || draft.title_en || draft.title_ja || draft.title,
+          title_en: draft.title_en,
+          title_ja: draft.title_ja,
+          title_vi: draft.title_vi,
+          content: draft.content_vi || draft.content_en || draft.content_ja || draft.content,
+          content_en: draft.content_en,
+          content_ja: draft.content_ja,
+          content_vi: draft.content_vi,
           content_type: draft.content_type,
           is_published: draft.is_published,
         }),
@@ -116,7 +154,11 @@ export default function ContentPages() {
     try {
       const response = await apiFetch('/contact-info/', {
         method: 'PUT',
-        body: JSON.stringify(contact),
+        body: JSON.stringify({
+          ...contact,
+          address: contact.address_vi || contact.address_en || contact.address_ja || contact.address,
+          working_hours: contact.working_hours_vi || contact.working_hours_en || contact.working_hours_ja || contact.working_hours,
+        }),
       });
       if (!response.ok) throw new Error('save failed');
       setContact(await response.json());
@@ -159,7 +201,7 @@ export default function ContentPages() {
           {pages.map((page) => (
             <button key={page.slug} onClick={() => setSelectedSlug(page.slug)} className={`flex w-full items-start gap-3 border-b border-brand-clay/70 px-5 py-4 text-left transition-colors last:border-0 ${selectedSlug === page.slug ? 'bg-brand-red/5 text-brand-red' : 'hover:bg-brand-paper'}`}>
               <FileText size={18} className="mt-0.5 shrink-0" />
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{page.title}</span><span className="mt-1 block text-xs text-brand-ink/35">/{page.slug}</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{page.title_vi || page.title_en || page.title_ja || page.title}</span><span className="mt-1 block text-xs text-brand-ink/35">/{page.slug}</span></span>
               {page.is_published ? <Eye size={15} className="mt-0.5 text-emerald-600" /> : <EyeOff size={15} className="mt-0.5 text-brand-ink/30" />}
             </button>
           ))}
@@ -168,13 +210,17 @@ export default function ContentPages() {
         {draft && (
           <section className="overflow-hidden rounded-xl border border-brand-clay bg-white shadow-sm">
             <div className="flex flex-col gap-4 border-b border-brand-clay px-6 py-5 md:flex-row md:items-center md:justify-between">
-              <div><h2 className="font-serif text-2xl font-semibold">{draft.title}</h2><p className="mt-1 text-xs text-brand-ink/40">{t('content_pages.last_updated', { date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(draft.updated_at)) })}{draft.updated_by_name ? ` · ${draft.updated_by_name}` : ''}</p></div>
-              <button onClick={savePage} disabled={savingPage || !draft.title.trim()} className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-red disabled:opacity-50">
+              <div><h2 className="font-serif text-2xl font-semibold">{draft[titleField] || draft.title}</h2><p className="mt-1 text-xs text-brand-ink/40">{t('content_pages.last_updated', { date: new Intl.DateTimeFormat(i18n.language, { dateStyle: 'medium', timeStyle: 'short' }).format(new Date(draft.updated_at)) })}{draft.updated_by_name ? ` · ${draft.updated_by_name}` : ''}</p></div>
+              <button onClick={savePage} disabled={savingPage || !(draft.title_en || draft.title_ja || draft.title_vi || draft.title).trim()} className="inline-flex items-center justify-center gap-2 rounded-md bg-brand-ink px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-brand-red disabled:opacity-50">
                 {savingPage ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}{t('common.save')}
               </button>
             </div>
             <div className="space-y-6 p-6">
-              <label className="block text-sm font-semibold">{t('content_pages.fields.title')}<input maxLength={255} value={draft.title} onChange={(e) => setDraft({ ...draft, title: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay bg-brand-paper/30 px-4 py-3 outline-none focus:border-brand-red" /></label>
+              <div>
+                <p className="mb-2 text-sm font-semibold">{t('content_pages.fields.language')}</p>
+                <div className="flex flex-wrap gap-2">{contentLanguages.map((language) => <button key={language.code} type="button" onClick={() => setContentLanguage(language.code)} className={`rounded-md border px-4 py-2 text-sm font-semibold transition-colors ${contentLanguage === language.code ? 'border-brand-red bg-brand-red text-white' : 'border-brand-clay bg-white hover:border-brand-red'}`}>{language.label}</button>)}</div>
+              </div>
+              <label className="block text-sm font-semibold">{t('content_pages.fields.title')} ({contentLanguage.toUpperCase()})<input maxLength={255} value={draft[titleField]} onChange={(e) => setDraft({ ...draft, [titleField]: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay bg-brand-paper/30 px-4 py-3 outline-none focus:border-brand-red" /></label>
               <div className="grid gap-5 md:grid-cols-2">
                 <label className="block text-sm font-semibold">{t('content_pages.fields.content_type')}<select value={draft.content_type} onChange={(e) => setDraft({ ...draft, content_type: e.target.value as StorePage['content_type'] })} className="mt-2 w-full rounded-md border border-brand-clay bg-white px-4 py-3 outline-none focus:border-brand-red"><option value="markdown">Markdown</option><option value="html">HTML</option></select></label>
                 <label className="mt-7 flex cursor-pointer items-center gap-3 rounded-md border border-brand-clay px-4 py-3"><input type="checkbox" checked={draft.is_published} onChange={(e) => setDraft({ ...draft, is_published: e.target.checked })} className="h-4 w-4 accent-brand-red" /><span className="text-sm font-semibold">{t('content_pages.fields.published')}</span>{draft.is_published && <Check size={16} className="ml-auto text-emerald-600" />}</label>
@@ -182,8 +228,8 @@ export default function ContentPages() {
               <div>
                 <div className="mb-2 flex items-center justify-between"><label className="text-sm font-semibold">{t('content_pages.fields.content')}</label><button onClick={() => setShowPreview((value) => !value)} className="inline-flex items-center gap-2 text-xs font-semibold text-brand-red">{showPreview ? <EyeOff size={15} /> : <Eye size={15} />}{showPreview ? t('content_pages.hide_preview') : t('content_pages.show_preview')}</button></div>
                 <div className={`grid gap-5 ${showPreview ? 'lg:grid-cols-2' : ''}`}>
-                  <textarea value={draft.content} onChange={(e) => setDraft({ ...draft, content: e.target.value })} rows={20} maxLength={100000} className="min-h-[480px] w-full resize-y rounded-md border border-brand-clay bg-brand-paper/20 p-4 font-mono text-sm leading-6 outline-none focus:border-brand-red" />
-                  {showPreview && <div className="min-h-[480px] overflow-auto rounded-md border border-brand-clay p-6"><p className="mb-5 border-b border-brand-clay pb-3 text-xs font-bold uppercase tracking-widest text-brand-ink/35">{t('content_pages.preview')}</p><ContentRenderer content={draft.content} contentType={draft.content_type} /></div>}
+                  <textarea value={draft[contentField]} onChange={(e) => setDraft({ ...draft, [contentField]: e.target.value })} rows={20} maxLength={100000} className="min-h-[480px] w-full resize-y rounded-md border border-brand-clay bg-brand-paper/20 p-4 font-mono text-sm leading-6 outline-none focus:border-brand-red" />
+                  {showPreview && <div className="min-h-[480px] overflow-auto rounded-md border border-brand-clay p-6"><p className="mb-5 border-b border-brand-clay pb-3 text-xs font-bold uppercase tracking-widest text-brand-ink/35">{t('content_pages.preview')} · {contentLanguage.toUpperCase()}</p><ContentRenderer content={draft[contentField]} contentType={draft.content_type} /></div>}
                 </div>
               </div>
             </div>
@@ -196,8 +242,10 @@ export default function ContentPages() {
           <section className="rounded-xl border border-brand-clay bg-white p-6 shadow-sm">
             <div className="mb-6 flex items-center justify-between"><div><h2 className="font-serif text-2xl font-semibold">{t('content_pages.contact_title')}</h2><p className="mt-1 text-sm text-brand-ink/45">{t('content_pages.contact_description')}</p></div><button onClick={saveContact} disabled={savingContact} className="inline-flex items-center gap-2 rounded-md bg-brand-ink px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-red disabled:opacity-50">{savingContact ? <Loader2 size={17} className="animate-spin" /> : <Save size={17} />}{t('common.save')}</button></div>
             <div className="grid gap-5 md:grid-cols-2">
-              {(['phone', 'email', 'working_hours', 'facebook_url', 'zalo_url', 'instagram_url', 'tiktok_url'] as const).map((field) => <label key={field} className="text-sm font-semibold">{t(`content_pages.contact_fields.${field}`)}<input type={field === 'email' ? 'email' : field.endsWith('_url') ? 'url' : 'text'} value={contact[field]} onChange={(e) => setContact({ ...contact, [field]: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay px-4 py-3 outline-none focus:border-brand-red" /></label>)}
-              <label className="text-sm font-semibold md:col-span-2">{t('content_pages.contact_fields.address')}<textarea rows={3} value={contact.address} onChange={(e) => setContact({ ...contact, address: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay px-4 py-3 outline-none focus:border-brand-red" /></label>
+              {(['phone', 'email', 'facebook_url', 'zalo_url', 'instagram_url', 'tiktok_url'] as const).map((field) => <label key={field} className="text-sm font-semibold">{t(`content_pages.contact_fields.${field}`)}<input type={field === 'email' ? 'email' : field.endsWith('_url') ? 'url' : 'text'} value={contact[field]} onChange={(e) => setContact({ ...contact, [field]: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay px-4 py-3 outline-none focus:border-brand-red" /></label>)}
+              <div className="md:col-span-2"><p className="mb-2 text-sm font-semibold">{t('content_pages.fields.language')}</p><div className="flex flex-wrap gap-2">{contentLanguages.map((language) => <button key={language.code} type="button" onClick={() => setContentLanguage(language.code)} className={`rounded-md border px-4 py-2 text-sm font-semibold transition-colors ${contentLanguage === language.code ? 'border-brand-red bg-brand-red text-white' : 'border-brand-clay bg-white hover:border-brand-red'}`}>{language.label}</button>)}</div></div>
+              <label className="text-sm font-semibold">{t('content_pages.contact_fields.working_hours')} ({contentLanguage.toUpperCase()})<input value={contact[workingHoursField]} onChange={(e) => setContact({ ...contact, [workingHoursField]: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay px-4 py-3 outline-none focus:border-brand-red" /></label>
+              <label className="text-sm font-semibold md:col-span-2">{t('content_pages.contact_fields.address')} ({contentLanguage.toUpperCase()})<textarea rows={3} value={contact[addressField]} onChange={(e) => setContact({ ...contact, [addressField]: e.target.value })} className="mt-2 w-full rounded-md border border-brand-clay px-4 py-3 outline-none focus:border-brand-red" /></label>
             </div>
           </section>
 
