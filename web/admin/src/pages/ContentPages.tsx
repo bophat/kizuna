@@ -68,8 +68,21 @@ const contentLanguages: Array<{ code: ContentLanguage; label: string }> = [
   { code: 'vi', label: 'Tiếng Việt' },
 ];
 
+const storePageNameKeys: Record<string, string> = {
+  'privacy-policy': 'content_pages.page_names.privacy_policy',
+  'terms-of-service': 'content_pages.page_names.terms_of_service',
+  'shipping-returns': 'content_pages.page_names.shipping_returns',
+  contact: 'content_pages.page_names.contact',
+};
+
+function supportedContentLanguage(language?: string): ContentLanguage {
+  const normalized = (language || 'en').split('-')[0];
+  return normalized === 'ja' || normalized === 'vi' ? normalized : 'en';
+}
+
 export default function ContentPages() {
   const { t, i18n } = useTranslation();
+  const interfaceLanguage = supportedContentLanguage(i18n.resolvedLanguage || i18n.language);
   const [pages, setPages] = useState<StorePage[]>([]);
   const [selectedSlug, setSelectedSlug] = useState('privacy-policy');
   const [draft, setDraft] = useState<StorePage | null>(null);
@@ -79,7 +92,7 @@ export default function ContentPages() {
   const [savingPage, setSavingPage] = useState(false);
   const [savingContact, setSavingContact] = useState(false);
   const [showPreview, setShowPreview] = useState(true);
-  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>('vi');
+  const [contentLanguage, setContentLanguage] = useState<ContentLanguage>(interfaceLanguage);
 
   const titleField = `title_${contentLanguage}` as TitleField;
   const contentField = `content_${contentLanguage}` as ContentField;
@@ -114,6 +127,9 @@ export default function ContentPages() {
   };
 
   useEffect(() => { void load(); }, []);
+  useEffect(() => {
+    setContentLanguage(interfaceLanguage);
+  }, [interfaceLanguage]);
   useEffect(() => {
     if (selectedPage) setDraft({ ...selectedPage });
   }, [selectedPage]);
@@ -201,7 +217,7 @@ export default function ContentPages() {
           {pages.map((page) => (
             <button key={page.slug} onClick={() => setSelectedSlug(page.slug)} className={`flex w-full items-start gap-3 border-b border-brand-clay/70 px-5 py-4 text-left transition-colors last:border-0 ${selectedSlug === page.slug ? 'bg-brand-red/5 text-brand-red' : 'hover:bg-brand-paper'}`}>
               <FileText size={18} className="mt-0.5 shrink-0" />
-              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{page.title_vi || page.title_en || page.title_ja || page.title}</span><span className="mt-1 block text-xs text-brand-ink/35">/{page.slug}</span></span>
+              <span className="min-w-0 flex-1"><span className="block truncate text-sm font-semibold">{storePageNameKeys[page.slug] ? t(storePageNameKeys[page.slug]) : page[`title_${interfaceLanguage}` as TitleField] || page.title}</span><span className="mt-1 block text-xs text-brand-ink/35">/{page.slug}</span></span>
               {page.is_published ? <Eye size={15} className="mt-0.5 text-emerald-600" /> : <EyeOff size={15} className="mt-0.5 text-brand-ink/30" />}
             </button>
           ))}

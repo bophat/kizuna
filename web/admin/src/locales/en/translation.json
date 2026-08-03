@@ -47,6 +47,7 @@
     "title": "Content pages",
     "description": "Edit the policy pages and contact information shown on the storefront without deploying code.",
     "page_list": "Store pages",
+    "page_names": { "privacy_policy": "Privacy Policy", "terms_of_service": "Terms of Service", "shipping_returns": "Shipping & Returns", "contact": "Contact" },
     "last_updated": "Updated {{date}}",
     "load_failed": "Unable to load content pages.",
     "saved": "Page saved successfully.",

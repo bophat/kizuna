@@ -47,6 +47,7 @@
     "title": "コンテンツページ",
     "description": "デプロイせずにストアのポリシーページと連絡先情報を編集できます。",
     "page_list": "ストアページ",
+    "page_names": { "privacy_policy": "プライバシーポリシー", "terms_of_service": "利用規約", "shipping_returns": "配送・返品", "contact": "お問い合わせ" },
     "last_updated": "更新日時 {{date}}",
     "load_failed": "コンテンツページを読み込めませんでした。",
     "saved": "ページを保存しました。",

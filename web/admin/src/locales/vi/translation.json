@@ -47,6 +47,7 @@
     "title": "Trang nội dung",
     "description": "Chỉnh sửa các trang chính sách và thông tin liên hệ hiển thị trên website mà không cần deploy lại code.",
     "page_list": "Danh sách trang",
+    "page_names": { "privacy_policy": "Chính sách bảo mật", "terms_of_service": "Điều khoản dịch vụ", "shipping_returns": "Giao hàng & trả hàng", "contact": "Liên hệ" },
     "last_updated": "Cập nhật {{date}}",
     "load_failed": "Không thể tải các trang nội dung.",
     "saved": "Đã lưu trang thành công.",
