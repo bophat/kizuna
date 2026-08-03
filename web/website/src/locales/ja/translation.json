@@ -275,6 +275,20 @@
     "more_items": "他 {{count}} 点",
     "payment_method": "お支払い"
   },
+  "affiliate_dashboard": {
+    "tab": "アフィリエイト",
+    "your_code": "あなたの紹介コード",
+    "rate": "対象商品売上の {{rate}}% を報酬として受け取れます",
+    "copy_link": "紹介リンクをコピー",
+    "recent": "最近の報酬",
+    "empty": "紹介による注文はまだありません。",
+    "order": "注文",
+    "date": "日付",
+    "status": "ステータス",
+    "commission": "報酬",
+    "metrics": { "visits": "紹介アクセス", "orders": "紹介注文", "pending": "保留中", "available": "支払い可能", "paid": "支払い済み" },
+    "statuses": { "pending": "保留中", "available": "支払い可能", "paid": "支払い済み", "reversed": "取消済み" }
+  },
   "users": {
     "phone": "電話番号"
   },

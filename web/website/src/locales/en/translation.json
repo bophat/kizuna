@@ -275,6 +275,20 @@
     "more_items": "+{{count}} more",
     "payment_method": "Payment"
   },
+  "affiliate_dashboard": {
+    "tab": "Affiliate",
+    "your_code": "Your affiliate code",
+    "rate": "{{rate}}% commission on eligible product revenue",
+    "copy_link": "Copy referral link",
+    "recent": "Recent commissions",
+    "empty": "No referred orders yet.",
+    "order": "Order",
+    "date": "Date",
+    "status": "Status",
+    "commission": "Commission",
+    "metrics": { "visits": "Referral visits", "orders": "Referred orders", "pending": "Pending", "available": "Available for payout", "paid": "Paid" },
+    "statuses": { "pending": "Pending", "available": "Available", "paid": "Paid", "reversed": "Reversed" }
+  },
   "users": {
     "phone": "Phone Number"
   },

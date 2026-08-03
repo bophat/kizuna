@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/Icons';
-import { CircleAlert, Loader2, Package, Star, LogOut, CheckCircle2, KeyRound } from 'lucide-react';
+import { CircleAlert, Copy, Loader2, Package, Star, LogOut, CheckCircle2, KeyRound, Link2, MousePointerClick, WalletCards } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
@@ -42,12 +42,31 @@ interface UserData {
   profile: UserProfile;
 }
 
+interface AffiliateDashboard {
+  is_affiliate: boolean;
+  code?: string;
+  status?: string;
+  commission_rate?: string;
+  cookie_days?: number;
+  visits_count?: number;
+  orders_count?: number;
+  totals?: Record<'pending' | 'available' | 'paid' | 'reversed', string>;
+  recent_commissions?: Array<{
+    id: number;
+    order_id: number;
+    status: string;
+    base_amount: string;
+    amount: string;
+    created_at: string;
+  }>;
+}
+
 
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
-  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items' | 'affiliate'>('info');
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -55,6 +74,7 @@ export function ProfilePage() {
   const [isSendingPasswordEmail, setIsSendingPasswordEmail] = useState(false);
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+  const [affiliate, setAffiliate] = useState<AffiliateDashboard | null>(null);
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -69,6 +89,7 @@ export function ProfilePage() {
   useEffect(() => {
     fetchProfile();
     fetchOrders();
+    fetchAffiliate();
   }, [i18n.language]);
 
   const fetchProfile = async () => {
@@ -103,6 +124,15 @@ export function ProfilePage() {
       console.error(err);
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchAffiliate = async () => {
+    try {
+      const response = await apiFetch('/shop/affiliates/me/');
+      if (response.ok) setAffiliate(await response.json());
+    } catch (error) {
+      console.error(error);
     }
   };
 
@@ -234,6 +264,16 @@ export function ProfilePage() {
         >
           {t('profile.purchased_items', { count: purchasedItems.length })}
         </button>
+        {affiliate?.is_affiliate && (
+          <button
+            onClick={() => setActiveTab('affiliate')}
+            className={`px-8 py-4 label-md tracking-normal border-b-2 transition-all whitespace-nowrap ${
+              activeTab === 'affiliate' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-primary'
+            }`}
+          >
+            {t('affiliate_dashboard.tab')}
+          </button>
+        )}
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -461,7 +501,76 @@ export function ProfilePage() {
               )}
             </div>
           )}
+
+          {activeTab === 'affiliate' && affiliate?.is_affiliate && (
+            <AffiliateDashboardPanel affiliate={affiliate} formatPrice={formatPrice} />
+          )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function AffiliateDashboardPanel({ affiliate, formatPrice }: { affiliate: AffiliateDashboard; formatPrice: (value: number | string) => string }) {
+  const { t, i18n } = useTranslation();
+  const referralLink = `${window.location.origin}/?ref=${affiliate.code}`;
+  const totals = affiliate.totals || { pending: '0', available: '0', paid: '0', reversed: '0' };
+  const cards = [
+    { key: 'visits', value: affiliate.visits_count || 0, icon: MousePointerClick },
+    { key: 'orders', value: affiliate.orders_count || 0, icon: Package },
+    { key: 'pending', value: formatPrice(totals.pending), icon: WalletCards },
+    { key: 'available', value: formatPrice(totals.available), icon: WalletCards },
+    { key: 'paid', value: formatPrice(totals.paid), icon: CheckCircle2 },
+  ];
+
+  return (
+    <div className="space-y-8">
+      <div className="rounded-sm border border-surface-variant bg-surface-container/30 p-6 md:p-8">
+        <div className="flex flex-col gap-5 md:flex-row md:items-end md:justify-between">
+          <div>
+            <p className="label-sm text-primary">{t('affiliate_dashboard.your_code')}</p>
+            <h2 className="mt-2 font-mono text-3xl font-bold tracking-wider">{affiliate.code}</h2>
+            <p className="mt-2 body-sm text-secondary">{t('affiliate_dashboard.rate', { rate: Number(affiliate.commission_rate || 0) })}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => navigator.clipboard.writeText(referralLink)}
+            className="inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-6 py-3 text-sm font-semibold text-white"
+          >
+            <Copy size={17} /> {t('affiliate_dashboard.copy_link')}
+          </button>
+        </div>
+        <div className="mt-5 flex items-center gap-2 overflow-hidden rounded-sm border border-surface-variant bg-white px-4 py-3 text-sm text-secondary">
+          <Link2 size={16} className="shrink-0 text-primary" /><code className="truncate">{referralLink}</code>
+        </div>
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
+        {cards.map(({ key, value, icon: Icon }) => (
+          <div key={key} className="rounded-sm border border-surface-variant bg-white p-5">
+            <Icon size={20} className="mb-4 text-primary" />
+            <p className="text-xl font-bold">{value}</p>
+            <p className="mt-1 text-xs text-secondary">{t(`affiliate_dashboard.metrics.${key}`)}</p>
+          </div>
+        ))}
+      </div>
+
+      <div className="overflow-hidden rounded-sm border border-surface-variant bg-white">
+        <div className="border-b border-surface-variant px-5 py-4 font-semibold">{t('affiliate_dashboard.recent')}</div>
+        {!affiliate.recent_commissions?.length ? (
+          <p className="p-8 text-center text-sm text-secondary">{t('affiliate_dashboard.empty')}</p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left text-sm">
+              <thead className="bg-surface-container/40 text-xs text-secondary"><tr><th className="px-5 py-3">{t('affiliate_dashboard.order')}</th><th className="px-5 py-3">{t('affiliate_dashboard.date')}</th><th className="px-5 py-3">{t('affiliate_dashboard.status')}</th><th className="px-5 py-3 text-right">{t('affiliate_dashboard.commission')}</th></tr></thead>
+              <tbody className="divide-y divide-surface-variant">
+                {affiliate.recent_commissions.map((commission) => (
+                  <tr key={commission.id}><td className="px-5 py-4 font-semibold">#{commission.order_id}</td><td className="px-5 py-4 text-secondary">{new Date(commission.created_at).toLocaleDateString(i18n.language)}</td><td className="px-5 py-4"><span className="rounded-full bg-primary/5 px-2.5 py-1 text-xs font-semibold text-primary">{t(`affiliate_dashboard.statuses.${commission.status}`)}</span></td><td className="px-5 py-4 text-right font-semibold">{formatPrice(commission.amount)}</td></tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );

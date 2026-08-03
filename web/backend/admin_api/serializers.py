@@ -1,5 +1,10 @@
+from decimal import Decimal
+
 from rest_framework import serializers
 from shop.models import (
+    AffiliateCommission,
+    AffiliatePayout,
+    AffiliateProfile,
     Category,
     ContactInfo,
     ContactMessage,
@@ -20,6 +25,7 @@ from .secrets import (
     prepare_setting_for_storage,
 )
 from shop.image_urls import resolve_image_url, resolve_product_image_url
+from shop.affiliate_payout_details import encrypt_payout_details, masked_payout_details
 
 class UserSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', required=False, allow_null=True, allow_blank=True)
@@ -79,6 +85,7 @@ class CategorySerializer(serializers.ModelSerializer):
 
 class CouponSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
+    affiliate_code = serializers.CharField(source='affiliate.code', read_only=True)
 
     class Meta:
         model = Coupon
@@ -87,6 +94,7 @@ class CouponSerializer(serializers.ModelSerializer):
             'minimum_order_amount', 'maximum_discount_amount', 'usage_limit',
             'per_user_limit', 'used_count', 'starts_at', 'expires_at',
             'is_active', 'created_by_name', 'created_at', 'updated_at',
+            'affiliate', 'affiliate_code',
         ]
         read_only_fields = ['id', 'used_count', 'created_by_name', 'created_at', 'updated_at']
 
@@ -96,7 +104,13 @@ class CouponSerializer(serializers.ModelSerializer):
         return obj.created_by.get_full_name().strip() or obj.created_by.username
 
     def validate_code(self, value):
+        import re
+
         code = value.strip().upper()
+        if not re.fullmatch(r'[A-Z0-9_-]{2,40}', code):
+            raise serializers.ValidationError(
+                'Use 2-40 letters, numbers, underscores or hyphens.'
+            )
         queryset = Coupon.objects.filter(code__iexact=code)
         if self.instance:
             queryset = queryset.exclude(pk=self.instance.pk)
@@ -146,6 +160,150 @@ class CouponSerializer(serializers.ModelSerializer):
         if errors:
             raise serializers.ValidationError(errors)
         return attrs
+
+
+class AffiliateProfileSerializer(serializers.ModelSerializer):
+    user_details = UserSerializer(source='user', read_only=True)
+    visits_count = serializers.SerializerMethodField()
+    orders_count = serializers.SerializerMethodField()
+    pending_amount = serializers.SerializerMethodField()
+    available_amount = serializers.SerializerMethodField()
+    paid_amount = serializers.SerializerMethodField()
+    payout_details = serializers.SerializerMethodField()
+    bank_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    account_name = serializers.CharField(write_only=True, required=False, allow_blank=True)
+    account_number = serializers.CharField(write_only=True, required=False, allow_blank=True)
+
+    class Meta:
+        model = AffiliateProfile
+        fields = [
+            'id', 'user', 'user_details', 'code', 'status', 'commission_rate',
+            'cookie_days', 'internal_notes', 'visits_count', 'orders_count',
+            'pending_amount', 'available_amount', 'paid_amount', 'payout_details',
+            'bank_name', 'account_name', 'account_number', 'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'visits_count', 'orders_count', 'pending_amount',
+            'available_amount', 'paid_amount', 'payout_details',
+            'created_at', 'updated_at',
+        ]
+
+    def validate_code(self, value):
+        code = value.strip().upper()
+        queryset = AffiliateProfile.objects.filter(code__iexact=code)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError('This affiliate code is already in use.')
+        return code
+
+    def validate_user(self, value):
+        queryset = AffiliateProfile.objects.filter(user=value)
+        if self.instance:
+            queryset = queryset.exclude(pk=self.instance.pk)
+        if queryset.exists():
+            raise serializers.ValidationError('This user is already an affiliate.')
+        return value
+
+    def validate(self, attrs):
+        rate = attrs.get('commission_rate', getattr(self.instance, 'commission_rate', 0))
+        cookie_days = attrs.get('cookie_days', getattr(self.instance, 'cookie_days', 30))
+        errors = {}
+        if rate < 0 or rate > 100:
+            errors['commission_rate'] = 'Commission rate must be between 0 and 100.'
+        if cookie_days < 1 or cookie_days > 365:
+            errors['cookie_days'] = 'Cookie duration must be between 1 and 365 days.'
+        if errors:
+            raise serializers.ValidationError(errors)
+        return attrs
+
+    def _save_payout_details(self, validated_data, instance=None):
+        details = {
+            field: validated_data.pop(field, '')
+            for field in ('bank_name', 'account_name', 'account_number')
+        }
+        if details['account_number']:
+            validated_data['payout_details_encrypted'] = encrypt_payout_details(details)
+        elif instance:
+            validated_data['payout_details_encrypted'] = instance.payout_details_encrypted
+        return validated_data
+
+    def create(self, validated_data):
+        return super().create(self._save_payout_details(validated_data))
+
+    def update(self, instance, validated_data):
+        return super().update(instance, self._save_payout_details(validated_data, instance))
+
+    def get_visits_count(self, obj):
+        return obj.visits.count()
+
+    def get_orders_count(self, obj):
+        return obj.commissions.count()
+
+    def _total(self, obj, status_code):
+        return sum(
+            (
+                commission.amount
+                for commission in obj.commissions.all()
+                if commission.status == status_code
+                and not (
+                    status_code == AffiliateCommission.Status.AVAILABLE
+                    and commission.payout_id
+                )
+            ),
+            Decimal('0.00'),
+        )
+
+    def get_pending_amount(self, obj):
+        return self._total(obj, AffiliateCommission.Status.PENDING)
+
+    def get_available_amount(self, obj):
+        return self._total(obj, AffiliateCommission.Status.AVAILABLE)
+
+    def get_paid_amount(self, obj):
+        return self._total(obj, AffiliateCommission.Status.PAID)
+
+    def get_payout_details(self, obj):
+        return masked_payout_details(obj.payout_details_encrypted)
+
+
+class AffiliateCommissionSerializer(serializers.ModelSerializer):
+    affiliate_code = serializers.CharField(source='affiliate.code', read_only=True)
+    customer_email = serializers.EmailField(source='order.user.email', read_only=True)
+
+    class Meta:
+        model = AffiliateCommission
+        fields = [
+            'id', 'affiliate', 'affiliate_code', 'order', 'customer_email',
+            'status', 'base_amount', 'commission_rate', 'amount', 'payout',
+            'available_at', 'paid_at', 'reversed_at', 'created_at', 'updated_at',
+        ]
+        read_only_fields = fields
+
+
+class AffiliatePayoutSerializer(serializers.ModelSerializer):
+    affiliate_code = serializers.CharField(source='affiliate.code', read_only=True)
+    commission_count = serializers.SerializerMethodField()
+    payout_details = serializers.SerializerMethodField()
+
+    class Meta:
+        model = AffiliatePayout
+        fields = [
+            'id', 'affiliate', 'affiliate_code', 'status', 'currency',
+            'total_amount', 'commission_count', 'transaction_reference',
+            'payout_details', 'notes', 'paid_at', 'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'affiliate', 'affiliate_code', 'status', 'currency',
+            'total_amount', 'commission_count', 'payout_details', 'paid_at',
+            'created_at', 'updated_at',
+        ]
+
+    def get_commission_count(self, obj):
+        return obj.commissions.count()
+
+    def get_payout_details(self, obj):
+        return masked_payout_details(obj.payout_details_encrypted)
 
 class ProductSerializer(serializers.ModelSerializer):
     category_name = serializers.ReadOnlyField(source='category.name')

@@ -30,7 +30,16 @@ type Coupon = {
   starts_at: string | null;
   expires_at: string | null;
   is_active: boolean;
+  affiliate: number | null;
+  affiliate_code: string;
   created_at: string;
+};
+
+type AffiliateOption = {
+  id: number;
+  code: string;
+  status: 'pending' | 'active' | 'suspended';
+  user_details: { email: string; username: string };
 };
 
 type CouponForm = {
@@ -44,6 +53,7 @@ type CouponForm = {
   per_user_limit: string;
   starts_at: string;
   expires_at: string;
+  affiliate: string;
   is_active: boolean;
 };
 
@@ -58,6 +68,7 @@ const emptyForm: CouponForm = {
   per_user_limit: '1',
   starts_at: '',
   expires_at: '',
+  affiliate: '',
   is_active: true,
 };
 
@@ -71,6 +82,7 @@ function toLocalInput(value: string | null) {
 export default function Coupons() {
   const { t, i18n } = useTranslation();
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [affiliates, setAffiliates] = useState<AffiliateOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
@@ -83,9 +95,17 @@ export default function Coupons() {
   const loadCoupons = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await apiFetch('/coupons/');
-      if (!response.ok) throw new Error();
-      setCoupons(await response.json());
+      const [couponResponse, affiliateResponse] = await Promise.all([
+        apiFetch('/coupons/'),
+        apiFetch('/affiliates/'),
+      ]);
+      if (!couponResponse.ok || !affiliateResponse.ok) throw new Error();
+      const [couponData, affiliateData] = await Promise.all([
+        couponResponse.json(),
+        affiliateResponse.json(),
+      ]);
+      setCoupons(Array.isArray(couponData) ? couponData : couponData.results || []);
+      setAffiliates(Array.isArray(affiliateData) ? affiliateData : affiliateData.results || []);
       setError('');
     } catch {
       setError(t('coupons.errors.load'));
@@ -102,7 +122,7 @@ export default function Coupons() {
     const query = search.trim().toLowerCase();
     if (!query) return coupons;
     return coupons.filter((coupon) =>
-      `${coupon.code} ${coupon.description}`.toLowerCase().includes(query),
+      `${coupon.code} ${coupon.description} ${coupon.affiliate_code}`.toLowerCase().includes(query),
     );
   }, [coupons, search]);
 
@@ -125,6 +145,7 @@ export default function Coupons() {
       per_user_limit: coupon.per_user_limit.toString(),
       starts_at: toLocalInput(coupon.starts_at),
       expires_at: toLocalInput(coupon.expires_at),
+      affiliate: coupon.affiliate?.toString() || '',
       is_active: coupon.is_active,
     });
     setModalOpen(true);
@@ -149,6 +170,7 @@ export default function Coupons() {
         maximum_discount_amount: form.maximum_discount_amount || null,
         usage_limit: form.usage_limit ? Number(form.usage_limit) : null,
         per_user_limit: Number(form.per_user_limit),
+        affiliate: form.affiliate ? Number(form.affiliate) : null,
         starts_at: form.starts_at ? new Date(form.starts_at).toISOString() : null,
         expires_at: form.expires_at ? new Date(form.expires_at).toISOString() : null,
       };
@@ -287,6 +309,7 @@ export default function Coupons() {
                       <td className="px-6 py-4">
                         <code className="rounded bg-brand-red/10 px-2.5 py-1 font-bold text-brand-red">{coupon.code}</code>
                         {coupon.description && <p className="mt-2 max-w-xs truncate text-xs text-brand-ink/50">{coupon.description}</p>}
+                        {coupon.affiliate_code && <p className="mt-2 text-xs font-semibold text-emerald-700">{t('coupons.affiliate_badge', { code: coupon.affiliate_code })}</p>}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold">
                         {coupon.discount_type === 'percentage'
@@ -380,6 +403,14 @@ export default function Coupons() {
                 </Field>
                 <Field label={t('coupons.fields.per_user')} required>
                   <input required type="number" min="1" step="1" value={form.per_user_limit} onChange={(e) => updateField('per_user_limit', e.target.value)} className="form-input" />
+                </Field>
+                <Field label={t('coupons.fields.affiliate')} hint={t('coupons.optional')}>
+                  <select value={form.affiliate} onChange={(e) => updateField('affiliate', e.target.value)} className="form-input">
+                    <option value="">{t('coupons.no_affiliate')}</option>
+                    {affiliates.filter((affiliate) => affiliate.status === 'active' || affiliate.id === editing?.affiliate).map((affiliate) => (
+                      <option key={affiliate.id} value={affiliate.id}>{affiliate.code} · {affiliate.user_details.email || affiliate.user_details.username}</option>
+                    ))}
+                  </select>
                 </Field>
                 <Field label={t('coupons.fields.starts_at')} hint={t('coupons.optional')}>
                   <input type="datetime-local" value={form.starts_at} onChange={(e) => updateField('starts_at', e.target.value)} className="form-input" />

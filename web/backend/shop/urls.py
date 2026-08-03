@@ -20,6 +20,7 @@ from .concierge_views import (
     ConciergeStreamView,
 )
 from .coupon_views import CouponValidateView
+from .affiliate_views import AffiliateDashboardView, AffiliateTrackView
 
 router = DefaultRouter()
 router.register(r'products', ProductViewSet, basename='product')
@@ -30,6 +31,8 @@ router.register(r'checkout', CheckoutViewSet, basename='checkout')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
+    path('affiliates/track/', AffiliateTrackView.as_view(), name='affiliate-track'),
+    path('affiliates/me/', AffiliateDashboardView.as_view(), name='affiliate-dashboard'),
     path('coupons/validate/', CouponValidateView.as_view(), name='coupon-validate'),
     path('exchange-rates/', ExchangeRatesView.as_view(), name='exchange-rates'),
     path('settings/', PublicSettingsView.as_view(), name='public-settings'),

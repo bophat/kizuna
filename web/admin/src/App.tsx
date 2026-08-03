@@ -26,6 +26,7 @@ const ApprovalQueue = lazy(() => import('./pages/ApprovalQueue'));
 const AiDiscovery = lazy(() => import('./pages/AiDiscovery'));
 const ContentPages = lazy(() => import('./pages/ContentPages'));
 const Coupons = lazy(() => import('./pages/Coupons'));
+const Affiliates = lazy(() => import('./pages/Affiliates'));
 
 function LoadingScreen() {
   const { t } = useTranslation();
@@ -93,6 +94,7 @@ function App() {
                     <Route path="/settings" element={<Settings />} />
                     <Route path="/content-pages" element={<ContentPages />} />
                     <Route path="/coupons" element={<Coupons />} />
+                    <Route path="/affiliates" element={<Affiliates />} />
                   </Routes>
                 </Layout>
               ) : (

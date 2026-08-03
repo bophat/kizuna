@@ -1,4 +1,5 @@
 from decimal import Decimal
+import re
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -109,6 +110,59 @@ class UserProfile(models.Model):
         return f"Profile for {self.user.username}"
 
 
+class AffiliateProfile(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending approval'
+        ACTIVE = 'active', 'Active'
+        SUSPENDED = 'suspended', 'Suspended'
+
+    user = models.OneToOneField(
+        User, on_delete=models.CASCADE, related_name='affiliate_profile'
+    )
+    code = models.CharField(max_length=40, unique=True, db_index=True)
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    commission_rate = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal('5.00')
+    )
+    cookie_days = models.PositiveSmallIntegerField(default=30)
+    payout_details_encrypted = models.TextField(blank=True, default='')
+    internal_notes = models.TextField(blank=True, default='')
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_affiliates',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def clean(self):
+        errors = {}
+        normalized_code = str(self.code or '').strip().upper()
+        if not re.fullmatch(r'[A-Z0-9_-]{2,40}', normalized_code):
+            errors['code'] = 'Use 2-40 letters, numbers, underscores or hyphens.'
+        if self.commission_rate is not None and not Decimal('0') <= self.commission_rate <= Decimal('100'):
+            errors['commission_rate'] = 'Commission rate must be between 0 and 100.'
+        if self.cookie_days is not None and not 1 <= self.cookie_days <= 365:
+            errors['cookie_days'] = 'Cookie duration must be between 1 and 365 days.'
+        if errors:
+            raise ValidationError(errors)
+
+    def save(self, *args, **kwargs):
+        self.code = self.code.strip().upper()
+        self.full_clean()
+        return super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f'{self.code} - {self.user.get_full_name() or self.user.username}'
+
+
 class Coupon(models.Model):
     class DiscountType(models.TextChoices):
         PERCENTAGE = 'percentage', 'Percentage'
@@ -136,6 +190,13 @@ class Coupon(models.Model):
         null=True,
         blank=True,
         related_name='created_coupons',
+    )
+    affiliate = models.ForeignKey(
+        AffiliateProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='coupons',
     )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -204,6 +265,18 @@ class Order(models.Model):
         related_name='orders',
     )
     coupon_code = models.CharField(max_length=50, blank=True, default='')
+    affiliate = models.ForeignKey(
+        AffiliateProfile,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='orders',
+    )
+    affiliate_code = models.CharField(max_length=40, blank=True, default='')
+    affiliate_attribution_source = models.CharField(max_length=12, blank=True, default='')
+    affiliate_commission_rate = models.DecimalField(
+        max_digits=5, decimal_places=2, default=Decimal('0.00')
+    )
     payment_receipt = models.ImageField(upload_to='receipts/', null=True, blank=True)
     admin_notes = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -241,6 +314,94 @@ class CouponRedemption(models.Model):
 
     def __str__(self):
         return f'{self.coupon.code} - Order #{self.order_id}'
+
+
+class AffiliateVisit(models.Model):
+    affiliate = models.ForeignKey(
+        AffiliateProfile, on_delete=models.CASCADE, related_name='visits'
+    )
+    session_id = models.CharField(max_length=64)
+    landing_path = models.CharField(max_length=500, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['affiliate', 'session_id'], name='unique_affiliate_visit_session'
+            )
+        ]
+
+
+class AffiliatePayout(models.Model):
+    class Status(models.TextChoices):
+        DRAFT = 'draft', 'Draft'
+        PAID = 'paid', 'Paid'
+        CANCELLED = 'cancelled', 'Cancelled'
+
+    affiliate = models.ForeignKey(
+        AffiliateProfile, on_delete=models.PROTECT, related_name='payouts'
+    )
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.DRAFT, db_index=True
+    )
+    currency = models.CharField(max_length=3, default='USD')
+    total_amount = models.DecimalField(max_digits=12, decimal_places=2, default=0.00)
+    payout_details_encrypted = models.TextField(blank=True, default='')
+    transaction_reference = models.CharField(max_length=100, blank=True, default='')
+    notes = models.TextField(blank=True, default='')
+    created_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='created_affiliate_payouts',
+    )
+    paid_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+
+class AffiliateCommission(models.Model):
+    class Status(models.TextChoices):
+        PENDING = 'pending', 'Pending'
+        AVAILABLE = 'available', 'Available'
+        PAID = 'paid', 'Paid'
+        REVERSED = 'reversed', 'Reversed'
+
+    affiliate = models.ForeignKey(
+        AffiliateProfile, on_delete=models.PROTECT, related_name='commissions'
+    )
+    order = models.OneToOneField(
+        Order, on_delete=models.CASCADE, related_name='affiliate_commission'
+    )
+    payout = models.ForeignKey(
+        AffiliatePayout,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='commissions',
+    )
+    status = models.CharField(
+        max_length=12, choices=Status.choices, default=Status.PENDING, db_index=True
+    )
+    base_amount = models.DecimalField(max_digits=12, decimal_places=2)
+    commission_rate = models.DecimalField(max_digits=5, decimal_places=2)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    available_at = models.DateTimeField(null=True, blank=True, db_index=True)
+    paid_at = models.DateTimeField(null=True, blank=True)
+    reversed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.affiliate.code} - Order #{self.order_id} - {self.amount}'
 
 class Favorite(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='favorites')

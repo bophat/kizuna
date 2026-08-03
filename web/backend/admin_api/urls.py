@@ -1,6 +1,9 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from .views import (
+    AdminAffiliateCommissionViewSet,
+    AdminAffiliatePayoutViewSet,
+    AdminAffiliateViewSet,
     AdminCategoryViewSet,
     AdminContactInfoView,
     AdminContactMessageViewSet,
@@ -43,6 +46,9 @@ from .views_chat_proxy import (
 from .views_notifications import AdminNotificationFeedView
 
 router = DefaultRouter()
+router.register(r'affiliates', AdminAffiliateViewSet)
+router.register(r'affiliate-commissions', AdminAffiliateCommissionViewSet, basename='affiliate-commissions')
+router.register(r'affiliate-payouts', AdminAffiliatePayoutViewSet, basename='affiliate-payouts')
 router.register(r'products', AdminProductViewSet)
 router.register(r'orders', AdminOrderViewSet)
 router.register(r'users', AdminUserViewSet)

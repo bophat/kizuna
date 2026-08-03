@@ -16,6 +16,7 @@ import {
   ShieldCheck,
   FileText,
   TicketPercent,
+  UsersRound,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -35,6 +36,7 @@ export function Sidebar() {
     { icon: Menu, label: t('nav.categories'), path: '/categories' },
     { icon: ShoppingBag, label: t('nav.orders'), path: '/orders' },
     { icon: TicketPercent, label: t('nav.coupons'), path: '/coupons' },
+    { icon: UsersRound, label: t('nav.affiliates'), path: '/affiliates' },
     { icon: Users, label: t('nav.users'), path: '/users' },
     { icon: UserSquare, label: t('nav.staff'), path: '/staff' },
     { icon: Calculator, label: t('nav.pricing'), path: '/pricing' },

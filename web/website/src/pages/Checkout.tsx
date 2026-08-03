@@ -10,6 +10,7 @@ import { apiFetch } from '@/lib/api';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { fadeUp, slideX, tweenBase, tweenFast } from '@/lib/motion';
 import { ProductImage } from '@/components/products/ProductImage';
+import { getAffiliateCode } from '@/lib/affiliate';
 
 const STEPS = ['information', 'shipping', 'payment', 'success'] as const;
 const SHIPPING_USD = 75;
@@ -150,7 +151,8 @@ export function CheckoutPage() {
           last_name: lastName,
           phone,
           address,
-          coupon_code: appliedCoupon?.code || ''
+          coupon_code: appliedCoupon?.code || '',
+          affiliate_code: getAffiliateCode()
         })
       });
       const data = await response.json();

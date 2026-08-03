@@ -6,6 +6,7 @@ import { AnimatedRoutes } from '@/components/layout/AnimatedRoutes';
 import { ConciergeFAB } from '@/components/home/ConciergeFAB';
 import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
 import { useEffect } from 'react';
+import { captureAffiliateFromUrl } from '@/lib/affiliate';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -19,6 +20,7 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
+      <AffiliateTracker />
       <GlobalToaster />
       <div className="min-h-screen flex flex-col font-sans selection:bg-secondary/10 selection:text-secondary">
         <ConditionalHeader />
@@ -31,6 +33,17 @@ export default function App() {
       </div>
     </Router>
   );
+}
+
+function AffiliateTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    void captureAffiliateFromUrl(
+      location.search,
+      `${location.pathname}${location.search}`,
+    );
+  }, [location.pathname, location.search]);
+  return null;
 }
 
 function ConditionalHeader() {

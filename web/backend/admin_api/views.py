@@ -1,9 +1,14 @@
+from decimal import Decimal
+
 from rest_framework import mixins, viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
 from shop.models import (
+    AffiliateCommission,
+    AffiliatePayout,
+    AffiliateProfile,
     Category,
     ContactInfo,
     ContactMessage,
@@ -36,7 +41,11 @@ from .serializers import (
     ProductSerializer,
     SettingSerializer,
     UserSerializer,
+    AffiliateCommissionSerializer,
+    AffiliatePayoutSerializer,
+    AffiliateProfileSerializer,
 )
+from shop.affiliates import refresh_available_commissions, sync_order_commission
 
 import logging
 logger = logging.getLogger(__name__)
@@ -99,7 +108,6 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
         
         if old_status != new_status:
             logger.info(f"[ORDER_STATUS_CHANGE] Order ID: {instance.id} | {old_status} -> {new_status} | User: {self.request.user}")
-            
             with transaction.atomic():
                 if new_status == 'cancelled' and old_status != 'cancelled':
                     for item in instance.items.all():
@@ -115,6 +123,9 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                             product.stock -= item.quantity
                             product.sales += item.quantity
                             product.save()
+                order = serializer.save()
+                sync_order_commission(order, old_status)
+            return
         serializer.save()
 
 class AdminUserViewSet(viewsets.ModelViewSet):
@@ -136,7 +147,7 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
 
 
 class AdminCouponViewSet(viewsets.ModelViewSet):
-    queryset = Coupon.objects.select_related('created_by').all().order_by('-created_at')
+    queryset = Coupon.objects.select_related('created_by', 'affiliate').all().order_by('-created_at')
     serializer_class = CouponSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -151,6 +162,157 @@ class AdminCouponViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
         return super().destroy(request, *args, **kwargs)
+
+
+class AdminAffiliateViewSet(viewsets.ModelViewSet):
+    queryset = (
+        AffiliateProfile.objects.select_related('user', 'user__profile', 'created_by')
+        .prefetch_related('visits', 'commissions')
+        .all()
+    )
+    serializer_class = AffiliateProfileSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        refresh_available_commissions()
+        return super().get_queryset()
+
+    def perform_create(self, serializer):
+        serializer.save(created_by=self.request.user)
+
+    def destroy(self, request, *args, **kwargs):
+        affiliate = self.get_object()
+        if affiliate.commissions.exists() or affiliate.coupons.exists():
+            return Response(
+                {'detail': 'Affiliate history must be retained. Suspend this account instead.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        return super().destroy(request, *args, **kwargs)
+
+
+class AdminAffiliateCommissionViewSet(viewsets.ReadOnlyModelViewSet):
+    queryset = (
+        AffiliateCommission.objects.select_related('affiliate', 'order', 'order__user', 'payout')
+        .all()
+    )
+    serializer_class = AffiliateCommissionSerializer
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_queryset(self):
+        refresh_available_commissions()
+        queryset = super().get_queryset()
+        status_code = self.request.query_params.get('status')
+        affiliate_id = self.request.query_params.get('affiliate')
+        if status_code:
+            queryset = queryset.filter(status=status_code)
+        if affiliate_id:
+            queryset = queryset.filter(affiliate_id=affiliate_id)
+        return queryset
+
+
+class AdminAffiliatePayoutViewSet(viewsets.ModelViewSet):
+    queryset = (
+        AffiliatePayout.objects.select_related('affiliate', 'created_by')
+        .prefetch_related('commissions')
+        .all()
+    )
+    serializer_class = AffiliatePayoutSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ['get', 'post', 'head', 'options']
+
+    def create(self, request, *args, **kwargs):
+        return Response(
+            {'detail': 'Use create-from-available to create a payout.'},
+            status=status.HTTP_400_BAD_REQUEST,
+        )
+
+    @action(detail=False, methods=['post'], url_path='create-from-available')
+    def create_from_available(self, request):
+        affiliate_id = request.data.get('affiliate')
+        if not affiliate_id:
+            return Response({'affiliate': ['This field is required.']}, status=status.HTTP_400_BAD_REQUEST)
+        refresh_available_commissions()
+        with transaction.atomic():
+            try:
+                affiliate = AffiliateProfile.objects.select_for_update().get(pk=affiliate_id)
+            except AffiliateProfile.DoesNotExist:
+                return Response({'affiliate': ['Affiliate not found.']}, status=status.HTTP_404_NOT_FOUND)
+            if not affiliate.payout_details_encrypted:
+                return Response(
+                    {'detail': 'Configure affiliate bank details before creating a payout.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            commissions = list(
+                AffiliateCommission.objects.select_for_update().filter(
+                    affiliate=affiliate,
+                    status=AffiliateCommission.Status.AVAILABLE,
+                    payout__isnull=True,
+                )
+            )
+            if not commissions:
+                return Response(
+                    {'detail': 'No available commissions for this affiliate.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            total = sum((item.amount for item in commissions), Decimal('0.00'))
+            minimum = Decimal(str(getattr(settings, 'AFFILIATE_MIN_PAYOUT_USD', '20.00')))
+            if total < minimum:
+                return Response(
+                    {'detail': f'Minimum payout is {minimum} USD.', 'available_amount': total},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            payout = AffiliatePayout.objects.create(
+                affiliate=affiliate,
+                total_amount=total,
+                payout_details_encrypted=affiliate.payout_details_encrypted,
+                notes=str(request.data.get('notes') or '').strip(),
+                created_by=request.user,
+            )
+            AffiliateCommission.objects.filter(pk__in=[item.pk for item in commissions]).update(
+                payout=payout
+            )
+        return Response(self.get_serializer(payout).data, status=status.HTTP_201_CREATED)
+
+    @action(detail=True, methods=['post'], url_path='mark-paid')
+    def mark_paid(self, request, pk=None):
+        reference = str(request.data.get('transaction_reference') or '').strip()
+        if not reference:
+            return Response(
+                {'transaction_reference': ['This field is required.']},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        with transaction.atomic():
+            payout = AffiliatePayout.objects.select_for_update().get(pk=self.get_object().pk)
+            if payout.status != AffiliatePayout.Status.DRAFT:
+                return Response(
+                    {'detail': 'Only draft payouts can be marked paid.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            now = timezone.now()
+            payout.status = AffiliatePayout.Status.PAID
+            payout.transaction_reference = reference
+            payout.paid_at = now
+            payout.save(update_fields=['status', 'transaction_reference', 'paid_at', 'updated_at'])
+            payout.commissions.update(
+                status=AffiliateCommission.Status.PAID,
+                paid_at=now,
+                updated_at=now,
+            )
+        return Response(self.get_serializer(payout).data)
+
+    @action(detail=True, methods=['post'])
+    def cancel(self, request, pk=None):
+        with transaction.atomic():
+            payout = AffiliatePayout.objects.select_for_update().get(pk=self.get_object().pk)
+            if payout.status != AffiliatePayout.Status.DRAFT:
+                return Response(
+                    {'detail': 'Only draft payouts can be cancelled.'},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
+            payout.commissions.update(payout=None)
+            payout.status = AffiliatePayout.Status.CANCELLED
+            payout.save(update_fields=['status', 'updated_at'])
+        return Response(self.get_serializer(payout).data)
 
 
 class AdminStorePageViewSet(

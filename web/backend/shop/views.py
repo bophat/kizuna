@@ -14,12 +14,17 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.db.models import Case, IntegerField, Value, When
 from .models import (
-    Cart, CartItem, Coupon, CouponRedemption, Order, OrderItem, UserProfile,
-    Product, ProductStatus, Category, Favorite,
+    AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
+    OrderItem, UserProfile, Product, ProductStatus, Category, Favorite,
 )
 from .serializers import CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer, CategorySerializer, FavoriteSerializer
 from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
 from .shipping import calculate_shipping_amount
+from .affiliates import (
+    create_order_commission,
+    normalize_affiliate_code,
+    resolve_active_affiliate,
+)
 
 
 PUBLIC_API_CACHE_SECONDS = getattr(settings, 'PUBLIC_API_CACHE_SECONDS', 60)
@@ -253,6 +258,7 @@ class CheckoutViewSet(viewsets.ViewSet):
         phone = request.data.get('phone')
         address = request.data.get('address')
         coupon_code = normalize_coupon_code(request.data.get('coupon_code'))
+        affiliate_code = normalize_affiliate_code(request.data.get('affiliate_code'))
 
         # Fallback to user data if authenticated
         if user.is_authenticated:
@@ -317,7 +323,11 @@ class CheckoutViewSet(viewsets.ViewSet):
             discount_amount = 0
             if coupon_code:
                 try:
-                    coupon = Coupon.objects.select_for_update().get(code=coupon_code)
+                    coupon = (
+                        Coupon.objects.select_for_update()
+                        .select_related('affiliate', 'affiliate__user')
+                        .get(code=coupon_code)
+                    )
                 except Coupon.DoesNotExist:
                     return Response(
                         {"error": "Coupon is invalid", "coupon_error_code": "invalid"},
@@ -358,6 +368,23 @@ class CheckoutViewSet(viewsets.ViewSet):
                 profile.address = address
             profile.save()
 
+            affiliate = None
+            affiliate_source = ''
+            if coupon and coupon.affiliate_id:
+                coupon_affiliate = coupon.affiliate
+                if (
+                    coupon_affiliate.status == AffiliateProfile.Status.ACTIVE
+                    and coupon_affiliate.user_id != user.id
+                ):
+                    affiliate = coupon_affiliate
+                    affiliate_source = 'coupon'
+            elif affiliate_code:
+                affiliate = resolve_active_affiliate(
+                    affiliate_code, customer=user, for_update=True
+                )
+                if affiliate:
+                    affiliate_source = 'link'
+
             total_amount = subtotal_amount + shipping_amount - discount_amount
             order = Order.objects.create(
                 user=user,
@@ -367,6 +394,12 @@ class CheckoutViewSet(viewsets.ViewSet):
                 total_amount=total_amount,
                 coupon=coupon,
                 coupon_code=coupon.code if coupon else '',
+                affiliate=affiliate,
+                affiliate_code=affiliate.code if affiliate else '',
+                affiliate_attribution_source=affiliate_source,
+                affiliate_commission_rate=(
+                    affiliate.commission_rate if affiliate else 0
+                ),
                 payment_method=db_payment_method,
                 status='pending'
             )
@@ -395,6 +428,9 @@ class CheckoutViewSet(viewsets.ViewSet):
                 )
                 coupon.used_count += 1
                 coupon.save(update_fields=['used_count', 'updated_at'])
+
+            if affiliate:
+                create_order_commission(order, affiliate)
 
             cart.delete()
 

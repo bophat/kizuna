@@ -4,12 +4,15 @@ from decimal import Decimal
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
-from django.test import TestCase
+from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
 
 from .concierge_store import sessions_for_admin
 from .models import (
+    AffiliateCommission,
+    AffiliateProfile,
+    AffiliateVisit,
     Cart,
     CartItem,
     Category,
@@ -22,6 +25,7 @@ from .models import (
     Product,
     StorePage,
 )
+from .affiliates import refresh_available_commissions, sync_order_commission
 
 
 class PublicCatalogLocalizationTests(TestCase):
@@ -422,3 +426,168 @@ class CouponCheckoutTests(TestCase):
         self.assertEqual(response.status_code, 200)
         self.assertEqual(response.data['discount_amount'], Decimal('200.00'))
         self.assertEqual(response.data['total_after_discount'], Decimal('0.00'))
+
+
+class AffiliateProgramTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.customer = User.objects.create_user(
+            username='affiliate-customer',
+            email='buyer@example.com',
+            password='test-password-123',
+        )
+        self.partner_user = User.objects.create_user(
+            username='affiliate-partner',
+            email='partner@example.com',
+            password='test-password-123',
+        )
+        self.partner = AffiliateProfile.objects.create(
+            user=self.partner_user,
+            code='kenji10',
+            status=AffiliateProfile.Status.ACTIVE,
+            commission_rate=Decimal('10.00'),
+            cookie_days=30,
+        )
+        self.product = Product.objects.create(
+            id='AFFILIATE-PRODUCT',
+            name='Affiliate product',
+            description='Product for affiliate tests',
+            price=Decimal('100.00'),
+            stock=10,
+            weight=Decimal('0.30'),
+            status='published',
+        )
+
+    def _authenticate_customer_with_cart(self, user=None):
+        user = user or self.customer
+        self.client.force_authenticate(user=user)
+        cart = Cart.objects.create(user=user)
+        CartItem.objects.create(
+            cart=cart,
+            product=self.product,
+            quantity=2,
+            price=self.product.price,
+        )
+
+    def _checkout(self, **overrides):
+        payload = {
+            'email': self.customer.email,
+            'first_name': 'Affiliate',
+            'last_name': 'Customer',
+            'phone': '0900000000',
+            'address': 'Tokyo',
+            'payment_method': 'cash',
+            'affiliate_code': self.partner.code,
+        }
+        payload.update(overrides)
+        return self.client.post(
+            '/api/shop/checkout/process_checkout/', payload, format='json'
+        )
+
+    def test_tracking_accepts_active_code_and_counts_session_once(self):
+        payload = {
+            'code': ' kenji10 ',
+            'session_id': 'browser-session-1',
+            'landing_path': '/products/example?ref=KENJI10',
+        }
+        first = self.client.post('/api/shop/affiliates/track/', payload, format='json')
+        second = self.client.post('/api/shop/affiliates/track/', payload, format='json')
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(first.data['code'], 'KENJI10')
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(AffiliateVisit.objects.filter(affiliate=self.partner).count(), 1)
+
+        self.partner.status = AffiliateProfile.Status.SUSPENDED
+        self.partner.save()
+        rejected = self.client.post(
+            '/api/shop/affiliates/track/',
+            {**payload, 'session_id': 'browser-session-2'},
+            format='json',
+        )
+        self.assertEqual(rejected.status_code, 404)
+
+    @patch('shop.shipping.get_exchange_rates', return_value={'usd_to_vnd': 25000})
+    def test_checkout_creates_commission_without_counting_shipping(self, _rates):
+        self._authenticate_customer_with_cart()
+        response = self._checkout()
+
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get()
+        commission = AffiliateCommission.objects.get(order=order)
+        self.assertEqual(order.affiliate, self.partner)
+        self.assertEqual(order.affiliate_attribution_source, 'link')
+        self.assertEqual(order.shipping_amount, Decimal('4.00'))
+        self.assertEqual(commission.base_amount, Decimal('200.00'))
+        self.assertEqual(commission.amount, Decimal('20.00'))
+        self.assertEqual(commission.status, AffiliateCommission.Status.PENDING)
+
+    @patch('shop.shipping.get_exchange_rates', return_value={'usd_to_vnd': 25000})
+    def test_affiliate_coupon_overrides_referral_link(self, _rates):
+        coupon_user = User.objects.create_user(
+            username='coupon-partner', email='coupon-partner@example.com'
+        )
+        coupon_partner = AffiliateProfile.objects.create(
+            user=coupon_user,
+            code='COUPONPARTNER',
+            status=AffiliateProfile.Status.ACTIVE,
+            commission_rate=Decimal('5.00'),
+        )
+        Coupon.objects.create(
+            code='PARTNER10',
+            discount_type=Coupon.DiscountType.PERCENTAGE,
+            discount_value=Decimal('10.00'),
+            per_user_limit=1,
+            affiliate=coupon_partner,
+        )
+        self._authenticate_customer_with_cart()
+        response = self._checkout(coupon_code='PARTNER10')
+
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get()
+        commission = AffiliateCommission.objects.get(order=order)
+        self.assertEqual(order.affiliate, coupon_partner)
+        self.assertEqual(order.affiliate_attribution_source, 'coupon')
+        self.assertEqual(commission.base_amount, Decimal('180.00'))
+        self.assertEqual(commission.amount, Decimal('9.00'))
+
+    @patch('shop.shipping.get_exchange_rates', return_value={'usd_to_vnd': 25000})
+    def test_self_referral_is_not_commissioned(self, _rates):
+        self._authenticate_customer_with_cart(self.partner_user)
+        response = self._checkout(email=self.partner_user.email)
+
+        self.assertEqual(response.status_code, 200)
+        order = Order.objects.get()
+        self.assertIsNone(order.affiliate)
+        self.assertFalse(AffiliateCommission.objects.exists())
+
+    @override_settings(AFFILIATE_RETURN_WINDOW_DAYS=0)
+    def test_delivered_commission_becomes_available_and_cancel_reverses_it(self):
+        order = Order.objects.create(
+            user=self.customer,
+            payment_method='cash',
+            subtotal_amount=Decimal('100.00'),
+            total_amount=Decimal('100.00'),
+            affiliate=self.partner,
+            affiliate_code=self.partner.code,
+            affiliate_commission_rate=self.partner.commission_rate,
+        )
+        commission = AffiliateCommission.objects.create(
+            affiliate=self.partner,
+            order=order,
+            base_amount=Decimal('100.00'),
+            commission_rate=Decimal('10.00'),
+            amount=Decimal('10.00'),
+        )
+        order.status = 'delivered'
+        order.save(update_fields=['status'])
+        sync_order_commission(order, 'shipped')
+        refresh_available_commissions()
+        commission.refresh_from_db()
+        self.assertEqual(commission.status, AffiliateCommission.Status.AVAILABLE)
+
+        order.status = 'cancelled'
+        order.save(update_fields=['status'])
+        sync_order_commission(order, 'delivered')
+        commission.refresh_from_db()
+        self.assertEqual(commission.status, AffiliateCommission.Status.REVERSED)

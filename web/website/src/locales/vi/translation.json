@@ -275,6 +275,20 @@
     "more_items": "+{{count}} sản phẩm",
     "payment_method": "Thanh toán"
   },
+  "affiliate_dashboard": {
+    "tab": "Cộng tác viên",
+    "your_code": "Mã giới thiệu của bạn",
+    "rate": "Nhận {{rate}}% hoa hồng trên doanh thu sản phẩm hợp lệ",
+    "copy_link": "Sao chép link giới thiệu",
+    "recent": "Hoa hồng gần đây",
+    "empty": "Chưa có đơn hàng được giới thiệu.",
+    "order": "Đơn hàng",
+    "date": "Ngày",
+    "status": "Trạng thái",
+    "commission": "Hoa hồng",
+    "metrics": { "visits": "Lượt truy cập", "orders": "Đơn giới thiệu", "pending": "Đang chờ", "available": "Có thể thanh toán", "paid": "Đã thanh toán" },
+    "statuses": { "pending": "Đang chờ", "available": "Khả dụng", "paid": "Đã thanh toán", "reversed": "Đã thu hồi" }
+  },
   "users": {
     "phone": "Số điện thoại"
   },
