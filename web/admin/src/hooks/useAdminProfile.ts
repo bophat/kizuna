@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, type ChangeEvent, type FormEvent } from 'react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../lib/api';
 import { toast } from '@izuna/shared/lib/toast';
@@ -17,6 +17,7 @@ export function useAdminProfile() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [loggingOut, setLoggingOut] = useState(false);
   const [avatarPreview, setAvatarPreview] = useState<string | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [formData, setFormData] = useState<ProfileFormData>({
@@ -58,7 +59,7 @@ export function useAdminProfile() {
     fetchProfile();
   }, []);
 
-  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleAvatarChange = (e: ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
     setAvatarFile(file);
@@ -67,7 +68,7 @@ export function useAdminProfile() {
     reader.readAsDataURL(file);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     setSaving(true);
 
@@ -112,9 +113,23 @@ export function useAdminProfile() {
   };
 
   const handleLogout = async () => {
-    if (window.confirm(t('profile.logout_confirm'))) {
-      await apiFetch('/logout/', { method: 'POST' });
-      window.location.href = '/login';
+    if (!window.confirm(t('profile.logout_confirm'))) return;
+
+    setLoggingOut(true);
+    try {
+      const response = await apiFetch('/logout/', { method: 'POST' });
+      if (!response.ok) throw new Error(t('profile.logout_error'));
+
+      // Remove tokens left by older admin builds. Current authentication uses
+      // HttpOnly cookies, which are cleared by the logout endpoint.
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      window.location.replace('/login');
+    } catch {
+      toast.error(t('profile.logout_error'));
+      setLoggingOut(false);
     }
   };
 
@@ -122,6 +137,7 @@ export function useAdminProfile() {
     user,
     loading,
     saving,
+    loggingOut,
     avatarPreview,
     formData,
     setFormData,

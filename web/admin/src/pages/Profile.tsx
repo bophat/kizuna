@@ -11,6 +11,7 @@ export default function Profile() {
     user,
     loading,
     saving,
+    loggingOut,
     avatarPreview,
     formData,
     setFormData,
@@ -53,9 +54,10 @@ export default function Profile() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex items-center gap-2 px-6 py-2 border border-brand-red text-brand-red rounded-md text-sm hover:bg-brand-red hover:text-white transition-all"
+            disabled={loggingOut}
+            className="flex items-center gap-2 px-6 py-2 border border-brand-red text-brand-red rounded-md text-sm hover:bg-brand-red hover:text-white transition-all disabled:cursor-not-allowed disabled:opacity-50"
           >
-            <LogOut size={16} />
+            {loggingOut ? <Loader2 size={16} className="animate-spin" /> : <LogOut size={16} />}
             {t('profile.logout')}
           </button>
           <div className="flex items-center gap-4">

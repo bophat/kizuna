@@ -533,6 +533,7 @@
     "logout": "サインアウト",
     "logout_confirm": "サインアウトしてもよろしいですか？",
     "logout_success": "サインアウトしました",
+    "logout_error": "サインアウトできませんでした。もう一度お試しください。",
     "errors": {
       "update_failed": "プロフィールの更新に失敗しました",
       "avatar_failed": "アバターのアップロードに失敗しました"

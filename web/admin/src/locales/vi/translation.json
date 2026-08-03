@@ -533,6 +533,7 @@
     "logout": "Đăng xuất",
     "logout_confirm": "Bạn có chắc chắn muốn đăng xuất?",
     "logout_success": "Đã đăng xuất",
+    "logout_error": "Không thể đăng xuất. Vui lòng thử lại.",
     "errors": {
       "update_failed": "Cập nhật hồ sơ thất bại",
       "avatar_failed": "Tải ảnh đại diện thất bại"

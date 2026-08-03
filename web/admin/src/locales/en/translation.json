@@ -533,6 +533,7 @@
     "logout": "Sign out",
     "logout_confirm": "Are you sure you want to sign out?",
     "logout_success": "Signed out",
+    "logout_error": "Could not sign out. Please try again.",
     "errors": {
       "update_failed": "Failed to update profile",
       "avatar_failed": "Failed to upload avatar"

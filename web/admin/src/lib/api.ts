@@ -27,13 +27,17 @@ async function refreshAccessToken(): Promise<boolean> {
 export async function apiFetch(endpoint: string, options: RequestInit = {}) {
   let path = endpoint.startsWith('/') ? endpoint : `/${endpoint}`;
 
-  if (
-    !path.startsWith('/admin') &&
-    !path.startsWith('/login') &&
-    !path.startsWith('/register') &&
-    !path.startsWith('/me') &&
-    !path.startsWith('/shop')
-  ) {
+  const rootApiPrefixes = [
+    '/login',
+    '/logout',
+    '/register',
+    '/me',
+    '/shop',
+    '/token/refresh',
+  ];
+  const usesRootApi = rootApiPrefixes.some((prefix) => path.startsWith(prefix));
+
+  if (!path.startsWith('/admin') && !usesRootApi) {
     path = `/admin${path}`;
   }
 

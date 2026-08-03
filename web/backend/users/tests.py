@@ -15,6 +15,20 @@ class FailingEmailBackend(BaseEmailBackend):
         raise OSError('SMTP is unavailable')
 
 
+class LogoutCookieTests(APITestCase):
+    @override_settings(DEBUG=False)
+    def test_logout_clears_cross_site_auth_cookies(self):
+        response = self.client.post('/api/logout/', {}, format='json')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        for cookie_name in (ACCESS_COOKIE, REFRESH_COOKIE):
+            cookie = response.cookies[cookie_name]
+            self.assertEqual(cookie['path'], '/api')
+            self.assertEqual(cookie['samesite'], 'None')
+            self.assertTrue(cookie['secure'])
+            self.assertEqual(cookie['max-age'], 0)
+
+
 @override_settings(
     EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend',
     DEFAULT_FROM_EMAIL='KIZUNA <no-reply@example.test>',
