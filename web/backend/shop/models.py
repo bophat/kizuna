@@ -193,3 +193,75 @@ class ConciergeMessage(models.Model):
 
     def __str__(self):
         return f'{self.session.session_id}: {self.role}'
+
+
+class StorePage(models.Model):
+    class ContentType(models.TextChoices):
+        MARKDOWN = 'markdown', 'Markdown'
+        HTML = 'html', 'HTML'
+
+    slug = models.SlugField(max_length=50, unique=True)
+    title = models.CharField(max_length=255)
+    content = models.TextField(blank=True, default='')
+    content_type = models.CharField(
+        max_length=10,
+        choices=ContentType.choices,
+        default=ContentType.MARKDOWN,
+    )
+    is_published = models.BooleanField(default=True)
+    updated_by = models.ForeignKey(
+        User,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='updated_store_pages',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['id']
+
+    def __str__(self):
+        return self.title
+
+
+class ContactInfo(models.Model):
+    phone = models.CharField(max_length=30, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
+    address = models.TextField(blank=True, default='')
+    working_hours = models.CharField(max_length=255, blank=True, default='')
+    facebook_url = models.URLField(max_length=500, blank=True, default='')
+    zalo_url = models.URLField(max_length=500, blank=True, default='')
+    instagram_url = models.URLField(max_length=500, blank=True, default='')
+    tiktok_url = models.URLField(max_length=500, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    def __str__(self):
+        return self.email or self.phone or 'Store contact information'
+
+
+class ContactMessage(models.Model):
+    class Status(models.TextChoices):
+        UNREAD = 'unread', 'Unread'
+        READ = 'read', 'Read'
+        REPLIED = 'replied', 'Replied'
+
+    name = models.CharField(max_length=100)
+    email = models.EmailField()
+    message = models.TextField()
+    status = models.CharField(
+        max_length=10,
+        choices=Status.choices,
+        default=Status.UNREAD,
+        db_index=True,
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f'{self.name} <{self.email}>'

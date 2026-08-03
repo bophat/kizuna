@@ -11,7 +11,30 @@
     "pricing": "Tính giá",
     "settings": "Cài đặt",
     "approvals": "Duyệt phản hồi",
-    "ai_discovery": "Khám phá bằng AI"
+    "ai_discovery": "Khám phá bằng AI",
+    "content_pages": "Trang nội dung"
+  },
+  "content_pages": {
+    "title": "Trang nội dung",
+    "description": "Chỉnh sửa các trang chính sách và thông tin liên hệ hiển thị trên website mà không cần deploy lại code.",
+    "page_list": "Danh sách trang",
+    "last_updated": "Cập nhật {{date}}",
+    "load_failed": "Không thể tải các trang nội dung.",
+    "saved": "Đã lưu trang thành công.",
+    "contact_saved": "Đã lưu thông tin liên hệ.",
+    "save_failed": "Không thể lưu thay đổi.",
+    "preview": "Xem trước",
+    "show_preview": "Hiện xem trước",
+    "hide_preview": "Ẩn xem trước",
+    "fields": { "title": "Tiêu đề trang", "content_type": "Định dạng nội dung", "published": "Đã xuất bản", "content": "Nội dung" },
+    "contact_title": "Thông tin liên hệ có cấu trúc",
+    "contact_description": "Các thông tin này được hiển thị kèm biểu tượng trên trang Liên hệ.",
+    "contact_fields": { "phone": "Số điện thoại", "email": "Email", "address": "Địa chỉ", "working_hours": "Giờ làm việc", "facebook_url": "Liên kết Facebook", "zalo_url": "Liên kết Zalo", "instagram_url": "Liên kết Instagram", "tiktok_url": "Liên kết TikTok" },
+    "messages_title": "Hộp thư liên hệ",
+    "messages_count": "{{count}} tin nhắn",
+    "no_messages": "Chưa có tin nhắn liên hệ.",
+    "unread": "Mới",
+    "status": { "unread": "Chưa đọc", "read": "Đã đọc", "replied": "Đã trả lời" }
   },
   "chat": {
     "title": "Live Chat",

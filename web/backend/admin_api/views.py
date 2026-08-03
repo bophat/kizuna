@@ -1,9 +1,18 @@
-from rest_framework import viewsets, permissions, status
+from rest_framework import mixins, viewsets, permissions, status
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
-from shop.models import Product, ProductStatus, Order, Category, UserProfile
+from shop.models import (
+    Category,
+    ContactInfo,
+    ContactMessage,
+    Order,
+    Product,
+    ProductStatus,
+    StorePage,
+    UserProfile,
+)
 from django.contrib.auth.models import User
 from django.db import transaction
 from django.conf import settings
@@ -16,7 +25,16 @@ import os
 from django.core.files.storage import default_storage
 
 from .models import Setting
-from .serializers import SettingSerializer, ProductSerializer, OrderSerializer, UserSerializer, CategorySerializer
+from .serializers import (
+    AdminContactInfoSerializer,
+    AdminContactMessageSerializer,
+    AdminStorePageSerializer,
+    CategorySerializer,
+    OrderSerializer,
+    ProductSerializer,
+    SettingSerializer,
+    UserSerializer,
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -113,6 +131,61 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
     queryset = Category.objects.annotate(product_count=Count('products')).all()
     serializer_class = CategorySerializer
     permission_classes = [permissions.IsAdminUser]
+
+
+class AdminStorePageViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = StorePage.objects.select_related('updated_by').all()
+    serializer_class = AdminStorePageSerializer
+    permission_classes = [permissions.IsAdminUser]
+    lookup_field = 'slug'
+    http_method_names = ['get', 'put', 'patch', 'head', 'options']
+
+    def perform_update(self, serializer):
+        serializer.save(updated_by=self.request.user)
+
+
+class AdminContactInfoView(APIView):
+    permission_classes = [permissions.IsAdminUser]
+
+    def get_object(self):
+        contact_info = ContactInfo.objects.order_by('id').first()
+        if contact_info is None:
+            contact_info = ContactInfo.objects.create()
+        return contact_info
+
+    def get(self, request):
+        return Response(AdminContactInfoSerializer(self.get_object()).data)
+
+    def put(self, request):
+        serializer = AdminContactInfoSerializer(self.get_object(), data=request.data)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request):
+        serializer = AdminContactInfoSerializer(
+            self.get_object(), data=request.data, partial=True
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class AdminContactMessageViewSet(
+    mixins.ListModelMixin,
+    mixins.RetrieveModelMixin,
+    mixins.UpdateModelMixin,
+    viewsets.GenericViewSet,
+):
+    queryset = ContactMessage.objects.all()
+    serializer_class = AdminContactMessageSerializer
+    permission_classes = [permissions.IsAdminUser]
+    http_method_names = ['get', 'patch', 'head', 'options']
 
 class DashboardStatsView(APIView):
     permission_classes = [permissions.IsAdminUser]

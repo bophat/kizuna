@@ -1,6 +1,19 @@
 from rest_framework import serializers
 from django.contrib.auth.models import User
-from .models import Cart, CartItem, Order, OrderItem, UserProfile, Product, Category, Favorite, ProductImage
+from .models import (
+    Cart,
+    CartItem,
+    Category,
+    ContactInfo,
+    ContactMessage,
+    Favorite,
+    Order,
+    OrderItem,
+    Product,
+    ProductImage,
+    StorePage,
+    UserProfile,
+)
 from .image_urls import resolve_image_url, resolve_product_image_url
 
 
@@ -139,3 +152,39 @@ class FavoriteSerializer(serializers.ModelSerializer):
     class Meta:
         model = Favorite
         fields = ['id', 'product', 'created_at']
+
+
+class StorePagePublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = StorePage
+        fields = ['slug', 'title', 'content', 'content_type', 'updated_at']
+
+
+class ContactInfoPublicSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactInfo
+        fields = [
+            'phone', 'email', 'address', 'working_hours',
+            'facebook_url', 'zalo_url', 'instagram_url', 'tiktok_url',
+            'updated_at',
+        ]
+
+
+class ContactMessageSubmitSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ['name', 'email', 'message']
+
+    def validate_name(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Name is required.')
+        return value
+
+    def validate_message(self, value):
+        value = value.strip()
+        if not value:
+            raise serializers.ValidationError('Message is required.')
+        if len(value) > 5000:
+            raise serializers.ValidationError('Message must not exceed 5000 characters.')
+        return value

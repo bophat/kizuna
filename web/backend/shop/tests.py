@@ -6,7 +6,7 @@ from django.test import TestCase
 from rest_framework.test import APIClient
 
 from .concierge_store import sessions_for_admin
-from .models import Category, ConciergeSession, Product
+from .models import Category, ConciergeSession, ContactInfo, ContactMessage, Product, StorePage
 
 
 class PublicCatalogLocalizationTests(TestCase):
@@ -166,3 +166,64 @@ class ConciergeCustomerIdentityTests(TestCase):
 
         admin_session = sessions_for_admin()['web_username']
         self.assertEqual(admin_session['customer_name'], 'hanako')
+
+
+class PublicStoreContentTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.page, _ = StorePage.objects.update_or_create(
+            slug='privacy-policy',
+            defaults={
+                'title': 'Privacy policy',
+                'content': '## Safe content',
+                'content_type': StorePage.ContentType.MARKDOWN,
+                'is_published': True,
+            },
+        )
+
+    def test_published_page_is_public(self):
+        response = self.client.get('/api/pages/privacy-policy/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['slug'], 'privacy-policy')
+        self.assertEqual(response.data['content'], '## Safe content')
+        self.assertNotIn('is_published', response.data)
+
+    def test_unpublished_page_returns_404(self):
+        self.page.is_published = False
+        self.page.save(update_fields=['is_published'])
+        response = self.client.get('/api/pages/privacy-policy/')
+        self.assertEqual(response.status_code, 404)
+
+    def test_contact_info_is_public(self):
+        info = ContactInfo.objects.order_by('id').first() or ContactInfo.objects.create()
+        info.phone = '+84 123 456 789'
+        info.email = 'hello@example.com'
+        info.instagram_url = 'https://www.instagram.com/kizuna'
+        info.tiktok_url = 'https://www.tiktok.com/@kizuna'
+        info.save()
+        response = self.client.get('/api/contact-info/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['phone'], '+84 123 456 789')
+        self.assertEqual(response.data['email'], 'hello@example.com')
+        self.assertEqual(response.data['instagram_url'], 'https://www.instagram.com/kizuna')
+        self.assertEqual(response.data['tiktok_url'], 'https://www.tiktok.com/@kizuna')
+
+    def test_contact_form_saves_message(self):
+        response = self.client.post(
+            '/api/contact/submit/',
+            {'name': 'Hanako', 'email': 'hanako@example.com', 'message': 'Please contact me.'},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 201)
+        message = ContactMessage.objects.get()
+        self.assertEqual(message.name, 'Hanako')
+        self.assertEqual(message.status, ContactMessage.Status.UNREAD)
+
+    def test_contact_form_rejects_empty_message(self):
+        response = self.client.post(
+            '/api/contact/submit/',
+            {'name': 'Hanako', 'email': 'hanako@example.com', 'message': '   '},
+            format='json',
+        )
+        self.assertEqual(response.status_code, 400)
+        self.assertFalse(ContactMessage.objects.exists())

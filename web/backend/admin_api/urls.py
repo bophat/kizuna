@@ -1,6 +1,17 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import SettingViewSet, AdminProductViewSet, AdminOrderViewSet, AdminUserViewSet, AdminCategoryViewSet, DashboardStatsView, BulkImportProductsView
+from .views import (
+    AdminCategoryViewSet,
+    AdminContactInfoView,
+    AdminContactMessageViewSet,
+    AdminOrderViewSet,
+    AdminProductViewSet,
+    AdminStorePageViewSet,
+    AdminUserViewSet,
+    BulkImportProductsView,
+    DashboardStatsView,
+    SettingViewSet,
+)
 from .views_product_images import ProductImageViewSet
 from product_sources.views import (
     BulkImportView,
@@ -40,8 +51,11 @@ router.register(r'product-images', ProductImageViewSet)
 router.register(r'pending-replies', PendingReplyViewSet, basename='pending-replies')
 router.register(r'trending-leads', TrendingProductLeadViewSet, basename='trending-leads')
 router.register(r'repost-logs', RepostLogViewSet, basename='repost-logs')
+router.register(r'pages', AdminStorePageViewSet, basename='admin-pages')
+router.register(r'contact-messages', AdminContactMessageViewSet, basename='admin-contact-messages')
 
 urlpatterns = [
+    path('contact-info/', AdminContactInfoView.as_view(), name='admin-contact-info'),
     path('products/import-csv/', BulkImportProductsView.as_view(), name='admin-import-csv'),
     path('products/import-source/preview/', PreviewImportView.as_view(), name='admin-import-source-preview'),
     path('products/import-source/', ImportSourceProductView.as_view(), name='admin-import-source'),

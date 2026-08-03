@@ -24,6 +24,7 @@ const Login = lazy(() => import('./pages/Login'));
 const Pricing = lazy(() => import('./pages/Pricing').then((module) => ({ default: module.Pricing })));
 const ApprovalQueue = lazy(() => import('./pages/ApprovalQueue'));
 const AiDiscovery = lazy(() => import('./pages/AiDiscovery'));
+const ContentPages = lazy(() => import('./pages/ContentPages'));
 
 function LoadingScreen() {
   const { t } = useTranslation();
@@ -89,6 +90,7 @@ function App() {
                     <Route path="/ai-discovery" element={<AiDiscovery />} />
                     <Route path="/pricing" element={<Pricing />} />
                     <Route path="/settings" element={<Settings />} />
+                    <Route path="/content-pages" element={<ContentPages />} />
                   </Routes>
                 </Layout>
               ) : (

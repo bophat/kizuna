@@ -292,6 +292,31 @@
     "send": "Gửi tin nhắn",
     "ask_kenji": "Hỏi Kenji"
   },
+  "static_pages": {
+    "updated_at": "Cập nhật lần cuối {{date}}",
+    "not_found": "Nội dung chưa khả dụng",
+    "not_found_description": "Trang này chưa được xuất bản hoặc đang tạm thời không khả dụng.",
+    "load_error": "Không thể tải trang",
+    "back_home": "Về trang chủ"
+  },
+  "contact": {
+    "title": "Liên hệ",
+    "information": "Thông tin liên hệ",
+    "information_description": "Hãy liên hệ với chúng tôi qua kênh thuận tiện nhất với bạn.",
+    "information_updating": "Thông tin liên hệ đang được cập nhật.",
+    "phone": "Điện thoại",
+    "email": "Email",
+    "address": "Địa chỉ",
+    "working_hours": "Giờ làm việc",
+    "form_title": "Gửi lời nhắn",
+    "form_description": "Để lại thông tin, đội ngũ KIZUNA sẽ phản hồi bạn sớm nhất có thể.",
+    "name": "Họ và tên",
+    "message": "Nội dung",
+    "send": "Gửi tin nhắn",
+    "sending": "Đang gửi...",
+    "form_success": "Cảm ơn bạn. Tin nhắn đã được tiếp nhận.",
+    "form_error": "Không thể gửi tin nhắn. Vui lòng thử lại sau."
+  },
   "footer": {
     "privacy": "Chính sách bảo mật",
     "terms": "Điều khoản dịch vụ",

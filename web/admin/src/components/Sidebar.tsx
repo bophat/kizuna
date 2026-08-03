@@ -14,6 +14,7 @@ import {
   Calculator,
   Sparkles,
   ShieldCheck,
+  FileText,
 } from 'lucide-react';
 import { cn } from '../lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
@@ -35,6 +36,7 @@ export function Sidebar() {
     { icon: Users, label: t('nav.users'), path: '/users' },
     { icon: UserSquare, label: t('nav.staff'), path: '/staff' },
     { icon: Calculator, label: t('nav.pricing'), path: '/pricing' },
+    { icon: FileText, label: t('nav.content_pages'), path: '/content-pages' },
     { icon: User, label: t('nav.profile'), path: '/profile' },
     { icon: SettingsIcon, label: t('nav.settings'), path: '/settings' },
   ];

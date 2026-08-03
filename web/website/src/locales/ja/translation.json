@@ -292,6 +292,31 @@
     "send": "メッセージを送信",
     "ask_kenji": "Kenjiに相談"
   },
+  "static_pages": {
+    "updated_at": "最終更新日 {{date}}",
+    "not_found": "コンテンツは利用できません",
+    "not_found_description": "このページはまだ公開されていないか、一時的に利用できません。",
+    "load_error": "ページを読み込めませんでした",
+    "back_home": "ホームに戻る"
+  },
+  "contact": {
+    "title": "お問い合わせ",
+    "information": "お問い合わせ先",
+    "information_description": "ご都合のよい方法でお問い合わせください。",
+    "information_updating": "連絡先情報を更新中です。",
+    "phone": "電話番号",
+    "email": "メール",
+    "address": "住所",
+    "working_hours": "営業時間",
+    "form_title": "メッセージを送る",
+    "form_description": "必要事項をご入力ください。担当者より折り返しご連絡いたします。",
+    "name": "お名前",
+    "message": "メッセージ",
+    "send": "送信する",
+    "sending": "送信中...",
+    "form_success": "お問い合わせを受け付けました。ありがとうございます。",
+    "form_error": "送信できませんでした。しばらくしてからもう一度お試しください。"
+  },
   "footer": {
     "privacy": "プライバシーポリシー",
     "terms": "利用規約",

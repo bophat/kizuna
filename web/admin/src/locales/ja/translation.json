@@ -11,7 +11,30 @@
     "pricing": "価格計算",
     "settings": "設定",
     "approvals": "承認キュー",
-    "ai_discovery": "AI商品発見"
+    "ai_discovery": "AI商品発見",
+    "content_pages": "コンテンツページ"
+  },
+  "content_pages": {
+    "title": "コンテンツページ",
+    "description": "デプロイせずにストアのポリシーページと連絡先情報を編集できます。",
+    "page_list": "ストアページ",
+    "last_updated": "更新日時 {{date}}",
+    "load_failed": "コンテンツページを読み込めませんでした。",
+    "saved": "ページを保存しました。",
+    "contact_saved": "連絡先情報を保存しました。",
+    "save_failed": "変更を保存できませんでした。",
+    "preview": "プレビュー",
+    "show_preview": "プレビューを表示",
+    "hide_preview": "プレビューを非表示",
+    "fields": { "title": "ページタイトル", "content_type": "コンテンツ形式", "published": "公開済み", "content": "コンテンツ" },
+    "contact_title": "連絡先情報",
+    "contact_description": "この情報はお問い合わせページにアイコン付きで表示されます。",
+    "contact_fields": { "phone": "電話番号", "email": "メール", "address": "住所", "working_hours": "営業時間", "facebook_url": "Facebook URL", "zalo_url": "Zalo URL", "instagram_url": "Instagram URL", "tiktok_url": "TikTok URL" },
+    "messages_title": "お問い合わせ受信箱",
+    "messages_count": "{{count}} 件のメッセージ",
+    "no_messages": "お問い合わせはまだありません。",
+    "unread": "新着",
+    "status": { "unread": "未読", "read": "既読", "replied": "返信済み" }
   },
   "chat": {
     "title": "ライブチャット",

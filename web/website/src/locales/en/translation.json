@@ -292,6 +292,31 @@
     "send": "Send message",
     "ask_kenji": "Ask Kenji"
   },
+  "static_pages": {
+    "updated_at": "Last updated {{date}}",
+    "not_found": "Content not available",
+    "not_found_description": "This page has not been published yet or is temporarily unavailable.",
+    "load_error": "Unable to load this page",
+    "back_home": "Back to home"
+  },
+  "contact": {
+    "title": "Contact",
+    "information": "Contact information",
+    "information_description": "Reach us through the channel that is most convenient for you.",
+    "information_updating": "Contact information is being updated.",
+    "phone": "Phone",
+    "email": "Email",
+    "address": "Address",
+    "working_hours": "Working hours",
+    "form_title": "Send us a message",
+    "form_description": "Leave your details and our team will get back to you as soon as possible.",
+    "name": "Your name",
+    "message": "Message",
+    "send": "Send message",
+    "sending": "Sending...",
+    "form_success": "Thank you. Your message has been received.",
+    "form_error": "Unable to send your message. Please try again later."
+  },
   "footer": {
     "privacy": "Privacy Policy",
     "terms": "Terms of Service",

@@ -1,5 +1,16 @@
 from rest_framework import serializers
-from shop.models import Product, Order, OrderItem, Category, UserProfile, ProductImage
+from shop.models import (
+    Category,
+    ContactInfo,
+    ContactMessage,
+    Order,
+    OrderItem,
+    Product,
+    ProductImage,
+    StorePage,
+    UserProfile,
+)
+from shop.content_sanitizer import sanitize_store_page_html
 from django.contrib.auth.models import User
 from .models import Setting, PendingReply, TrendingProductLead
 from .secrets import (
@@ -170,3 +181,50 @@ class TrendingProductLeadSerializer(serializers.ModelSerializer):
             'price_info', 'status', 'raw_data', 'created_at',
         ]
         read_only_fields = ['id', 'created_at']
+
+
+class AdminStorePageSerializer(serializers.ModelSerializer):
+    updated_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = StorePage
+        fields = [
+            'id', 'slug', 'title', 'content', 'content_type', 'is_published',
+            'updated_by_name', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'slug', 'updated_by_name', 'created_at', 'updated_at']
+
+    def get_updated_by_name(self, obj):
+        if not obj.updated_by:
+            return ''
+        return obj.updated_by.get_full_name().strip() or obj.updated_by.username
+
+    def validate(self, attrs):
+        content = attrs.get('content', getattr(self.instance, 'content', ''))
+        content_type = attrs.get(
+            'content_type',
+            getattr(self.instance, 'content_type', StorePage.ContentType.MARKDOWN),
+        )
+        if len(content) > 100_000:
+            raise serializers.ValidationError({'content': 'Content must not exceed 100000 characters.'})
+        if content_type == StorePage.ContentType.HTML:
+            attrs['content'] = sanitize_store_page_html(content)
+        return attrs
+
+
+class AdminContactInfoSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactInfo
+        fields = [
+            'phone', 'email', 'address', 'working_hours',
+            'facebook_url', 'zalo_url', 'instagram_url', 'tiktok_url',
+            'updated_at',
+        ]
+        read_only_fields = ['updated_at']
+
+
+class AdminContactMessageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ContactMessage
+        fields = ['id', 'name', 'email', 'message', 'status', 'created_at', 'updated_at']
+        read_only_fields = ['id', 'name', 'email', 'message', 'created_at', 'updated_at']

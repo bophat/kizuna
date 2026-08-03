@@ -11,7 +11,30 @@
     "pricing": "Pricing",
     "settings": "Settings",
     "approvals": "Approvals",
-    "ai_discovery": "AI Discovery"
+    "ai_discovery": "AI Discovery",
+    "content_pages": "Content pages"
+  },
+  "content_pages": {
+    "title": "Content pages",
+    "description": "Edit the policy pages and contact information shown on the storefront without deploying code.",
+    "page_list": "Store pages",
+    "last_updated": "Updated {{date}}",
+    "load_failed": "Unable to load content pages.",
+    "saved": "Page saved successfully.",
+    "contact_saved": "Contact information saved.",
+    "save_failed": "Unable to save changes.",
+    "preview": "Preview",
+    "show_preview": "Show preview",
+    "hide_preview": "Hide preview",
+    "fields": { "title": "Page title", "content_type": "Content format", "published": "Published", "content": "Content" },
+    "contact_title": "Structured contact information",
+    "contact_description": "These details are displayed with icons on the contact page.",
+    "contact_fields": { "phone": "Phone", "email": "Email", "address": "Address", "working_hours": "Working hours", "facebook_url": "Facebook URL", "zalo_url": "Zalo URL", "instagram_url": "Instagram URL", "tiktok_url": "TikTok URL" },
+    "messages_title": "Contact inbox",
+    "messages_count": "{{count}} messages",
+    "no_messages": "No contact messages yet.",
+    "unread": "New",
+    "status": { "unread": "Unread", "read": "Read", "replied": "Replied" }
   },
   "chat": {
     "title": "Live Chat",

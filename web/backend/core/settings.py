@@ -178,6 +178,7 @@ REST_FRAMEWORK = {
         'password_reset_confirm': '20/hour',
         'password_change_request': '5/hour',
         'concierge': '30/hour',
+        'contact_submit': '5/hour',
     },
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }

@@ -17,6 +17,8 @@ const CollectionPage = lazy(() => import('@/pages/Collection').then((module) => 
 const ConciergePage = lazy(() => import('@/pages/Concierge').then((module) => ({ default: module.ConciergePage })));
 const WishlistPage = lazy(() => import('@/pages/Wishlist').then((module) => ({ default: module.WishlistPage })));
 const ProductDetail = lazy(() => import('@/pages/ProductDetail').then((module) => ({ default: module.ProductDetail })));
+const StaticPage = lazy(() => import('@/pages/StaticPage').then((module) => ({ default: module.StaticPage })));
+const ContactPage = lazy(() => import('@/pages/Contact').then((module) => ({ default: module.ContactPage })));
 const NotFoundPage = lazy(() => import('@/pages/NotFound').then((module) => ({ default: module.NotFoundPage })));
 
 function wrap(page: ReactNode) {
@@ -53,6 +55,10 @@ export function AnimatedRoutes() {
             <Route path="/forgot-password" element={wrap(<ForgotPasswordPage />)} />
             <Route path="/reset-password" element={wrap(<ResetPasswordPage />)} />
             <Route path="/concierge" element={wrap(<ConciergePage />)} />
+            <Route path="/chinh-sach-bao-mat" element={wrap(<StaticPage slug="privacy-policy" />)} />
+            <Route path="/dieu-khoan-dich-vu" element={wrap(<StaticPage slug="terms-of-service" />)} />
+            <Route path="/giao-hang-va-tra-hang" element={wrap(<StaticPage slug="shipping-returns" />)} />
+            <Route path="/lien-he" element={wrap(<ContactPage />)} />
             <Route path="*" element={wrap(<NotFoundPage />)} />
           </Routes>
         </div>

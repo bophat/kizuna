@@ -14,14 +14,14 @@ export function Footer() {
         </Link>
         <div className="flex flex-wrap justify-center gap-8">
           {[
-            { key: 'privacy', label: t('footer.privacy') },
-            { key: 'terms', label: t('footer.terms') },
-            { key: 'shipping', label: t('footer.shipping') },
-            { key: 'contact', label: t('footer.contact') }
+            { key: 'privacy', label: t('footer.privacy'), to: '/chinh-sach-bao-mat' },
+            { key: 'terms', label: t('footer.terms'), to: '/dieu-khoan-dich-vu' },
+            { key: 'shipping', label: t('footer.shipping'), to: '/giao-hang-va-tra-hang' },
+            { key: 'contact', label: t('footer.contact'), to: '/lien-he' }
           ].map((item) => (
             <Link
               key={item.key}
-              to="#"
+              to={item.to}
               className="label-sm text-zinc-500 hover:text-primary transition-colors lowercase tracking-wider border-b border-transparent hover:border-primary pb-1"
             >
               {item.label}
