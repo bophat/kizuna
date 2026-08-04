@@ -22,6 +22,7 @@ from .concierge_views import (
 from .coupon_views import CouponValidateView
 from .affiliate_views import AffiliateDashboardView, AffiliateTrackView
 from .payment_views import PublicPaymentMethodsView, PaymentProofUploadView
+from .loyalty_views import LoyaltyDashboardView
 
 router = DefaultRouter()
 router.register(r'products', ProductViewSet, basename='product')
@@ -32,6 +33,7 @@ router.register(r'checkout', CheckoutViewSet, basename='checkout')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
 
 urlpatterns = [
+    path('loyalty/', LoyaltyDashboardView.as_view(), name='loyalty-dashboard'),
     path('payment-methods/', PublicPaymentMethodsView.as_view(), name='payment-methods'),
     path('orders/<int:order_id>/payment-proof/', PaymentProofUploadView.as_view(), name='payment-proof'),
     path('affiliates/track/', AffiliateTrackView.as_view(), name='affiliate-track'),

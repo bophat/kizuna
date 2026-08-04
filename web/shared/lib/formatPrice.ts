@@ -1,5 +1,6 @@
 /** Giá trong DB/API lưu theo USD */
 export const FREE_SHIPPING_MIN_USD = 100;
+export const DEFAULT_DISPLAY_CURRENCY = 'VND' as const;
 
 export const FALLBACK_RATES = {
   usdToVnd: 25_000,
@@ -48,34 +49,16 @@ function resolveRates(rates?: ExchangeRates): ExchangeRates {
 
 export function formatPrice(
   amountUsd: number | string,
-  locale?: string,
+  _locale?: string,
   rates?: ExchangeRates
 ): string {
   const usd = toUsd(amountUsd);
-  const lang = resolveLang(locale);
-  const { usdToVnd, usdToJpy } = resolveRates(rates);
-
-  switch (lang) {
-    case 'vi':
-      return new Intl.NumberFormat('vi-VN', {
-        style: 'currency',
-        currency: 'VND',
-        maximumFractionDigits: 0,
-      }).format(Math.round(usd * usdToVnd));
-    case 'ja':
-      return new Intl.NumberFormat('ja-JP', {
-        style: 'currency',
-        currency: 'JPY',
-        maximumFractionDigits: 0,
-      }).format(Math.round(usd * usdToJpy));
-    default:
-      return new Intl.NumberFormat('en-US', {
-        style: 'currency',
-        currency: 'USD',
-        minimumFractionDigits: 2,
-        maximumFractionDigits: 2,
-      }).format(usd);
-  }
+  const { usdToVnd } = resolveRates(rates);
+  return new Intl.NumberFormat('vi-VN', {
+    style: 'currency',
+    currency: DEFAULT_DISPLAY_CURRENCY,
+    maximumFractionDigits: 0,
+  }).format(Math.round(usd * usdToVnd));
 }
 
 export function formatPriceRangeLabel(
@@ -116,7 +99,7 @@ export function getPriceRangeLabel(
   return formatPriceRangeLabel(opt.min, opt.max, locale, rates);
 }
 
-/** Giá USD gốc (nhãn phụ khi hiển thị VND/JPY) */
+/** Giá USD gốc, chỉ dùng làm nhãn tham chiếu trong màn quản trị. */
 export function formatUsdRaw(amountUsd: number | string): string {
   const usd = toUsd(amountUsd);
   return new Intl.NumberFormat('en-US', {

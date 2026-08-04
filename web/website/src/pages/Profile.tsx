@@ -61,12 +61,26 @@ interface AffiliateDashboard {
   }>;
 }
 
+interface LoyaltyTransaction {
+  id: number;
+  order_id: number;
+  points_delta: number;
+  balance_after: number;
+  reason: 'order_delivered' | 'order_reversed';
+  created_at: string;
+}
+
+interface LoyaltyDashboard {
+  points: number;
+  transactions: LoyaltyTransaction[];
+}
+
 
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
-  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items' | 'affiliate'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items' | 'loyalty' | 'affiliate'>('info');
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -75,6 +89,7 @@ export function ProfilePage() {
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [affiliate, setAffiliate] = useState<AffiliateDashboard | null>(null);
+  const [loyalty, setLoyalty] = useState<LoyaltyDashboard | null>(null);
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -90,6 +105,7 @@ export function ProfilePage() {
     fetchProfile();
     fetchOrders();
     fetchAffiliate();
+    fetchLoyalty();
   }, [i18n.language]);
 
   const fetchProfile = async () => {
@@ -131,6 +147,15 @@ export function ProfilePage() {
     try {
       const response = await apiFetch('/shop/affiliates/me/');
       if (response.ok) setAffiliate(await response.json());
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const fetchLoyalty = async () => {
+    try {
+      const response = await apiFetch('/shop/loyalty/');
+      if (response.ok) setLoyalty(await response.json());
     } catch (error) {
       console.error(error);
     }
@@ -222,7 +247,7 @@ export function ProfilePage() {
             <h1 className="headline-xl">{t('profile.title')}</h1>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 border border-primary/10 rounded-full">
               <Star size={14} className="text-primary fill-primary" />
-              <span className="label-sm text-primary font-bold">{t('profile.points', { count: user?.profile?.points || 0 })}</span>
+              <span className="label-sm text-primary font-bold">{t('profile.points', { count: loyalty?.points ?? user?.profile?.points ?? 0 })}</span>
             </div>
           </div>
           <p className="body-md text-secondary max-w-2xl">
@@ -263,6 +288,14 @@ export function ProfilePage() {
           }`}
         >
           {t('profile.purchased_items', { count: purchasedItems.length })}
+        </button>
+        <button
+          onClick={() => setActiveTab('loyalty')}
+          className={`px-8 py-4 label-md tracking-normal border-b-2 transition-all whitespace-nowrap ${
+            activeTab === 'loyalty' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-primary'
+          }`}
+        >
+          {t('profile.loyalty.tab')}
         </button>
         {affiliate?.is_affiliate && (
           <button
@@ -502,10 +535,67 @@ export function ProfilePage() {
             </div>
           )}
 
+          {activeTab === 'loyalty' && (
+            <LoyaltyDashboardPanel loyalty={loyalty} />
+          )}
+
           {activeTab === 'affiliate' && affiliate?.is_affiliate && (
             <AffiliateDashboardPanel affiliate={affiliate} formatPrice={formatPrice} />
           )}
         </div>
+      </div>
+    </div>
+  );
+}
+
+function LoyaltyDashboardPanel({ loyalty }: { loyalty: LoyaltyDashboard | null }) {
+  const { t, i18n } = useTranslation();
+  const transactions = loyalty?.transactions || [];
+
+  return (
+    <div className="space-y-8">
+      <div className="grid gap-5 md:grid-cols-[minmax(0,280px)_1fr]">
+        <div className="rounded-sm border border-primary/20 bg-primary/5 p-7">
+          <div className="flex items-center gap-2 text-primary">
+            <Star size={19} className="fill-primary" />
+            <p className="label-sm">{t('profile.loyalty.balance')}</p>
+          </div>
+          <p className="mt-4 text-4xl font-bold text-primary">{loyalty?.points ?? 0}</p>
+          <p className="mt-1 body-sm text-secondary">{t('profile.loyalty.points_unit')}</p>
+        </div>
+        <div className="rounded-sm border border-surface-variant bg-surface-container/30 p-7">
+          <h2 className="headline-sm normal-case tracking-normal">{t('profile.loyalty.how_it_works')}</h2>
+          <p className="mt-3 body-md leading-relaxed text-secondary">{t('profile.loyalty.rule')}</p>
+          <p className="mt-2 body-sm leading-relaxed text-secondary">{t('profile.loyalty.reversal_rule')}</p>
+        </div>
+      </div>
+
+      <div className="overflow-hidden rounded-sm border border-surface-variant bg-white">
+        <div className="border-b border-surface-variant px-6 py-5">
+          <h2 className="font-semibold">{t('profile.loyalty.history')}</h2>
+        </div>
+        {transactions.length === 0 ? (
+          <p className="p-10 text-center body-sm text-secondary">{t('profile.loyalty.empty')}</p>
+        ) : (
+          <div className="divide-y divide-surface-variant">
+            {transactions.map((item) => (
+              <div key={item.id} className="flex flex-col gap-3 px-6 py-5 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                  <p className="font-semibold">{t(`profile.loyalty.reasons.${item.reason}`)}</p>
+                  <p className="mt-1 text-sm text-secondary">
+                    {t('profile.loyalty.order', { id: item.order_id })} · {new Date(item.created_at).toLocaleString(i18n.language)}
+                  </p>
+                </div>
+                <div className="sm:text-right">
+                  <p className={`text-lg font-bold ${item.points_delta > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                    {item.points_delta > 0 ? '+' : ''}{item.points_delta}
+                  </p>
+                  <p className="text-xs text-secondary">{t('profile.loyalty.balance_after', { count: item.balance_after })}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );

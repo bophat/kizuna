@@ -314,7 +314,23 @@
     "phone_placeholder": "+84 000 000 000",
     "order_number": "Đơn hàng #{{id}}",
     "more_items": "+{{count}} sản phẩm",
-    "payment_method": "Thanh toán"
+    "payment_method": "Thanh toán",
+    "loyalty": {
+      "tab": "Điểm thưởng",
+      "balance": "Số dư khả dụng",
+      "points_unit": "điểm thưởng",
+      "how_it_works": "Cách tính điểm",
+      "rule": "Nhận 1 điểm cho mỗi 25.000 VND tiền sản phẩm sau giảm giá. Phí vận chuyển không được tính điểm.",
+      "reversal_rule": "Điểm chỉ được cộng một lần khi đơn đã giao và sẽ bị thu hồi nếu trạng thái giao hàng bị hủy hoặc đơn bị hủy.",
+      "history": "Lịch sử điểm",
+      "empty": "Chưa có giao dịch điểm. Điểm sẽ xuất hiện sau khi đơn hàng đầu tiên được giao thành công.",
+      "order": "Đơn hàng #{{id}}",
+      "balance_after": "Số dư: {{count}} điểm",
+      "reasons": {
+        "order_delivered": "Cộng điểm từ đơn đã giao",
+        "order_reversed": "Thu hồi điểm từ đơn hàng"
+      }
+    }
   },
   "affiliate_dashboard": {
     "tab": "Cộng tác viên",

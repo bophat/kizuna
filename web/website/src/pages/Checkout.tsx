@@ -13,7 +13,6 @@ import { ProductImage } from '@/components/products/ProductImage';
 import { getAffiliateCode } from '@/lib/affiliate';
 
 const STEPS = ['information', 'shipping', 'payment', 'success'] as const;
-const SHIPPING_USD = 75;
 
 type AppliedCoupon = {
   code: string;
@@ -613,7 +612,7 @@ export function CheckoutPage() {
             <div className="border-t border-zinc-800 pt-6 flex justify-between items-baseline">
               <span className="headline-md text-white">{t('cart.total')}</span>
               <div className="text-right">
-                <span className="label-sm text-zinc-500 mr-2">USD</span>
+                <span className="label-sm text-zinc-500 mr-2">VND</span>
                 <span className="headline-lg text-white">{formatPrice(total)}</span>
               </div>
             </div>

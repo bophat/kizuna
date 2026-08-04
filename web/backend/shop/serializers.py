@@ -7,6 +7,7 @@ from .models import (
     ContactInfo,
     ContactMessage,
     Favorite,
+    LoyaltyPointTransaction,
     Order,
     OrderItem,
     PaymentMethodConfig,
@@ -94,6 +95,17 @@ class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
         fields = ['phone', 'address', 'points']
+
+
+class LoyaltyPointTransactionSerializer(serializers.ModelSerializer):
+    order_id = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = LoyaltyPointTransaction
+        fields = [
+            'id', 'order_id', 'points_delta', 'balance_after', 'reason',
+            'created_at',
+        ]
 
 class UserSerializer(serializers.ModelSerializer):
     profile = UserProfileSerializer(read_only=True)

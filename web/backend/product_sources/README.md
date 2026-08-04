@@ -99,16 +99,23 @@ It accepts up to 50 manually entered source URLs and product payloads, calculate
 prices with `ProductPricingService`, renders the same storefront preview, and
 stores selected products with provider `manual` and status `draft`.
 
+The storefront always displays selling prices in VND. Imported source prices may
+be JPY, USD, or VND; the pricing service first normalizes them to VND and then
+applies the sourcing buffer, shipping, and markup. Unsupported currencies fail
+clearly instead of being treated as JPY. The existing product/order amount stored
+in the API remains canonical USD for backward compatibility and is converted to
+VND only at display and settlement boundaries.
+
 ```bash
 curl -X POST http://localhost:8000/api/admin/products/import-manual/preview/ \
   -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"items":[{"source_url":"https://www.amazon.co.jp/dp/B07HG6S41K","sku":"MANUAL-001","name":"Manual product","source_price_jpy":"3980","category_id":1,"weight_kg":"0.30","stock":1}],"image_mode":"remote"}'
+  -d '{"items":[{"source_url":"https://www.amazon.co.jp/dp/B07HG6S41K","sku":"MANUAL-001","name":"Manual product","source_price_jpy":"3980","source_currency":"JPY","category_id":1,"weight_kg":"0.30","stock":1}],"image_mode":"remote"}'
 
 curl -X POST http://localhost:8000/api/admin/products/import-manual/bulk/ \
   -H "Authorization: Bearer $ADMIN_ACCESS_TOKEN" \
   -H 'Content-Type: application/json' \
-  -d '{"items":[{"source_url":"https://www.amazon.co.jp/dp/B07HG6S41K","sku":"MANUAL-001","name":"Manual product","source_price_jpy":"3980","category_id":1,"weight_kg":"0.30","stock":1}],"image_mode":"remote"}'
+  -d '{"items":[{"source_url":"https://www.amazon.co.jp/dp/B07HG6S41K","sku":"MANUAL-001","name":"Manual product","source_price_jpy":"3980","source_currency":"JPY","category_id":1,"weight_kg":"0.30","stock":1}],"image_mode":"remote"}'
 ```
 
 ```bash

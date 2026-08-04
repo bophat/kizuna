@@ -1,3 +1,4 @@
+from decimal import Decimal
 from unittest.mock import patch
 from django.contrib.auth import get_user_model
 from django.test import override_settings
@@ -241,6 +242,48 @@ class ImportApiViewsTests(APITestCase):
             response.status_code,
             (status.HTTP_401_UNAUTHORIZED, status.HTTP_403_FORBIDDEN),
         )
+
+    def test_manual_import_converts_usd_source_price_to_vnd(self):
+        self.client.force_authenticate(user=self.admin_user)
+        payload = {
+            'items': [
+                {
+                    'source_url': 'https://www.amazon.co.jp/dp/USD-001',
+                    'sku': 'USD-001',
+                    'name': 'USD source product',
+                    'source_price_jpy': '10.00',
+                    'source_currency': 'USD',
+                    'category_id': self.category.id,
+                    'weight_kg': '0.30',
+                    'stock': 1,
+                },
+            ],
+            'image_mode': ImageMode.SKIP,
+        }
+
+        preview_response = self.client.post(
+            self.manual_preview_url,
+            payload,
+            format='json',
+        )
+        self.assertEqual(preview_response.status_code, status.HTTP_200_OK)
+        preview = preview_response.data['items'][0]['preview']
+        self.assertEqual(preview['source']['source_currency'], 'USD')
+        self.assertEqual(preview['source']['source_price'], '10.00')
+        self.assertIsNone(preview['source']['source_price_jpy'])
+        self.assertEqual(preview['pricing']['source_price_vnd'], '250000.00')
+
+        import_response = self.client.post(
+            self.manual_bulk_url,
+            payload,
+            format='json',
+        )
+        self.assertEqual(import_response.status_code, status.HTTP_200_OK)
+        self.assertEqual(import_response.data['succeeded'], 1)
+
+        product = Product.objects.get(pk='MAN-USD-001')
+        self.assertEqual(product.source_info.source_currency, 'USD')
+        self.assertEqual(product.source_info.source_price_jpy, Decimal('10.00'))
 
     def test_csv_import_with_provider_url(self):
         self.client.force_authenticate(user=self.admin_user)

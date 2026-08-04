@@ -314,7 +314,23 @@
     "phone_placeholder": "+1 000 000 0000",
     "order_number": "Order #{{id}}",
     "more_items": "+{{count}} more",
-    "payment_method": "Payment"
+    "payment_method": "Payment",
+    "loyalty": {
+      "tab": "Reward Points",
+      "balance": "Available balance",
+      "points_unit": "reward points",
+      "how_it_works": "How points work",
+      "rule": "Earn 1 point for every 25,000 VND spent on products after discounts. Shipping fees do not earn points.",
+      "reversal_rule": "Points are credited once an order is delivered and removed if its delivery is reversed or the order is cancelled.",
+      "history": "Points history",
+      "empty": "No points transactions yet. Points will appear after your first delivered order.",
+      "order": "Order #{{id}}",
+      "balance_after": "Balance: {{count}} points",
+      "reasons": {
+        "order_delivered": "Points earned from delivered order",
+        "order_reversed": "Points reversed from order"
+      }
+    }
   },
   "affiliate_dashboard": {
     "tab": "Affiliate",

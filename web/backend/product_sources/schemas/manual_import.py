@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Literal
 
 from pydantic import BaseModel, Field, HttpUrl, field_validator
 
@@ -11,6 +12,7 @@ class ManualProductInput(BaseModel):
     name: str = Field(min_length=1, max_length=200)
     description: str = Field(default='', max_length=10_000)
     source_price_jpy: Decimal = Field(ge=0)
+    source_currency: Literal['JPY', 'USD', 'VND'] = 'JPY'
     category_id: int = Field(gt=0)
     weight_kg: Decimal = Field(default=Decimal('0.30'), ge=0)
     stock: int = Field(default=1, ge=0)

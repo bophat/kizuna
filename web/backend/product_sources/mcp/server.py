@@ -156,18 +156,22 @@ def calculate_product_price(
     source_price_jpy: str,
     weight_kg: str,
     usd_vnd_rate: str = "25500",
+    source_currency: str = "JPY",
 ) -> dict:
     """
-    Calculate selling price (USD/VND) from JPY price and weight using the system's pricing formula.
+    Convert a JPY, USD or VND source price to VND and calculate the selling price.
     """
     pricing_service = ProductPricingService()
     res = pricing_service.calculate(
         source_price_jpy=Decimal(source_price_jpy),
+        source_currency=source_currency,
         weight_kg=Decimal(weight_kg),
         usd_vnd_rate=Decimal(usd_vnd_rate),
     )
     return {
         "source_price_jpy": str(res.source_price_jpy),
+        "source_currency": res.source_currency,
+        "source_price_vnd": str(res.source_price_vnd),
         "import_cost_vnd": str(res.import_cost_vnd),
         "shipping_vnd": str(res.shipping_vnd),
         "selling_price_vnd": str(res.selling_price_vnd),

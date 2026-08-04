@@ -17,6 +17,8 @@ class PricingConfig:
 @dataclass(frozen=True)
 class PricingResult:
     source_price_jpy: Decimal
+    source_currency: str
+    source_price_vnd: Decimal
     import_cost_vnd: Decimal
     shipping_vnd: Decimal
     selling_price_vnd: Decimal
@@ -46,6 +48,7 @@ class ProductPricingService:
         source_price_jpy: Decimal,
         weight_kg: Decimal,
         usd_vnd_rate: Decimal,
+        source_currency: str = 'JPY',
         config: PricingConfig | None = None,
     ) -> PricingResult:
         config = config or get_pricing_config()
@@ -57,7 +60,20 @@ class ProductPricingService:
         if usd_vnd_rate <= 0:
             raise ValueError('usd_vnd_rate must be > 0')
 
-        import_cost_vnd = (source_price_jpy + config.jpy_buffer) * config.jpy_to_vnd_rate
+        source_currency = str(source_currency or 'JPY').strip().upper()
+        source_to_vnd_rate = {
+            'JPY': config.jpy_to_vnd_rate,
+            'USD': usd_vnd_rate,
+            'VND': Decimal('1'),
+        }.get(source_currency)
+        if source_to_vnd_rate is None:
+            raise ValueError(
+                f'Unsupported source currency: {source_currency}. Use JPY, USD or VND.'
+            )
+
+        source_price_vnd = source_price_jpy * source_to_vnd_rate
+        source_buffer_vnd = config.jpy_buffer * config.jpy_to_vnd_rate
+        import_cost_vnd = source_price_vnd + source_buffer_vnd
 
         if weight_kg > config.heavy_weight_threshold_kg:
             shipping_vnd = weight_kg * config.heavy_shipping_per_kg_vnd
@@ -71,6 +87,8 @@ class ProductPricingService:
 
         return PricingResult(
             source_price_jpy=source_price_jpy,
+            source_currency=source_currency,
+            source_price_vnd=source_price_vnd,
             import_cost_vnd=import_cost_vnd,
             shipping_vnd=shipping_vnd,
             selling_price_vnd=selling_price_vnd,
@@ -78,6 +96,11 @@ class ProductPricingService:
             calculation_snapshot={
                 'jpy_buffer': str(config.jpy_buffer),
                 'jpy_to_vnd_rate': str(config.jpy_to_vnd_rate),
+                'source_currency': source_currency,
+                'source_price': str(source_price_jpy),
+                'source_to_vnd_rate': str(source_to_vnd_rate),
+                'source_price_vnd': str(source_price_vnd),
+                'source_buffer_vnd': str(source_buffer_vnd),
                 'markup_rate': str(config.markup_rate),
                 'light_shipping_vnd': str(config.light_shipping_vnd),
                 'heavy_shipping_per_kg_vnd': str(config.heavy_shipping_per_kg_vnd),

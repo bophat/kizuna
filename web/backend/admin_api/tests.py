@@ -12,10 +12,12 @@ from shop.models import (
     ContactInfo,
     ContactMessage,
     Coupon,
+    LoyaltyPointTransaction,
     Order,
     PaymentMethodConfig,
     PaymentTransaction,
     StorePage,
+    UserProfile,
 )
 from shop.affiliate_payout_details import encrypt_payout_details
 
@@ -350,3 +352,88 @@ class AdminPaymentTests(TestCase):
         paid_response = self.client.get('/api/admin/notifications/feed/')
         paid_events = {item.get('event') for item in paid_response.data}
         self.assertIn('payment_succeeded', paid_events)
+
+
+class AdminLoyaltyPointTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_user(
+            username='loyalty-admin',
+            email='loyalty-admin@example.com',
+            password='test-password-123',
+            is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username='loyalty-customer',
+            email='loyalty-customer@example.com',
+        )
+        self.order = Order.objects.create(
+            user=self.customer,
+            status='shipped',
+            payment_method='cod',
+            subtotal_amount=Decimal('25.90'),
+            shipping_amount=Decimal('10.00'),
+            discount_amount=Decimal('5.20'),
+            total_amount=Decimal('30.70'),
+        )
+        self.client.force_authenticate(user=self.admin)
+
+    def test_delivery_awards_net_product_points_once_and_reversal_removes_them(self):
+        delivered = self.client.patch(
+            f'/api/admin/orders/{self.order.id}/',
+            {'status': 'delivered'},
+            format='json',
+        )
+
+        self.assertEqual(delivered.status_code, 200)
+        profile = UserProfile.objects.get(user=self.customer)
+        self.order.refresh_from_db()
+        self.assertEqual(profile.points, 20)
+        self.assertEqual(self.order.loyalty_points, 20)
+        self.assertTrue(self.order.loyalty_points_active)
+        self.assertEqual(
+            list(LoyaltyPointTransaction.objects.values_list('points_delta', flat=True)),
+            [20],
+        )
+
+        repeated = self.client.patch(
+            f'/api/admin/orders/{self.order.id}/',
+            {'status': 'delivered'},
+            format='json',
+        )
+        self.assertEqual(repeated.status_code, 200)
+        profile.refresh_from_db()
+        self.assertEqual(profile.points, 20)
+        self.assertEqual(LoyaltyPointTransaction.objects.count(), 1)
+
+        reversed_delivery = self.client.patch(
+            f'/api/admin/orders/{self.order.id}/',
+            {'status': 'cancelled'},
+            format='json',
+        )
+        self.assertEqual(reversed_delivery.status_code, 200)
+        profile.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(profile.points, 0)
+        self.assertFalse(self.order.loyalty_points_active)
+        self.assertEqual(
+            list(LoyaltyPointTransaction.objects.values_list('points_delta', flat=True)),
+            [-20, 20],
+        )
+
+    def test_customer_loyalty_endpoint_returns_balance_and_history(self):
+        self.client.patch(
+            f'/api/admin/orders/{self.order.id}/',
+            {'status': 'delivered'},
+            format='json',
+        )
+        self.client.force_authenticate(user=self.customer)
+
+        response = self.client.get('/api/shop/loyalty/')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['points'], 20)
+        self.assertEqual(response.data['earn_rate']['currency'], 'VND')
+        self.assertEqual(response.data['earn_rate']['amount'], 25000)
+        self.assertEqual(response.data['transactions'][0]['order_id'], self.order.id)
+        self.assertEqual(response.data['transactions'][0]['points_delta'], 20)

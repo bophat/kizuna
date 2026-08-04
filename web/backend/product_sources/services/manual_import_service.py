@@ -90,10 +90,12 @@ class ManualImportService:
         )
         pricing = self.pricing_service.calculate(
             source_price_jpy=item.source_price_jpy,
+            source_currency=item.source_currency,
             weight_kg=item.weight_kg,
             usd_vnd_rate=Decimal(str(settings.USD_VND_RATE)),
         )
         pricing_preview = PricingPreview(
+            source_price_vnd=str(pricing.source_price_vnd),
             import_cost_vnd=str(pricing.import_cost_vnd),
             shipping_vnd=str(pricing.shipping_vnd),
             selling_price_vnd=str(pricing.selling_price_vnd),
@@ -127,7 +129,13 @@ class ManualImportService:
                 status=ProductStatus.DRAFT,
             ),
             source=SourcePreviewInfo(
-                source_price_jpy=str(item.source_price_jpy),
+                source_price=str(item.source_price_jpy),
+                source_currency=item.source_currency,
+                source_price_jpy=(
+                    str(item.source_price_jpy)
+                    if item.source_currency == 'JPY'
+                    else None
+                ),
                 availability=SourceAvailability.UNKNOWN,
                 images=[str(item.image_url)] if item.image_url is not None else [],
             ),
@@ -254,7 +262,7 @@ class ManualImportService:
                     source_url=str(item.source_url),
                     canonical_url=str(item.source_url),
                     source_price_jpy=item.source_price_jpy,
-                    source_currency='JPY',
+                    source_currency=item.source_currency,
                     source_availability=SourceAvailability.UNKNOWN,
                     source_stock_quantity=item.stock,
                     external_image_url=external_image_url,

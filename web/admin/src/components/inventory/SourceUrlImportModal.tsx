@@ -47,11 +47,14 @@ export interface ImportPreview {
     is_new: boolean;
   };
   source: {
+    source_price: string | null;
+    source_currency: 'JPY' | 'USD' | 'VND';
     source_price_jpy: string | null;
     availability: string;
     images: string[];
   };
   pricing: {
+    source_price_vnd: string;
     import_cost_vnd: string;
     shipping_vnd: string;
     selling_price_vnd: string;

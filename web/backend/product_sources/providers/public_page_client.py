@@ -643,10 +643,10 @@ class PublicPageProductClient:
             or parser.first_meta('product:price:currency')
             or 'JPY'
         ).upper()
-        if source_price is not None and source_currency != 'JPY':
+        if source_price is not None and source_currency not in {'JPY', 'USD', 'VND'}:
             raise ProviderTemporaryError(
-                'Trang sản phẩm trả giá không phải JPY; đã dừng import để tránh '
-                'tính sai giá.',
+                'Đơn vị tiền trên trang sản phẩm chưa được hỗ trợ; chỉ chấp nhận '
+                'JPY, USD hoặc VND.',
                 details={
                     'provider': provider,
                     'source_product_id': source_product_id,

@@ -90,12 +90,18 @@ class SyncService:
             }
 
         old_source_price = source.source_price_jpy
+        old_source_currency = source.source_currency
         new_source_price = normalized.source_price
+        new_source_currency = normalized.source_currency
         previous_product_price = source.product.price
         warnings: list[str] = []
         updates: dict = {}
         price_changed = (
-            new_source_price is not None and new_source_price != old_source_price
+            new_source_price is not None
+            and (
+                new_source_price != old_source_price
+                or new_source_currency != old_source_currency
+            )
         )
         calculated_price = previous_product_price
         calculation_snapshot: dict = {}
@@ -109,13 +115,21 @@ class SyncService:
             else:
                 pricing = self.pricing_service.calculate(
                     source_price_jpy=new_source_price,
+                    source_currency=new_source_currency,
                     weight_kg=weight,
                     usd_vnd_rate=Decimal(str(settings.USD_VND_RATE)),
                 )
                 calculated_price = pricing.selling_price_usd
                 calculation_snapshot = pricing.calculation_snapshot
 
-                if old_source_price is None or old_source_price <= 0:
+                if new_source_currency != old_source_currency:
+                    warnings.append(
+                        'Đơn vị tiền nguồn đã thay đổi; sản phẩm cần admin kiểm tra.'
+                    )
+                    updates['status'] = ProductStatus.REVIEW
+                    if update_product_price:
+                        updates['price'] = calculated_price
+                elif old_source_price is None or old_source_price <= 0:
                     warnings.append('Chưa có giá nguồn trước đó để tính phần trăm thay đổi.')
                     updates['status'] = ProductStatus.REVIEW
                 else:

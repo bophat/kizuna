@@ -103,10 +103,12 @@ class SourceImportService:
         else:
             pricing_result = self.pricing_service.calculate(
                 source_price_jpy=normalized.source_price,
+                source_currency=normalized.source_currency,
                 weight_kg=weight,
                 usd_vnd_rate=Decimal(str(settings.USD_VND_RATE)),
             )
             pricing_preview = PricingPreview(
+                source_price_vnd=str(pricing_result.source_price_vnd),
                 import_cost_vnd=str(pricing_result.import_cost_vnd),
                 shipping_vnd=str(pricing_result.shipping_vnd),
                 selling_price_vnd=str(pricing_result.selling_price_vnd),
@@ -144,8 +146,15 @@ class SourceImportService:
                 status=ProductStatus.DRAFT,
             ),
             source=SourcePreviewInfo(
-                source_price_jpy=(
+                source_price=(
                     str(normalized.source_price) if normalized.source_price is not None else None
+                ),
+                source_currency=normalized.source_currency,
+                source_price_jpy=(
+                    str(normalized.source_price)
+                    if normalized.source_price is not None
+                    and normalized.source_currency == 'JPY'
+                    else None
                 ),
                 availability=normalized.availability,
                 images=[str(image.url) for image in normalized.images],

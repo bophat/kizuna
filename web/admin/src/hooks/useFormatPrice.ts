@@ -17,24 +17,18 @@ export function useFormatPrice() {
 
   const formatUsd = useCallback((amountUsd: number | string) => formatUsdRaw(amountUsd), []);
 
-  /** Hiển thị theo locale + ghi chú USD khi không phải en */
+  /** Giá bán chính luôn hiển thị bằng VND; USD chỉ là đơn vị nội bộ. */
   const formatValuation = useCallback(
     (amountUsd: number | string) => {
       const localized = format(amountUsd);
-      const code = locale.split('-')[0];
-      if (code === 'en') return localized;
       return localized;
     },
-    [format, locale]
+    [format]
   );
 
   const formatValuationSub = useCallback(
-    (amountUsd: number | string) => {
-      const code = locale.split('-')[0];
-      if (code === 'en') return null;
-      return formatUsd(amountUsd);
-    },
-    [formatUsd, locale]
+    (amountUsd: number | string) => formatUsd(amountUsd),
+    [formatUsd]
   );
 
   return { format, formatUsd, formatValuation, formatValuationSub, locale, rates };

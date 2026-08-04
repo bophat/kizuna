@@ -17,12 +17,15 @@ class ProductPayloadPreview(BaseModel):
 
 
 class SourcePreviewInfo(BaseModel):
+    source_price: str | None = None
+    source_currency: str = 'JPY'
     source_price_jpy: str | None = None
     availability: str = 'unknown'
     images: list[str] = Field(default_factory=list)
 
 
 class PricingPreview(BaseModel):
+    source_price_vnd: str
     import_cost_vnd: str
     shipping_vnd: str
     selling_price_vnd: str

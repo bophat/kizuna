@@ -35,6 +35,7 @@ interface ManualDraft {
   name: string;
   description: string;
   source_price_jpy: string;
+  source_currency: 'JPY' | 'USD' | 'VND';
   category_id: string;
   weight_kg: string;
   stock: string;
@@ -85,6 +86,7 @@ function createDraft(categoryId = ''): ManualDraft {
     name: '',
     description: '',
     source_price_jpy: '',
+    source_currency: 'JPY',
     category_id: categoryId,
     weight_kg: '0.30',
     stock: '1',
@@ -268,6 +270,7 @@ export function ManualProductImportModal({
     name: draft.name.trim(),
     description: draft.description.trim(),
     source_price_jpy: draft.source_price_jpy,
+    source_currency: draft.source_currency,
     category_id: Number(draft.category_id),
     weight_kg: draft.weight_kg || '0',
     stock: Math.max(0, Number(draft.stock) || 0),
@@ -663,6 +666,20 @@ export function ManualProductImportModal({
                             onChange={(event) => updateDraft('source_price_jpy', event.target.value)}
                             className="w-full border border-brand-clay px-3 py-3 text-sm outline-none focus:border-brand-red"
                           />
+                        </label>
+                        <label className="space-y-2">
+                          <span className="text-xs font-bold uppercase tracking-wider text-brand-ink/50">
+                            {t('inventory.manual_import.source_currency')} *
+                          </span>
+                          <select
+                            value={activeDraft.source_currency}
+                            onChange={(event) => updateDraft('source_currency', event.target.value as ManualDraft['source_currency'])}
+                            className="w-full border border-brand-clay px-3 py-3 text-sm outline-none focus:border-brand-red"
+                          >
+                            <option value="JPY">JPY — ¥</option>
+                            <option value="USD">USD — $</option>
+                            <option value="VND">VND — ₫</option>
+                          </select>
                         </label>
                         <label className="space-y-2">
                           <span className="text-xs font-bold uppercase tracking-wider text-brand-ink/50">

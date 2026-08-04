@@ -39,6 +39,9 @@ class ManualProductInputSerializer(serializers.Serializer):
     source_price_jpy = serializers.DecimalField(
         max_digits=14, decimal_places=2, min_value=0,
     )
+    source_currency = serializers.ChoiceField(
+        choices=('JPY', 'USD', 'VND'), default='JPY',
+    )
     category_id = serializers.IntegerField(min_value=1)
     weight_kg = serializers.DecimalField(
         max_digits=6, decimal_places=2, default=0.30, min_value=0,

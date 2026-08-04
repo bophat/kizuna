@@ -279,11 +279,40 @@ class Order(models.Model):
     )
     payment_receipt = models.ImageField(upload_to='receipts/', null=True, blank=True)
     admin_notes = models.TextField(null=True, blank=True)
+    loyalty_points = models.PositiveIntegerField(default=0)
+    loyalty_points_active = models.BooleanField(default=False, db_index=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"Order #{self.id} by {self.user.username}"
+
+
+class LoyaltyPointTransaction(models.Model):
+    class Reason(models.TextChoices):
+        ORDER_DELIVERED = 'order_delivered', 'Order delivered'
+        ORDER_REVERSED = 'order_reversed', 'Order delivery reversed'
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='loyalty_point_transactions',
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.CASCADE,
+        related_name='loyalty_point_transactions',
+    )
+    points_delta = models.IntegerField()
+    balance_after = models.PositiveIntegerField()
+    reason = models.CharField(max_length=30, choices=Reason.choices, db_index=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
+
+    def __str__(self):
+        return f'{self.points_delta:+d} points for order #{self.order_id}'
 
 
 class PaymentMethodConfig(models.Model):

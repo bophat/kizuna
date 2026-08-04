@@ -42,3 +42,8 @@ class ProviderProduct(BaseModel):
         if v is not None and v < 0:
             raise ValueError('source_price must be >= 0')
         return v
+
+    @field_validator('source_currency', mode='before')
+    @classmethod
+    def normalize_source_currency(cls, value):
+        return str(value or 'JPY').strip().upper()

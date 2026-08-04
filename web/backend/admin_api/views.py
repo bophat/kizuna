@@ -49,6 +49,7 @@ from .serializers import (
     PaymentMethodConfigSerializer,
 )
 from shop.affiliates import refresh_available_commissions, sync_order_commission
+from shop.loyalty import sync_order_loyalty_points
 from shop.payments import expire_payment, expire_pending_payments, restore_order_inventory
 
 import logging
@@ -156,6 +157,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                             product.save()
                 order = serializer.save()
                 sync_order_commission(order, old_status)
+                sync_order_loyalty_points(order)
             return
         serializer.save()
 
