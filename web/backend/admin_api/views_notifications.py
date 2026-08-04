@@ -38,7 +38,7 @@ class AdminNotificationFeedView(APIView):
                 'event': 'order_cod_ready',
                 'order_id': order.id,
                 'title': 'Đơn COD cần đóng gói',
-                'message': f'Đơn #{order.id} - Tổng: {order.total_amount}',
+                'message': f'Đơn {order.order_code} - Tổng: {order.total_amount}',
                 'data': {'order_id': order.id, 'amount': str(order.total_amount)},
                 'timestamp': order.created_at.isoformat(),
             })
@@ -62,7 +62,7 @@ class AdminNotificationFeedView(APIView):
                 'event': 'payment_proof_submitted',
                 'order_id': payment.order_id,
                 'title': 'Khách đã gửi biên lai',
-                'message': f'Đơn #{payment.order_id} cần xác minh thanh toán.',
+                'message': f'Đơn {payment.order.order_code} cần xác minh thanh toán.',
                 'data': {
                     'order_id': payment.order_id,
                     'amount': str(payment.settlement_amount),
@@ -78,7 +78,7 @@ class AdminNotificationFeedView(APIView):
                 'event': 'payment_succeeded',
                 'order_id': payment.order_id,
                 'title': 'Thanh toán thành công',
-                'message': f'Đơn #{payment.order_id} đã sẵn sàng để đóng gói.',
+                'message': f'Đơn {payment.order.order_code} đã sẵn sàng để đóng gói.',
                 'data': {
                     'order_id': payment.order_id,
                     'amount': str(payment.settlement_amount),

@@ -39,6 +39,14 @@ const STATUS_CONFIG: Record<string, { color: string, icon: any, key: string }> =
   'cancelled': { color: 'bg-red-500', icon: XCircle, key: 'cancelled' }
 };
 
+const NEXT_ORDER_STATUSES: Record<string, string[]> = {
+  pending: ['processing', 'cancelled'],
+  processing: ['shipped', 'cancelled'],
+  shipped: ['delivered', 'cancelled'],
+  delivered: [],
+  cancelled: [],
+};
+
 export default function Orders() {
   const { t, i18n } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
@@ -96,7 +104,11 @@ export default function Orders() {
           setSelectedOrder(updatedOrder);
         }
       } else {
-        alert(t('orders.errors.update_failed'));
+        const payload = await response.json().catch(() => ({}));
+        const message = Array.isArray(payload?.status)
+          ? payload.status[0]
+          : payload?.status || payload?.detail || t('orders.errors.update_failed');
+        alert(message);
       }
     } catch (err) {
       console.error(err);
@@ -131,10 +143,13 @@ export default function Orders() {
   };
 
   const filteredOrders = orders.filter(order => {
+    const normalizedSearch = searchQuery.toLowerCase();
     const matchesSearch = 
       order.id.toString().includes(searchQuery) ||
-      order.customer_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      order.email?.toLowerCase().includes(searchQuery.toLowerCase());
+      order.order_code?.toLowerCase().includes(normalizedSearch) ||
+      order.customer_name?.toLowerCase().includes(normalizedSearch) ||
+      order.email?.toLowerCase().includes(normalizedSearch) ||
+      order.user_details?.email?.toLowerCase().includes(normalizedSearch);
     const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
@@ -242,7 +257,7 @@ export default function Orders() {
                         onClick={() => handleOpenDetails(order)}
                       >
                         <td className="px-6 py-4">
-                          <p className="text-sm font-mono font-bold text-brand-ink">#{order.id}</p>
+                          <p className="text-sm font-mono font-bold text-brand-ink">{order.order_code || `#${order.id}`}</p>
                           <p className="text-[10px] text-brand-ink/40 uppercase tracking-widest">{order.payment_method}</p>
                         </td>
                         <td className="px-6 py-4">
@@ -335,7 +350,7 @@ export default function Orders() {
                 <div>
                   <div className="flex items-center gap-3 mb-1">
                     <h2 className="text-2xl font-serif font-bold">{t('orders.modal.title')}</h2>
-                    <span className="text-sm font-mono font-bold text-brand-red bg-brand-red/10 px-2 py-0.5 rounded">#{selectedOrder.id}</span>
+                    <span className="text-sm font-mono font-bold text-brand-red bg-brand-red/10 px-2 py-0.5 rounded">{selectedOrder.order_code || `#${selectedOrder.id}`}</span>
                   </div>
                   <p className="text-xs text-brand-ink/40 uppercase tracking-widest font-medium">{t('orders.modal.placed_on')} {new Date(selectedOrder.created_at).toLocaleString()}</p>
                 </div>
@@ -560,7 +575,8 @@ export default function Orders() {
                       </section>
                     )}
 
-                    {selectedOrder.payment_method !== 'bank_transfer' && (
+                    {(selectedOrder.payment_method !== 'bank_transfer'
+                      || selectedOrder.payment?.status === 'paid') && (
                       <section className="bg-brand-paper/30 p-6 rounded-xl border border-brand-clay">
                         <div className="flex items-center justify-between">
                           <div className="space-y-4 flex-1">
@@ -568,21 +584,28 @@ export default function Orders() {
                               <ShieldCheck size={18} className="text-green-600" />
                               <h3 className="text-sm font-bold uppercase tracking-wider text-brand-ink/80">{t('orders.modal.fulfillment')}</h3>
                             </div>
+                            <p className="text-xs text-brand-ink/55">
+                              {t('orders.modal.current_status')}: <strong>{t(`orders.status.${selectedOrder.status}`)}</strong>
+                            </p>
                             <div className="flex flex-wrap gap-2">
-                              {Object.keys(STATUS_CONFIG).map(s => (
+                              {(NEXT_ORDER_STATUSES[selectedOrder.status] || []).map(s => (
                                 <button
                                   key={s}
+                                  disabled={isUpdating}
                                   onClick={() => handleUpdateOrder(selectedOrder.id, { status: s })}
                                   className={cn(
-                                    "px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border",
-                                    selectedOrder.status === s 
-                                      ? "bg-brand-ink text-white border-brand-ink" 
-                                      : "bg-white text-brand-ink/60 border-brand-clay hover:border-brand-ink"
+                                    "px-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-widest transition-all border disabled:opacity-50",
+                                    s === 'cancelled'
+                                      ? "border-red-200 bg-red-50 text-red-700"
+                                      : "border-brand-ink bg-brand-ink text-white hover:bg-brand-red hover:border-brand-red"
                                   )}
                                 >
-                                  {t(`orders.status.${s}`)}
+                                  {t(`orders.modal.actions.${s}`)}
                                 </button>
                               ))}
+                              {(NEXT_ORDER_STATUSES[selectedOrder.status] || []).length === 0 && (
+                                <p className="text-xs font-semibold text-brand-ink/45">{t('orders.modal.no_further_actions')}</p>
+                              )}
                             </div>
                             {selectedOrder.payment?.status === 'cod_pending' && (
                               <button

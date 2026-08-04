@@ -540,7 +540,7 @@ class CheckoutViewSet(viewsets.ViewSet):
 
         # Send Email
         invoice_content = (
-            f"Order #{order.id}\n"
+            f"Order {order.order_code}\n"
             f"Subtotal: {order.subtotal_amount}\n"
             f"Shipping: {order.shipping_amount}\n"
         )

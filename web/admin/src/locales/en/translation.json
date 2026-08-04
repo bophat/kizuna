@@ -524,6 +524,14 @@
       "items": "Artifacts in Consignment",
       "verification": "Payment Verification",
       "fulfillment": "Order Fulfillment Status",
+      "current_status": "Current status",
+      "no_further_actions": "This order has no further fulfillment actions.",
+      "actions": {
+        "processing": "Start packing",
+        "shipped": "Hand over for delivery",
+        "delivered": "Mark as delivered",
+        "cancelled": "Cancel order"
+      },
       "email": "Email Address",
       "phone": "Contact Number",
       "address": "Delivery Address",

@@ -14,6 +14,7 @@ AMAZON_CREDENTIAL_ID_SECRET="${AMAZON_CREDENTIAL_ID_SECRET:-kizuna-amazon-creato
 AMAZON_CREDENTIAL_SECRET="${AMAZON_CREDENTIAL_SECRET:-kizuna-amazon-creators-credential-secret}"
 AMAZON_PARTNER_TAG_SECRET="${AMAZON_PARTNER_TAG_SECRET:-kizuna-amazon-jp-partner-tag}"
 QOO10_CERTIFICATION_SECRET="${QOO10_CERTIFICATION_SECRET:-kizuna-qoo10-certification-key}"
+SEPAY_WEBHOOK_SECRET_NAME="${SEPAY_WEBHOOK_SECRET_NAME:-kizuna-sepay-webhook-secret}"
 WEBSITE_URL="${WEBSITE_URL:-}"
 ADMIN_URL="${ADMIN_URL:-}"
 EMAIL_HOST="${EMAIL_HOST:-}"
@@ -37,6 +38,7 @@ AMAZON_CREATORS_CREDENTIAL_SECRET="${AMAZON_CREATORS_CREDENTIAL_SECRET:-}"
 AMAZON_CREATORS_CREDENTIAL_VERSION="${AMAZON_CREATORS_CREDENTIAL_VERSION:-3.3}"
 AMAZON_JP_PARTNER_TAG="${AMAZON_JP_PARTNER_TAG:-}"
 QOO10_CERTIFICATION_KEY="${QOO10_CERTIFICATION_KEY:-}"
+SEPAY_WEBHOOK_SECRET="${SEPAY_WEBHOOK_SECRET:-}"
 
 if [[ -z "$PROJECT_ID" ]]; then
   echo "Usage: ./deploy-cloud-run.sh <GCP_PROJECT_ID>"
@@ -269,6 +271,17 @@ if secret_exists "$QOO10_CERTIFICATION_SECRET" || [[ -n "$QOO10_CERTIFICATION_KE
     --role="roles/secretmanager.secretAccessor" >/dev/null
   secret_bindings+=(
     "QOO10_CERTIFICATION_KEY=${QOO10_CERTIFICATION_SECRET}:latest"
+  )
+fi
+
+if secret_exists "$SEPAY_WEBHOOK_SECRET_NAME" || [[ -n "$SEPAY_WEBHOOK_SECRET" ]]; then
+  create_or_update_secret "$SEPAY_WEBHOOK_SECRET_NAME" "$SEPAY_WEBHOOK_SECRET"
+  gcloud secrets add-iam-policy-binding "$SEPAY_WEBHOOK_SECRET_NAME" \
+    --project "$PROJECT_ID" \
+    --member="serviceAccount:${RUNTIME_SA}" \
+    --role="roles/secretmanager.secretAccessor" >/dev/null
+  secret_bindings+=(
+    "SEPAY_WEBHOOK_SECRET=${SEPAY_WEBHOOK_SECRET_NAME}:latest"
   )
 fi
 

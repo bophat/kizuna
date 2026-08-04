@@ -339,6 +339,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     user_details = UserSerializer(source='user', read_only=True)
+    order_code = serializers.CharField(read_only=True)
     payment_receipt = serializers.SerializerMethodField()
     payment = serializers.SerializerMethodField()
 

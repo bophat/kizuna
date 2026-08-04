@@ -524,6 +524,14 @@
       "items": "委託品",
       "verification": "支払い確認",
       "fulfillment": "注文履行ステータス",
+      "current_status": "現在のステータス",
+      "no_further_actions": "この注文にはこれ以上の処理操作はありません。",
+      "actions": {
+        "processing": "梱包を開始",
+        "shipped": "配送業者へ引き渡す",
+        "delivered": "配達完了にする",
+        "cancelled": "注文をキャンセル"
+      },
       "email": "メールアドレス",
       "phone": "連絡先番号",
       "address": "配送先住所",

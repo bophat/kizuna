@@ -20,6 +20,7 @@ interface OrderItem {
 
 interface Order {
   id: number;
+  order_code: string;
   status: string;
   payment_method: string;
   total_amount: string;
@@ -455,7 +456,7 @@ export function ProfilePage() {
                         </div>
                       </div>
                       <div className="flex items-center gap-4">
-                        <span className="label-xs text-secondary">{t('profile.order_number', { id: order.id })}</span>
+                        <span className="label-xs text-secondary">{t('profile.order_number', { id: order.order_code || order.id })}</span>
                         <Icons.ChevronRight size={16} className="text-secondary group-hover:translate-x-1 transition-transform" />
                       </div>
                     </div>

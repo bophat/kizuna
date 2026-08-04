@@ -2,6 +2,11 @@ from unittest.mock import patch
 from datetime import timedelta
 from decimal import Decimal
 import base64
+import hashlib
+import hmac
+import json
+import time
+from urllib.parse import parse_qs, urlparse
 
 from django.contrib.auth.models import User
 from django.core.cache import cache
@@ -26,6 +31,7 @@ from .models import (
     Order,
     PaymentMethodConfig,
     PaymentTransaction,
+    PaymentWebhookEvent,
     Product,
     StorePage,
 )
@@ -775,7 +781,12 @@ class PaymentCheckoutTests(TestCase):
         self.assertEqual(order.status, 'pending')
         self.assertEqual(order.payment.status, PaymentTransaction.Status.PENDING)
         self.assertEqual(order.payment.settlement_currency, 'VND')
-        self.assertTrue(response.data['payment']['qr_code_url'].startswith('https://img.vietqr.io/'))
+        self.assertEqual(response.data['order']['order_code'], order.payment.reference)
+        qr_code_url = response.data['payment']['qr_code_url']
+        self.assertTrue(qr_code_url.startswith('https://img.vietqr.io/'))
+        query = parse_qs(urlparse(qr_code_url).query)
+        self.assertEqual(query['amount'], [str(int(order.payment.settlement_amount))])
+        self.assertEqual(query['addInfo'], [order.payment.reference])
 
         receipt = SimpleUploadedFile('receipt.png', ONE_PIXEL_PNG, content_type='image/png')
         uploaded = self.client.post(
@@ -787,3 +798,116 @@ class PaymentCheckoutTests(TestCase):
         order.payment.refresh_from_db()
         self.assertEqual(order.payment.status, PaymentTransaction.Status.PROOF_SUBMITTED)
         self.assertIsNotNone(order.payment.proof_submitted_at)
+
+
+@override_settings(
+    SEPAY_WEBHOOK_SECRET='sepay-test-secret',
+    SEPAY_WEBHOOK_MAX_AGE_SECONDS=300,
+)
+class SepayPaymentWebhookTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='sepay-customer',
+            email='sepay@example.com',
+            password='test-password-123',
+        )
+        self.order = Order.objects.create(
+            user=self.user,
+            payment_method='bank_transfer',
+            status='pending',
+            total_amount=Decimal('13.00'),
+        )
+        self.payment = PaymentTransaction.objects.create(
+            order=self.order,
+            method=PaymentMethodConfig.Code.BANK_TRANSFER,
+            status=PaymentTransaction.Status.PENDING,
+            amount_usd=Decimal('13.00'),
+            settlement_amount=Decimal('325000'),
+            settlement_currency='VND',
+            exchange_rate=Decimal('25000'),
+            reference=f'KZ{self.order.id:010d}',
+            method_snapshot={'account_number': '123456789'},
+            expires_at=timezone.now() + timedelta(hours=1),
+        )
+
+    def payload(self, **overrides):
+        payload = {
+            'id': 987654,
+            'gateway': 'Test Bank',
+            'accountNumber': '123456789',
+            'code': None,
+            'content': f'{self.payment.reference} thanh toan don hang',
+            'transferType': 'in',
+            'transferAmount': 325000,
+            'referenceCode': 'BANK-REFERENCE-001',
+        }
+        payload.update(overrides)
+        return payload
+
+    def post_webhook(self, payload, secret='sepay-test-secret', timestamp=None):
+        timestamp = int(time.time()) if timestamp is None else timestamp
+        body = json.dumps(payload, separators=(',', ':')).encode('utf-8')
+        signed_payload = str(timestamp).encode('utf-8') + b'.' + body
+        signature = 'sha256=' + hmac.new(
+            secret.encode('utf-8'), signed_payload, hashlib.sha256
+        ).hexdigest()
+        return self.client.post(
+            '/api/shop/payments/webhooks/sepay/',
+            data=body,
+            content_type='application/json',
+            HTTP_X_SEPAY_SIGNATURE=signature,
+            HTTP_X_SEPAY_TIMESTAMP=str(timestamp),
+        )
+
+    def test_matching_credit_marks_payment_paid_and_releases_order(self):
+        response = self.post_webhook(self.payload())
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'success': True})
+        self.payment.refresh_from_db()
+        self.order.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentTransaction.Status.PAID)
+        self.assertEqual(self.payment.provider, 'sepay')
+        self.assertIsNotNone(self.payment.paid_at)
+        self.assertEqual(self.order.status, 'processing')
+        event = PaymentWebhookEvent.objects.get()
+        self.assertEqual(event.status, PaymentWebhookEvent.Status.PROCESSED)
+        self.assertEqual(event.reason, 'payment_confirmed')
+        self.assertEqual(event.payment, self.payment)
+
+    def test_duplicate_event_is_idempotent(self):
+        payload = self.payload()
+        first = self.post_webhook(payload)
+        second = self.post_webhook(payload)
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 200)
+        self.assertEqual(PaymentWebhookEvent.objects.count(), 1)
+
+    def test_invalid_signature_is_rejected(self):
+        response = self.post_webhook(self.payload(), secret='wrong-secret')
+
+        self.assertEqual(response.status_code, 401)
+        self.assertFalse(PaymentWebhookEvent.objects.exists())
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentTransaction.Status.PENDING)
+
+    def test_wrong_amount_is_logged_without_settling_payment(self):
+        response = self.post_webhook(self.payload(transferAmount=324999))
+
+        self.assertEqual(response.status_code, 200)
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentTransaction.Status.PENDING)
+        event = PaymentWebhookEvent.objects.get()
+        self.assertEqual(event.status, PaymentWebhookEvent.Status.IGNORED)
+        self.assertEqual(event.reason, 'settlement_amount_mismatch')
+
+    def test_wrong_bank_account_is_logged_without_settling_payment(self):
+        response = self.post_webhook(self.payload(accountNumber='000000000'))
+
+        self.assertEqual(response.status_code, 200)
+        self.payment.refresh_from_db()
+        self.assertEqual(self.payment.status, PaymentTransaction.Status.PENDING)
+        event = PaymentWebhookEvent.objects.get()
+        self.assertEqual(event.reason, 'bank_account_mismatch')

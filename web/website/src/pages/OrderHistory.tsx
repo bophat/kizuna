@@ -15,6 +15,7 @@ interface OrderItem {
 
 interface Order {
   id: number;
+  order_code: string;
   status: string;
   payment_method: string;
   subtotal_amount: string;
@@ -145,7 +146,7 @@ export function OrderHistoryPage() {
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8 border-b border-surface-variant pb-8">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="label-md lowercase tracking-tight">{t('order.order_number', { id: order.id })}</span>
+                      <span className="label-md lowercase tracking-tight">{t('order.order_number', { id: order.order_code || order.id })}</span>
                       <span className="bg-primary-container/10 text-primary px-3 py-1 rounded-sm label-sm border border-primary-container/20 capitalize">
                         {t(STATUS_LABELS[order.status] || order.status)}
                       </span>

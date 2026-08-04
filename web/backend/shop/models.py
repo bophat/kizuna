@@ -285,7 +285,18 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
-        return f"Order #{self.id} by {self.user.username}"
+        return f"Order {self.order_code} by {self.user.username}"
+
+    @property
+    def order_code(self):
+        """Stable customer-facing order code shared with payment references."""
+        if not self.pk:
+            return ''
+        try:
+            reference = self.payment.reference
+        except PaymentTransaction.DoesNotExist:
+            reference = ''
+        return reference or f'KZ{self.pk:010d}'
 
 
 class LoyaltyPointTransaction(models.Model):
@@ -406,6 +417,39 @@ class PaymentTransaction(models.Model):
 
     def __str__(self):
         return f'{self.reference} - {self.status}'
+
+
+class PaymentWebhookEvent(models.Model):
+    class Status(models.TextChoices):
+        PROCESSED = 'processed', 'Processed'
+        IGNORED = 'ignored', 'Ignored'
+
+    provider = models.CharField(max_length=30, default='sepay')
+    event_id = models.CharField(max_length=100)
+    payment = models.ForeignKey(
+        PaymentTransaction,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='webhook_events',
+    )
+    status = models.CharField(max_length=20, choices=Status.choices)
+    reason = models.CharField(max_length=200, blank=True, default='')
+    payload = models.JSONField(default=dict)
+    processed_at = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['provider', 'event_id'],
+                name='unique_payment_webhook_event',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.provider}:{self.event_id} - {self.status}'
 
 class OrderItem(models.Model):
     order = models.ForeignKey(Order, on_delete=models.CASCADE, related_name='items')

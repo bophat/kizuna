@@ -338,6 +338,15 @@ class AdminPaymentTests(TestCase):
         self.assertEqual(order.admin_notes, 'Bank statement matched.')
         self.assertEqual(payment.status, PaymentTransaction.Status.PAID)
         self.assertEqual(payment.verified_by, self.admin)
+        self.assertEqual(response.data['order_code'], payment.reference)
+
+        shipped = self.client.patch(
+            f'/api/admin/orders/{order.id}/',
+            {'status': 'shipped'},
+            format='json',
+        )
+        self.assertEqual(shipped.status_code, 200)
+        self.assertEqual(shipped.data['status'], 'shipped')
 
     def test_notification_feed_reports_receipt_and_confirmed_payment(self):
         _order, payment = self.create_bank_order()

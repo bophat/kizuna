@@ -524,6 +524,14 @@
       "items": "Hiện vật ký gửi",
       "verification": "Xác minh thanh toán",
       "fulfillment": "Trạng thái hoàn tất đơn hàng",
+      "current_status": "Trạng thái hiện tại",
+      "no_further_actions": "Đơn hàng không còn thao tác xử lý tiếp theo.",
+      "actions": {
+        "processing": "Bắt đầu đóng gói",
+        "shipped": "Bàn giao vận chuyển",
+        "delivered": "Xác nhận đã giao",
+        "cancelled": "Hủy đơn hàng"
+      },
       "email": "Địa chỉ Email",
       "phone": "Số điện thoại liên hệ",
       "address": "Địa chỉ giao hàng",

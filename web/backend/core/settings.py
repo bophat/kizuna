@@ -227,6 +227,13 @@ EXCHANGE_RATE_API_URL = os.environ.get(
     'https://api.frankfurter.app/latest?from=USD&to=VND,JPY',
 )
 
+# SePay bank transaction webhook. Keep this secret in Secret Manager in production.
+SEPAY_WEBHOOK_SECRET = os.environ.get('SEPAY_WEBHOOK_SECRET', '')
+SEPAY_WEBHOOK_MAX_AGE_SECONDS = int(os.environ.get(
+    'SEPAY_WEBHOOK_MAX_AGE_SECONDS',
+    '300',
+))
+
 # --- Amazon/Qoo10 source imports ---
 USD_VND_RATE = os.environ.get('USD_VND_RATE', '25000')
 SOURCE_IMPORT_USE_FAKE_PROVIDERS = os.environ.get(

@@ -129,6 +129,45 @@ export function CheckoutPage() {
     return () => { cancelled = true; };
   }, [i18n.language, t]);
 
+  const trackedOrderId = orderData?.order?.id;
+  const trackedPaymentMethod = orderData?.payment?.method || orderData?.order?.payment?.method;
+  const trackedPaymentStatus = orderData?.payment?.status || orderData?.order?.payment?.status;
+
+  useEffect(() => {
+    if (
+      step !== 3
+      || !trackedOrderId
+      || trackedPaymentMethod !== 'bank_transfer'
+      || !['pending', 'proof_submitted'].includes(trackedPaymentStatus)
+    ) {
+      return undefined;
+    }
+
+    let cancelled = false;
+    const refreshOrder = async () => {
+      try {
+        const response = await apiFetch(`/shop/orders/${trackedOrderId}/`);
+        if (!response.ok || cancelled) return;
+        const order = await response.json();
+        if (cancelled) return;
+        setOrderData((current: any) => current ? {
+          ...current,
+          order,
+          payment: order.payment,
+        } : current);
+      } catch (error) {
+        console.error('Error refreshing payment status:', error);
+      }
+    };
+
+    void refreshOrder();
+    const intervalId = window.setInterval(refreshOrder, 5000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [step, trackedOrderId, trackedPaymentMethod, trackedPaymentStatus]);
+
   const nextStep = () => {
     if (step < STEPS.length - 1) setStep(step + 1);
   };
@@ -326,6 +365,8 @@ export function CheckoutPage() {
     const orderTotal = parseFloat(orderData.order.total_amount);
     const payment = orderData.payment || orderData.order.payment;
     const isBankTransfer = payment?.method === 'bank_transfer';
+    const bankPaymentPaid = isBankTransfer && payment?.status === 'paid';
+    const orderCode = orderData.order.order_code || payment?.reference || orderData.order.id;
     const settlementAmount = new Intl.NumberFormat(i18n.language, {
       style: 'currency',
       currency: payment?.settlement_currency || 'VND',
@@ -350,10 +391,23 @@ export function CheckoutPage() {
             </motion.div>
 
             <h1 className="text-xl md:text-2xl font-black text-white mb-4 tracking-tight leading-tight">
-              {t(isBankTransfer ? 'checkout.bank_pending_title' : 'checkout.success_title')}
+              {t(
+                bankPaymentPaid
+                  ? 'checkout.bank_paid_title'
+                  : isBankTransfer
+                    ? 'checkout.bank_pending_title'
+                    : 'checkout.success_title'
+              )}
             </h1>
             <p className="text-base md:text-lg text-zinc-400 leading-relaxed max-w-2xl mx-auto">
-              {t(isBankTransfer ? 'checkout.bank_pending_message' : 'checkout.success_message', { id: orderData.order.id })} <br className="hidden md:block" />
+              {t(
+                bankPaymentPaid
+                  ? 'checkout.bank_paid_message'
+                  : isBankTransfer
+                    ? 'checkout.bank_pending_message'
+                    : 'checkout.success_message',
+                { id: orderCode },
+              )} <br className="hidden md:block" />
               {t('checkout.invoice_sent', { email: email })}
             </p>
           </div>

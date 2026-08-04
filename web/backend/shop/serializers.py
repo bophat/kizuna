@@ -156,12 +156,13 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
+    order_code = serializers.CharField(read_only=True)
     payment = serializers.SerializerMethodField()
 
     class Meta:
         model = Order
         fields = [
-            'id', 'status', 'payment_method', 'subtotal_amount',
+            'id', 'order_code', 'status', 'payment_method', 'subtotal_amount',
             'shipping_amount', 'discount_amount', 'total_amount',
             'coupon_code', 'items', 'created_at', 'updated_at',
             'payment',

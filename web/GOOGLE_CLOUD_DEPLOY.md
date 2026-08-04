@@ -124,6 +124,56 @@ VITE_MEDIA_BASE_URL=https://kizuna-backend-PROJECT_NUMBER.asia-southeast1.run.ap
 
 Sau đó chọn **Redeploy** cho Website và Admin. Không thêm dấu `/` ở cuối URL.
 
+## Tự động xác nhận chuyển khoản bằng SePay
+
+QR chuyển khoản được tạo riêng cho từng đơn và đã chứa đủ ba giá trị: tài khoản
+nhận, chính xác số tiền VND cần thanh toán và mã đơn `KZ...` trong nội dung
+chuyển khoản. Nếu chưa cấu hình SePay, Admin vẫn có thể xem biên lai và bấm xác
+nhận thủ công.
+
+Để hệ thống tự đổi thanh toán sang `Paid` khi tiền vào đúng tài khoản:
+
+1. Kết nối tài khoản ngân hàng của cửa hàng với SePay.
+2. Trong SePay, tạo webhook nhận giao dịch tiền vào với URL:
+
+   ```text
+   https://kizuna-backend-857138195082.asia-southeast1.run.app/api/shop/payments/webhooks/sepay/
+   ```
+
+3. Bật xác thực HMAC-SHA256 và tạo một webhook secret đủ dài, ngẫu nhiên.
+4. Cấu hình cùng secret đó cho Cloud Run bằng cách nhập ẩn trong Cloud Shell:
+
+   ```bash
+   cd ~/kizuna/web
+   git pull
+
+   IFS= read -r -s -p "SePay webhook secret: " SEPAY_WEBHOOK_SECRET
+   echo
+   export SEPAY_WEBHOOK_SECRET
+
+   WEBSITE_URL="https://kizuna-teal.vercel.app" \
+   ADMIN_URL="https://kizuna-admin.vercel.app" \
+   EMAIL_HOST="smtp.gmail.com" \
+   EMAIL_HOST_USER="bophat9420@gmail.com" \
+   DEFAULT_FROM_EMAIL="KIZUNA <bophat9420@gmail.com>" \
+   SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED=true \
+   ./deploy-cloud-run.sh kizuna-shop-503909
+
+   unset SEPAY_WEBHOOK_SECRET
+   ```
+
+Script lưu giá trị trong Secret Manager với tên mặc định
+`kizuna-sepay-webhook-secret`. Những lần deploy sau tự dùng lại secret, không
+cần nhập lại.
+
+Webhook chỉ xác nhận đơn khi đồng thời thỏa mãn: chữ ký hợp lệ, giao dịch tiền
+vào, mã `KZ...` tồn tại, đúng tài khoản nhận và đúng chính xác số tiền VND. Mã
+sự kiện SePay được lưu để một giao dịch gửi lại nhiều lần không cộng nhận hai
+lần. Sau khi khớp, thanh toán chuyển thành `Paid`, đơn chuyển sang `Processing`,
+Admin nhận sự kiện thanh toán và có thể tiếp tục cập nhật `Shipped` rồi
+`Delivered`. Website kiểm tra lại trạng thái mỗi 5 giây trong lúc khách đang mở
+màn hình QR.
+
 ## Kiểm tra
 
 ```bash

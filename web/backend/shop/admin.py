@@ -7,6 +7,7 @@ from .models import (
     AffiliateVisit,
     Coupon,
     CouponRedemption,
+    PaymentWebhookEvent,
 )
 
 
@@ -54,3 +55,14 @@ class AffiliatePayoutAdmin(admin.ModelAdmin):
 class AffiliateVisitAdmin(admin.ModelAdmin):
     list_display = ('affiliate', 'session_id', 'landing_path', 'created_at')
     search_fields = ('affiliate__code', 'session_id')
+
+
+@admin.register(PaymentWebhookEvent)
+class PaymentWebhookEventAdmin(admin.ModelAdmin):
+    list_display = ('provider', 'event_id', 'payment', 'status', 'reason', 'created_at')
+    list_filter = ('provider', 'status')
+    search_fields = ('event_id', 'payment__reference', 'reason')
+    readonly_fields = (
+        'provider', 'event_id', 'payment', 'status', 'reason',
+        'payload', 'processed_at', 'created_at',
+    )
