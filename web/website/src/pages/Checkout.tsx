@@ -70,6 +70,7 @@ export function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [checkoutError, setCheckoutError] = useState('');
 
   const { cart, fetchCart } = useCart();
   const { isAuthenticated, loading: authLoading } = useAuth();
@@ -145,6 +146,16 @@ export function CheckoutPage() {
     });
   };
 
+  const checkoutErrorText = (data: Record<string, any>) => {
+    const errorCode = data.checkout_error_code || data.payment_error_code;
+    if (!errorCode) return data.error || t('checkout.errors.failed');
+    return t(`checkout.errors.${errorCode}`, {
+      product: data.product_name || '',
+      count: data.available_stock ?? 0,
+      defaultValue: data.error || t('checkout.errors.failed'),
+    });
+  };
+
   const applyCoupon = async () => {
     const code = couponCode.trim().toUpperCase();
     if (!code || isApplyingCoupon) return;
@@ -180,6 +191,7 @@ export function CheckoutPage() {
   const handleCheckout = async () => {
     if (isSubmitting || !paymentMethod) return;
     setIsSubmitting(true);
+    setCheckoutError('');
     try {
       const response = await apiFetch('/shop/checkout/process_checkout/', {
         method: 'POST',
@@ -202,18 +214,20 @@ export function CheckoutPage() {
         nextStep(); // Go to Success step
       } else {
         if (data.coupon_error_code) {
+          const message = couponErrorText(data.coupon_error_code);
           setAppliedCoupon(null);
-          setCouponError(couponErrorText(data.coupon_error_code));
-          alert(couponErrorText(data.coupon_error_code));
-        } else if (data.payment_error_code) {
-          alert(t(`checkout.errors.${data.payment_error_code}`));
+          setCouponError(message);
+          setCheckoutError(message);
         } else {
-          alert(data.error || t('checkout.errors.failed'));
+          setCheckoutError(checkoutErrorText(data));
+          if (data.checkout_error_code === 'empty_cart') {
+            await fetchCart();
+          }
         }
       }
     } catch (error) {
       console.error(error);
-      alert(t('checkout.errors.failed'));
+      setCheckoutError(t('checkout.errors.connection'));
     } finally {
       setIsSubmitting(false);
     }
@@ -505,7 +519,7 @@ export function CheckoutPage() {
                 />
               )}
               {step === 1 && <ShippingMethodForm email={email} onNext={nextStep} onPrev={prevStep} shipping={shipping} />}
-              {step === 2 && <PaymentMethodForm isSubmitting={isSubmitting} paymentMethod={paymentMethod} paymentMethods={paymentMethods} loading={paymentMethodsLoading} error={paymentMethodsError} setPaymentMethod={setPaymentMethod} onPrev={prevStep} onSubmit={handleCheckout} />}
+              {step === 2 && <PaymentMethodForm isSubmitting={isSubmitting} paymentMethod={paymentMethod} paymentMethods={paymentMethods} loading={paymentMethodsLoading} error={paymentMethodsError} checkoutError={checkoutError} setPaymentMethod={(value) => { setPaymentMethod(value); setCheckoutError(''); }} onPrev={prevStep} onSubmit={handleCheckout} />}
             </motion.div>
           </AnimatePresence>
         </div>
@@ -762,7 +776,7 @@ function ShippingMethodForm({ email, onNext, onPrev, shipping }: { email: string
   );
 }
 
-function PaymentMethodForm({ isSubmitting, paymentMethod, paymentMethods, loading, error, setPaymentMethod, onPrev, onSubmit }: { isSubmitting: boolean, paymentMethod: string, paymentMethods: PaymentMethod[], loading: boolean, error: string, setPaymentMethod: (v: string) => void, onPrev: () => void, onSubmit: () => void }) {
+function PaymentMethodForm({ isSubmitting, paymentMethod, paymentMethods, loading, error, checkoutError, setPaymentMethod, onPrev, onSubmit }: { isSubmitting: boolean, paymentMethod: string, paymentMethods: PaymentMethod[], loading: boolean, error: string, checkoutError: string, setPaymentMethod: (v: string) => void, onPrev: () => void, onSubmit: () => void }) {
   const { t } = useTranslation();
   return (
     <div className="flex flex-col gap-10">
@@ -798,6 +812,20 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, paymentMethods, loadin
           </label>
         ))}
       </div>
+
+      {checkoutError && (
+        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm leading-relaxed text-red-700">
+          <div className="flex items-start gap-3">
+            <Icons.AlertCircle size={18} className="mt-0.5 shrink-0" />
+            <div>
+              <p className="font-semibold">{checkoutError}</p>
+              <Link to="/cart" className="mt-2 inline-block font-semibold underline underline-offset-4">
+                {t('checkout.review_cart')}
+              </Link>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div className="flex flex-col-reverse md:flex-row justify-between items-center pt-8 border-t border-surface-variant gap-4">
         <button onClick={onPrev} className="flex items-center gap-2 label-sm text-secondary hover:text-on-surface transition-colors">

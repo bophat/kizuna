@@ -190,26 +190,51 @@ class CartViewSet(viewsets.ViewSet):
     def add_item(self, request):
         cart = self._get_cart(request)
         product_id = request.data.get('product_id')
-        quantity = int(request.data.get('quantity', 1))
+        try:
+            quantity = int(request.data.get('quantity', 1))
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "Quantity must be a positive integer", "cart_error_code": "invalid_quantity"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if not product_id:
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
+        if quantity <= 0:
+            return Response(
+                {"error": "Quantity must be a positive integer", "cart_error_code": "invalid_quantity"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         try:
             product = Product.objects.get(pk=product_id, status=ProductStatus.PUBLISHED)
         except Product.DoesNotExist:
             return Response({"error": "Product not found"}, status=status.HTTP_404_NOT_FOUND)
 
-        cart_item, created = CartItem.objects.get_or_create(
-            cart=cart,
-            product=product,
-            defaults={'quantity': quantity, 'price': product.price}
-        )
+        cart_item = CartItem.objects.filter(cart=cart, product=product).first()
+        requested_quantity = quantity + (cart_item.quantity if cart_item else 0)
+        if requested_quantity > product.stock:
+            return Response(
+                {
+                    "error": f"Insufficient stock for {product.name}. Available: {product.stock}",
+                    "cart_error_code": "insufficient_stock",
+                    "product_name": product.name,
+                    "available_stock": product.stock,
+                },
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
-        if not created:
-            cart_item.quantity += quantity
+        if cart_item:
+            cart_item.quantity = requested_quantity
             cart_item.price = product.price
             cart_item.save(update_fields=['quantity', 'price'])
+        else:
+            CartItem.objects.create(
+                cart=cart,
+                product=product,
+                quantity=quantity,
+                price=product.price,
+            )
 
         serializer = CartSerializer(cart)
         return Response(serializer.data)
@@ -218,7 +243,13 @@ class CartViewSet(viewsets.ViewSet):
     def update_item(self, request):
         cart = self._get_cart(request)
         product_id = request.data.get('product_id')
-        quantity = int(request.data.get('quantity', 1))
+        try:
+            quantity = int(request.data.get('quantity', 1))
+        except (TypeError, ValueError):
+            return Response(
+                {"error": "Quantity must be zero or a positive integer", "cart_error_code": "invalid_quantity"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if not product_id:
             return Response({"error": "product_id is required"}, status=status.HTTP_400_BAD_REQUEST)
@@ -227,9 +258,20 @@ class CartViewSet(viewsets.ViewSet):
             cart_item = CartItem.objects.get(cart=cart, product_id=product_id)
             if quantity <= 0:
                 cart_item.delete()
+            elif quantity > cart_item.product.stock:
+                return Response(
+                    {
+                        "error": f"Insufficient stock for {cart_item.product.name}. Available: {cart_item.product.stock}",
+                        "cart_error_code": "insufficient_stock",
+                        "product_name": cart_item.product.name,
+                        "available_stock": cart_item.product.stock,
+                    },
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
             else:
                 cart_item.quantity = quantity
-                cart_item.save()
+                cart_item.price = cart_item.product.price
+                cart_item.save(update_fields=['quantity', 'price'])
         except CartItem.DoesNotExist:
             return Response({"error": "Item not in cart"}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -263,7 +305,10 @@ class CheckoutViewSet(viewsets.ViewSet):
     def process_checkout(self, request):
         cart = self._get_cart(request)
         if not cart or not cart.items.exists():
-            return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Cart is empty", "checkout_error_code": "empty_cart"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         user = request.user
         payment_method = normalize_payment_method(request.data.get('payment_method'))
@@ -291,7 +336,10 @@ class CheckoutViewSet(viewsets.ViewSet):
                 address = address or ""
 
         if not email:
-            return Response({"error": "Email is required"}, status=status.HTTP_400_BAD_REQUEST)
+            return Response(
+                {"error": "Email is required", "checkout_error_code": "email_required"},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
 
         if payment_method not in PaymentMethodConfig.Code.values:
             return Response(
@@ -315,7 +363,10 @@ class CheckoutViewSet(viewsets.ViewSet):
             try:
                 cart = Cart.objects.select_for_update().get(pk=cart.pk, user=user)
             except Cart.DoesNotExist:
-                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Cart is empty", "checkout_error_code": "empty_cart"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             cart_items = list(
                 CartItem.objects.select_for_update()
@@ -323,7 +374,10 @@ class CheckoutViewSet(viewsets.ViewSet):
                 .order_by('id')
             )
             if not cart_items:
-                return Response({"error": "Cart is empty"}, status=status.HTTP_400_BAD_REQUEST)
+                return Response(
+                    {"error": "Cart is empty", "checkout_error_code": "empty_cart"},
+                    status=status.HTTP_400_BAD_REQUEST,
+                )
 
             product_ids = [item.product_id for item in cart_items if item.product_id]
             products = {
@@ -332,7 +386,10 @@ class CheckoutViewSet(viewsets.ViewSet):
             }
             if len(products) != len(set(product_ids)):
                 return Response(
-                    {"error": "A product in your cart is no longer available"},
+                    {
+                        "error": "A product in your cart is no longer available",
+                        "checkout_error_code": "product_unavailable",
+                    },
                     status=status.HTTP_400_BAD_REQUEST,
                 )
 
@@ -372,11 +429,16 @@ class CheckoutViewSet(viewsets.ViewSet):
             for item in cart_items:
                 if item.product.status != ProductStatus.PUBLISHED:
                     return Response({
-                        "error": f"Product {item.product.name} is not available for checkout"
+                        "error": f"Product {item.product.name} is not available for checkout",
+                        "checkout_error_code": "product_unavailable",
+                        "product_name": item.product.name,
                     }, status=status.HTTP_400_BAD_REQUEST)
                 if item.product.stock < item.quantity:
                     return Response({
-                        "error": f"Insufficient stock for {item.product.name}. Available: {item.product.stock}"
+                        "error": f"Insufficient stock for {item.product.name}. Available: {item.product.stock}",
+                        "checkout_error_code": "insufficient_stock",
+                        "product_name": item.product.name,
+                        "available_stock": item.product.stock,
                     }, status=status.HTTP_400_BAD_REQUEST)
 
             # Update profile only after the complete order has passed validation.

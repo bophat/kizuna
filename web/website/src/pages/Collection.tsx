@@ -11,6 +11,8 @@ import { apiFetch } from '@/lib/api';
 import { fade, scaleIn, tweenBase } from '@/lib/motion';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 
+const normalizeSearchText = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase();
+
 export function CollectionPage() {
   const { t } = useTranslation();
   const { getRangeLabel, priceRangeOptions } = useFormatPrice();
@@ -33,11 +35,14 @@ export function CollectionPage() {
         
         const mappedProducts: Product[] = data.map((p: any) => ({
           ...p,
+          name: String(p.name ?? ''),
+          description: String(p.description ?? ''),
+          brand: String(p.brand ?? ''),
           isNew: p.is_new,
           isFeatured: p.is_featured,
           isLimited: p.is_limited,
           isCheap: p.is_cheap,
-          category: p.category_name || p.category,
+          category: String(p.category_name || p.category || ''),
         }));
         setProducts(mappedProducts);
       } catch (err) {
@@ -68,17 +73,22 @@ export function CollectionPage() {
     let result = [...products];
 
     if (searchQuery) {
-      const query = searchQuery.toLowerCase();
-      result = result.filter(p => 
-        p.name.toLowerCase().includes(query) || 
-        p.description.toLowerCase().includes(query) ||
-        p.category.toLowerCase().includes(query) ||
-        p.brand?.toLowerCase().includes(query)
-      );
+      const query = normalizeSearchText(searchQuery);
+      if (query) {
+        result = result.filter((product) => [
+          product.name,
+          product.description,
+          product.category,
+          product.brand,
+        ].some((value) => normalizeSearchText(value).includes(query)));
+      }
     }
 
     if (categoryFilters.length > 0) {
-      result = result.filter(p => categoryFilters.includes(p.category.toLowerCase()));
+      const normalizedCategories = categoryFilters.map(normalizeSearchText);
+      result = result.filter((product) => (
+        normalizedCategories.includes(normalizeSearchText(product.category))
+      ));
     }
 
     if (brandFilters.length > 0) {
@@ -371,7 +381,11 @@ export function CollectionPage() {
             </>
           ) : (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="body-lg text-secondary mb-4">{t('product.not_found')}</p>
+              <p className="body-lg text-secondary mb-4">
+                {searchQuery
+                  ? t('collection.no_search_results', { query: searchQuery })
+                  : t('product.not_found')}
+              </p>
               <button 
                 onClick={clearFilters}
                 className="text-primary border-b border-primary hover:text-primary-container hover:border-primary-container transition-all"

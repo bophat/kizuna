@@ -192,6 +192,7 @@
     "secure_transaction": "Secure encrypted transaction",
     "place_order": "Place Order",
     "processing": "Processing...",
+    "review_cart": "Review and update your cart",
     "change": "Change",
     "contact": "Contact",
     "select_method": "Select Method",
@@ -222,6 +223,11 @@
     },
     "errors": {
       "failed": "Checkout failed. Please try again.",
+      "connection": "The order could not be submitted. Check your connection and try again.",
+      "empty_cart": "Your cart is empty. Add the products again before placing your order.",
+      "email_required": "Enter your email address.",
+      "product_unavailable": "A product in your cart is no longer available. Please review your cart.",
+      "insufficient_stock": "There is not enough stock for “{{product}}”. Only {{count}} item(s) remain.",
       "invalid_payment_method": "Please select a valid payment method.",
       "payment_method_unavailable": "This payment method is no longer available. Please choose another option."
     }
@@ -329,6 +335,7 @@
   },
   "collection": {
     "search_results": "Search results for “{{query}}”",
+    "no_search_results": "No products found for “{{query}}”.",
     "active": "Active",
     "load_error": "Failed to load products"
   },

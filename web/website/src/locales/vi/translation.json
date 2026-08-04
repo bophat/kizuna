@@ -192,6 +192,7 @@
     "secure_transaction": "Giao dịch được mã hóa an toàn",
     "place_order": "Đặt hàng",
     "processing": "Đang xử lý...",
+    "review_cart": "Kiểm tra và cập nhật giỏ hàng",
     "change": "Thay đổi",
     "contact": "Liên hệ",
     "select_method": "Chọn phương thức",
@@ -222,6 +223,11 @@
     },
     "errors": {
       "failed": "Thanh toán thất bại. Vui lòng thử lại.",
+      "connection": "Không thể kết nối khi đặt hàng. Vui lòng kiểm tra mạng và thử lại.",
+      "empty_cart": "Giỏ hàng đang trống. Vui lòng thêm lại sản phẩm trước khi đặt hàng.",
+      "email_required": "Vui lòng nhập địa chỉ email.",
+      "product_unavailable": "Một sản phẩm trong giỏ hàng hiện không còn được bán. Vui lòng kiểm tra lại giỏ hàng.",
+      "insufficient_stock": "Sản phẩm “{{product}}” không đủ tồn kho. Hiện chỉ còn {{count}} sản phẩm.",
       "invalid_payment_method": "Vui lòng chọn phương thức thanh toán hợp lệ.",
       "payment_method_unavailable": "Phương thức thanh toán này không còn khả dụng. Vui lòng chọn phương thức khác."
     }
@@ -329,6 +335,7 @@
   },
   "collection": {
     "search_results": "Kết quả tìm kiếm cho “{{query}}”",
+    "no_search_results": "Không tìm thấy sản phẩm phù hợp với “{{query}}”.",
     "active": "Đang áp dụng",
     "load_error": "Không thể tải danh sách sản phẩm"
   },

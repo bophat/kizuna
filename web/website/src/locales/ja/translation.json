@@ -192,6 +192,7 @@
     "secure_transaction": "安全に暗号化された取引",
     "place_order": "注文を確定する",
     "processing": "処理中...",
+    "review_cart": "カートを確認・更新する",
     "change": "変更",
     "contact": "連絡先",
     "select_method": "配送方法を選択",
@@ -222,6 +223,11 @@
     },
     "errors": {
       "failed": "決済に失敗しました。もう一度お試しください。",
+      "connection": "注文を送信できませんでした。接続を確認して、もう一度お試しください。",
+      "empty_cart": "カートは空です。商品を追加してから注文してください。",
+      "email_required": "メールアドレスを入力してください。",
+      "product_unavailable": "カート内の商品が現在購入できません。カートをご確認ください。",
+      "insufficient_stock": "商品「{{product}}」の在庫が不足しています。残り {{count}} 点です。",
       "invalid_payment_method": "有効な支払い方法を選択してください。",
       "payment_method_unavailable": "この支払い方法は利用できなくなりました。別の方法を選択してください。"
     }
@@ -329,6 +335,7 @@
   },
   "collection": {
     "search_results": "「{{query}}」の検索結果",
+    "no_search_results": "「{{query}}」に一致する商品はありません。",
     "active": "適用中",
     "load_error": "商品の読み込みに失敗しました"
   },

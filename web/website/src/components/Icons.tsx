@@ -23,7 +23,8 @@ import {
   Copy,
   Loader2,
   Banknote,
-  Landmark
+  Landmark,
+  AlertCircle
 } from 'lucide-react';
 
 export const Icons = {
@@ -52,5 +53,6 @@ export const Icons = {
   Landmark,
   Copy,
   Loader2,
+  AlertCircle,
   Cart: ShoppingBag
 };

@@ -602,6 +602,72 @@ class AffiliateProgramTests(TestCase):
         self.assertEqual(commission.status, AffiliateCommission.Status.REVERSED)
 
 
+class CartStockValidationTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.user = User.objects.create_user(
+            username='cart-customer',
+            email='cart@example.com',
+            password='test-password-123',
+        )
+        self.product = Product.objects.create(
+            id='CART-STOCK-PRODUCT',
+            name='Limited product',
+            price=Decimal('10.00'),
+            stock=2,
+            status='published',
+        )
+        self.client.force_authenticate(user=self.user)
+
+    def test_add_item_rejects_quantity_above_stock(self):
+        response = self.client.post(
+            '/api/shop/cart/add_item/',
+            {'product_id': self.product.pk, 'quantity': 3},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['cart_error_code'], 'insufficient_stock')
+        self.assertEqual(response.data['available_stock'], 2)
+        self.assertFalse(CartItem.objects.exists())
+
+    def test_add_item_rejects_combined_quantity_above_stock(self):
+        first = self.client.post(
+            '/api/shop/cart/add_item/',
+            {'product_id': self.product.pk, 'quantity': 1},
+            format='json',
+        )
+        second = self.client.post(
+            '/api/shop/cart/add_item/',
+            {'product_id': self.product.pk, 'quantity': 2},
+            format='json',
+        )
+
+        self.assertEqual(first.status_code, 200)
+        self.assertEqual(second.status_code, 400)
+        self.assertEqual(CartItem.objects.get().quantity, 1)
+
+    def test_update_item_rejects_quantity_above_stock(self):
+        cart = Cart.objects.create(user=self.user)
+        item = CartItem.objects.create(
+            cart=cart,
+            product=self.product,
+            quantity=1,
+            price=self.product.price,
+        )
+
+        response = self.client.post(
+            '/api/shop/cart/update_item/',
+            {'product_id': self.product.pk, 'quantity': 3},
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['cart_error_code'], 'insufficient_stock')
+        item.refresh_from_db()
+        self.assertEqual(item.quantity, 1)
+
+
 class PaymentCheckoutTests(TestCase):
     def setUp(self):
         self.client = APIClient()
@@ -677,6 +743,25 @@ class PaymentCheckoutTests(TestCase):
         response = self.checkout('bank_transfer')
 
         self.assertEqual(response.status_code, 400)
+        self.assertFalse(Order.objects.exists())
+
+    def test_empty_cart_returns_structured_checkout_error(self):
+        response = self.checkout('cod')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['checkout_error_code'], 'empty_cart')
+
+    def test_insufficient_stock_returns_product_details(self):
+        self.create_cart()
+        self.product.stock = 0
+        self.product.save(update_fields=['stock'])
+
+        response = self.checkout('cod')
+
+        self.assertEqual(response.status_code, 400)
+        self.assertEqual(response.data['checkout_error_code'], 'insufficient_stock')
+        self.assertEqual(response.data['product_name'], self.product.name)
+        self.assertEqual(response.data['available_stock'], 0)
         self.assertFalse(Order.objects.exists())
 
     @patch('shop.payments.get_exchange_rates', return_value={'usd_to_vnd': 25000})
