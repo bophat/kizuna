@@ -153,7 +153,9 @@
       "total_acquisitions": "Total Acquisitions",
       "active_collectors": "Active Collectors",
       "total_trades": "Total Trades",
-      "archive_size": "Archive Size"
+      "archive_size": "Archive Size",
+      "estimated_gross_profit": "Estimated Gross Profit",
+      "profit_note": "{{margin}}% margin · {{coverage}}% cost coverage · paid orders"
     },
     "charts": {
       "trade_performance": "Trade Performance",
@@ -239,6 +241,8 @@
       },
       "price_label": "Evaluation (USD)",
       "price_preview": "{{localized}} (registry {{usd}})",
+      "cost_price_vnd_label": "Landed Unit Cost (VND)",
+      "cost_price_vnd_help": "Used for Dashboard gross profit. Enter the full unit cost before profit.",
       "stock_label": "Current Stock Level",
       "brand_label": "Artisan / Brand",
       "location_label": "Workshop Location",

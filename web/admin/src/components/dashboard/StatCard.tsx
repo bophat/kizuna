@@ -10,10 +10,14 @@ interface StatCardProps {
   trend?: string;
   isCurrency?: boolean;
   delay?: number;
+  note?: string;
 }
 
-export function StatCard({ title, value, icon: Icon, trend, isCurrency, delay = 0 }: StatCardProps) {
+export function StatCard({ title, value, icon: Icon, trend, isCurrency, delay = 0, note }: StatCardProps) {
   const { format: formatPrice } = useFormatPrice();
+  const trendValue = trend ? Number.parseFloat(trend) : 0;
+  const isPositiveTrend = trendValue > 0;
+  const isNeutralTrend = trendValue === 0;
 
   return (
     <motion.div
@@ -30,10 +34,16 @@ export function StatCard({ title, value, icon: Icon, trend, isCurrency, delay = 
           <div
             className={cn(
               'flex items-center gap-1 text-[10px] font-bold px-2 py-1 rounded-full',
-              trend.startsWith('+') ? 'text-emerald-600 bg-emerald-50' : 'text-brand-red bg-brand-red/5'
+              isPositiveTrend
+                ? 'text-emerald-600 bg-emerald-50'
+                : isNeutralTrend
+                  ? 'text-brand-ink/40 bg-brand-paper'
+                  : 'text-brand-red bg-brand-red/5'
             )}
           >
-            {trend.startsWith('+') ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />}
+            {!isNeutralTrend && (
+              isPositiveTrend ? <ArrowUpRight size={10} /> : <ArrowDownRight size={10} />
+            )}
             {trend}
           </div>
         )}
@@ -45,6 +55,11 @@ export function StatCard({ title, value, icon: Icon, trend, isCurrency, delay = 
             ? formatPrice(value ?? 0)
             : value?.toLocaleString() || '0'}
         </h3>
+        {note && (
+          <p className="mt-2 text-[10px] leading-relaxed text-brand-ink/40">
+            {note}
+          </p>
+        )}
       </div>
       <div className="absolute -right-4 -bottom-4 text-brand-clay/5 group-hover:text-brand-clay/10 transition-colors duration-700">
         <Icon size={120} strokeWidth={1} />

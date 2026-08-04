@@ -240,6 +240,10 @@ class SourceImportService:
                     id=preview.product_payload.id,
                     name=preview.product_payload.name,
                     price=prepared.pricing.selling_price_usd,
+                    cost_price_vnd=(
+                        prepared.pricing.import_cost_vnd
+                        + prepared.pricing.shipping_vnd
+                    ),
                     currency='USD',
                     category=category,
                     brand=preview.product_payload.brand or '',

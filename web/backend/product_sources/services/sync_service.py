@@ -121,6 +121,7 @@ class SyncService:
                 )
                 calculated_price = pricing.selling_price_usd
                 calculation_snapshot = pricing.calculation_snapshot
+                updates['cost_price_vnd'] = pricing.import_cost_vnd + pricing.shipping_vnd
 
                 if new_source_currency != old_source_currency:
                     warnings.append(
@@ -192,6 +193,8 @@ class SyncService:
                 product.status = updates['status']
             if 'stock' in updates:
                 product.stock = updates['stock']
+            if 'cost_price_vnd' in updates:
+                product.cost_price_vnd = updates['cost_price_vnd']
             if updates:
                 product.save()
 

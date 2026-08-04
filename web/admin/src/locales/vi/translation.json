@@ -153,7 +153,9 @@
       "total_acquisitions": "Tổng giá trị mua lại",
       "active_collectors": "Nhà sưu tập hoạt động",
       "total_trades": "Tổng số giao dịch",
-      "archive_size": "Quy mô lưu trữ"
+      "archive_size": "Quy mô lưu trữ",
+      "estimated_gross_profit": "Lợi nhuận gộp ước tính",
+      "profit_note": "Biên lợi nhuận {{margin}}% · đã có giá vốn cho {{coverage}}% · chỉ đơn đã thanh toán"
     },
     "charts": {
       "trade_performance": "Hiệu suất giao dịch",
@@ -239,6 +241,8 @@
       },
       "price_label": "Định giá (USD)",
       "price_preview": "{{localized}} (lưu kho {{usd}})",
+      "cost_price_vnd_label": "Giá vốn một sản phẩm (VND)",
+      "cost_price_vnd_help": "Dùng để tính lợi nhuận trên Dashboard. Nhập toàn bộ chi phí một sản phẩm trước lợi nhuận.",
       "stock_label": "Mức tồn kho hiện tại",
       "brand_label": "Nghệ nhân / Thương hiệu",
       "location_label": "Vị trí xưởng",

@@ -231,10 +231,14 @@ export function ProductFormModal({
                   >
                     <PricingCalculator
                       weight={parseFloat(formData.weight) || 0}
-                      onApplyPrice={(usd) => setFormData({ ...formData, price: usd })}
+                      onApplyPrice={(usd, costVnd) => setFormData((current) => ({
+                        ...current,
+                        price: usd,
+                        cost_price_vnd: costVnd,
+                      }))}
                     />
 
-                    <div className="grid grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                           {t('inventory.modal.price_label')}
@@ -260,6 +264,27 @@ export function ProductFormModal({
                             })}
                           </p>
                         )}
+                      </div>
+                      <div className="space-y-2">
+                        <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
+                          {t('inventory.modal.cost_price_vnd_label')}
+                        </label>
+                        <div className="relative">
+                          <span className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/40 font-bold text-xs">
+                            VND
+                          </span>
+                          <input
+                            type="number"
+                            min="0"
+                            step="1"
+                            className="w-full pl-14 pr-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all"
+                            value={formData.cost_price_vnd}
+                            onChange={(e) => setFormData({ ...formData, cost_price_vnd: e.target.value })}
+                          />
+                        </div>
+                        <p className="text-[10px] leading-relaxed text-brand-ink/40">
+                          {t('inventory.modal.cost_price_vnd_help')}
+                        </p>
                       </div>
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">

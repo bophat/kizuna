@@ -21,6 +21,7 @@ import {
   Star,
   Activity,
   ArrowUpRight,
+  CircleDollarSign,
 } from 'lucide-react';
 import { 
   XAxis, 
@@ -111,7 +112,7 @@ export default function Dashboard() {
       </div>
 
       {/* StatCards Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-6">
         <StatCard 
           title={t('dashboard.stats.total_acquisitions')} 
           value={stats?.total_revenue || 0} 
@@ -139,6 +140,18 @@ export default function Dashboard() {
           value={stats?.total_products || 0} 
           icon={Package} 
           delay={0.4}
+        />
+        <StatCard
+          title={t('dashboard.stats.estimated_gross_profit')}
+          value={stats?.estimated_gross_profit || 0}
+          icon={CircleDollarSign}
+          trend={stats?.gross_profit_trend || "0.0%"}
+          isCurrency
+          note={t('dashboard.stats.profit_note', {
+            margin: stats?.profit_margin_percent || 0,
+            coverage: stats?.profit_coverage_percent || 0,
+          })}
+          delay={0.5}
         />
       </div>
       

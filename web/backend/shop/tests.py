@@ -686,6 +686,7 @@ class PaymentCheckoutTests(TestCase):
             id='PAYMENT-PRODUCT',
             name='Payment product',
             price=Decimal('10.00'),
+            cost_price_vnd=Decimal('125000'),
             stock=5,
             weight=Decimal('0.30'),
             status='published',
@@ -743,6 +744,7 @@ class PaymentCheckoutTests(TestCase):
         self.assertEqual(order.payment_method, 'cod')
         self.assertEqual(order.status, 'processing')
         self.assertEqual(order.payment.status, PaymentTransaction.Status.COD_PENDING)
+        self.assertEqual(order.items.get().unit_cost_vnd, Decimal('125000'))
 
     def test_disabled_bank_transfer_is_rejected_without_creating_order(self):
         self.create_cart()

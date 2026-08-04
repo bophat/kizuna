@@ -86,6 +86,7 @@ class SourceImportServiceTests(TestCase):
         product = Product.objects.get(id="AMZ-B07HG6S41K")
         self.assertEqual(product.name, "[Fake Amazon] Sample Product B07HG6S41K")
         self.assertEqual(product.price, Decimal("46.62"))
+        self.assertEqual(product.cost_price_vnd, Decimal("1016000"))
         self.assertFalse(product.image)
 
         source = ProductSource.objects.get(id=res.source_id)

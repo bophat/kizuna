@@ -16,7 +16,7 @@ import {
 
 interface PricingCalculatorProps {
   weight?: number;
-  onApplyPrice: (usdPrice: string) => void;
+  onApplyPrice: (usdPrice: string, costVnd: string) => void;
 }
 
 function NumField({
@@ -373,7 +373,10 @@ export function PricingCalculator({ weight = 0, onApplyPrice }: PricingCalculato
               type="button"
               onClick={() => {
                 saveRates();
-                onApplyPrice(result.sellingPriceUsd.toFixed(2));
+                onApplyPrice(
+                  result.sellingPriceUsd.toFixed(2),
+                  Math.round(result.totalCostVnd).toString(),
+                );
               }}
               className="flex-1 flex items-center justify-center gap-2 bg-brand-ink text-white py-3 rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-brand-red transition-colors"
             >

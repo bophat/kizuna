@@ -14,12 +14,121 @@ from shop.models import (
     Coupon,
     LoyaltyPointTransaction,
     Order,
+    OrderItem,
     PaymentMethodConfig,
     PaymentTransaction,
+    Product,
     StorePage,
     UserProfile,
 )
 from shop.affiliate_payout_details import encrypt_payout_details
+
+
+class AdminDashboardProfitTests(TestCase):
+    def setUp(self):
+        self.client = APIClient()
+        self.admin = User.objects.create_user(
+            username='dashboard-admin',
+            email='dashboard-admin@example.com',
+            password='test-password-123',
+            is_staff=True,
+        )
+        self.customer = User.objects.create_user(
+            username='dashboard-customer',
+            email='dashboard-customer@example.com',
+            password='test-password-123',
+        )
+        self.client.force_authenticate(user=self.admin)
+
+    def test_dashboard_reports_paid_gross_profit_and_cost_coverage(self):
+        known_cost_product = Product.objects.create(
+            id='PROFIT-KNOWN',
+            name='Known cost product',
+            description='Known cost',
+            price=Decimal('100.00'),
+            cost_price_vnd=Decimal('1000000'),
+            stock=5,
+        )
+        unknown_cost_product = Product.objects.create(
+            id='PROFIT-UNKNOWN',
+            name='Unknown cost product',
+            description='Unknown cost',
+            price=Decimal('100.00'),
+            stock=5,
+        )
+        paid_order = Order.objects.create(
+            user=self.customer,
+            status='processing',
+            payment_method='bank_transfer',
+            subtotal_amount=Decimal('200.00'),
+            shipping_amount=Decimal('5.00'),
+            discount_amount=Decimal('20.00'),
+            total_amount=Decimal('185.00'),
+        )
+        OrderItem.objects.create(
+            order=paid_order,
+            product=known_cost_product,
+            product_name=known_cost_product.name,
+            quantity=1,
+            price=Decimal('100.00'),
+            unit_cost_vnd=Decimal('1000000'),
+        )
+        OrderItem.objects.create(
+            order=paid_order,
+            product=unknown_cost_product,
+            product_name=unknown_cost_product.name,
+            quantity=1,
+            price=Decimal('100.00'),
+        )
+        PaymentTransaction.objects.create(
+            order=paid_order,
+            method=PaymentMethodConfig.Code.BANK_TRANSFER,
+            status=PaymentTransaction.Status.PAID,
+            amount_usd=paid_order.total_amount,
+            settlement_amount=Decimal('4625000'),
+            settlement_currency='VND',
+            exchange_rate=Decimal('25000'),
+            reference=f'KZ{paid_order.id:010d}',
+        )
+
+        unpaid_order = Order.objects.create(
+            user=self.customer,
+            status='processing',
+            payment_method='cod',
+            subtotal_amount=Decimal('100.00'),
+            total_amount=Decimal('100.00'),
+        )
+        OrderItem.objects.create(
+            order=unpaid_order,
+            product=known_cost_product,
+            product_name=known_cost_product.name,
+            quantity=1,
+            price=Decimal('100.00'),
+            unit_cost_vnd=Decimal('1000000'),
+        )
+        PaymentTransaction.objects.create(
+            order=unpaid_order,
+            method=PaymentMethodConfig.Code.COD,
+            status=PaymentTransaction.Status.COD_PENDING,
+            amount_usd=unpaid_order.total_amount,
+            settlement_amount=Decimal('2500000'),
+            settlement_currency='VND',
+            exchange_rate=Decimal('25000'),
+            reference=f'KZ{unpaid_order.id:010d}',
+        )
+
+        today = timezone.localdate().isoformat()
+        response = self.client.get(
+            f'/api/admin/stats/?start_date={today}&end_date={today}'
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['estimated_gross_profit'], 50.0)
+        self.assertEqual(response.data['cost_of_goods_sold'], 40.0)
+        self.assertEqual(response.data['covered_product_revenue'], 90.0)
+        self.assertEqual(response.data['profit_margin_percent'], 55.6)
+        self.assertEqual(response.data['profit_coverage_percent'], 50.0)
+        self.assertEqual(response.data['gross_profit_trend'], '+100.0%')
 
 
 class AdminStoreContentTests(TestCase):

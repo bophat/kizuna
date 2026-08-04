@@ -29,6 +29,13 @@ class Product(models.Model):
     name_ja = models.CharField(max_length=200, blank=True, default='')
     name_vi = models.CharField(max_length=200, blank=True, default='')
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    cost_price_vnd = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        help_text='Landed unit cost in VND, used for gross profit reporting.',
+    )
     currency = models.CharField(max_length=10, default='USD')
     status = models.CharField(
         max_length=20,
@@ -457,6 +464,13 @@ class OrderItem(models.Model):
     product_name = models.CharField(max_length=200, null=True, blank=True) # Backup in case product is deleted
     quantity = models.PositiveIntegerField(default=1)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    unit_cost_vnd = models.DecimalField(
+        max_digits=14,
+        decimal_places=0,
+        null=True,
+        blank=True,
+        help_text='Snapshot of the landed unit cost when the order was placed.',
+    )
 
     def __str__(self):
         return f"{self.quantity} x {self.product_name} (Order #{self.order.id})"

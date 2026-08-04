@@ -153,7 +153,9 @@
       "total_acquisitions": "総取得額",
       "active_collectors": "アクティブコレクター",
       "total_trades": "総取引数",
-      "archive_size": "アーカイブサイズ"
+      "archive_size": "アーカイブサイズ",
+      "estimated_gross_profit": "推定粗利益",
+      "profit_note": "粗利率 {{margin}}%・原価カバー率 {{coverage}}%・支払済み注文"
     },
     "charts": {
       "trade_performance": "取引パフォーマンス",
@@ -239,6 +241,8 @@
       },
       "price_label": "評価額 (USD)",
       "price_preview": "{{localized}}（登録 {{usd}}）",
+      "cost_price_vnd_label": "商品1点あたり原価 (VND)",
+      "cost_price_vnd_help": "ダッシュボードの粗利益計算に使用します。利益を加える前の1点あたり総原価を入力してください。",
       "stock_label": "現在の在庫レベル",
       "brand_label": "職人 / ブランド",
       "location_label": "工房の所在地",

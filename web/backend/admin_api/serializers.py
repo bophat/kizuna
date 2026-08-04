@@ -313,7 +313,7 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'name_en', 'name_ja', 'name_vi',
-            'price', 'currency', 'category', 'category_name',
+            'price', 'cost_price_vnd', 'currency', 'category', 'category_name',
             'brand', 'location', 'description', 'description_en',
             'description_ja', 'description_vi', 'image', 'status',
             'is_limited', 'is_new', 'is_featured', 'is_cheap',
@@ -333,7 +333,10 @@ class OrderItemSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = OrderItem
-        fields = ['id', 'order', 'product', 'product_name', 'quantity', 'price', 'product_details']
+        fields = [
+            'id', 'order', 'product', 'product_name', 'quantity', 'price',
+            'unit_cost_vnd', 'product_details',
+        ]
         read_only_fields = ['id', 'product_details']
 
 class OrderSerializer(serializers.ModelSerializer):

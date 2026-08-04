@@ -51,6 +51,7 @@ from .serializers import (
 from shop.affiliates import refresh_available_commissions, sync_order_commission
 from shop.loyalty import sync_order_loyalty_points
 from shop.payments import expire_payment, expire_pending_payments, restore_order_inventory
+from shop.profit import calculate_gross_profit_metrics, recognized_sales
 
 import logging
 logger = logging.getLogger(__name__)
@@ -604,13 +605,26 @@ class DashboardStatsView(APIView):
                 if current > 0:
                     return "+100.0%"
                 return "0.0%"
-            change = ((current - previous) / previous) * 100
+            change = ((current - previous) / abs(previous)) * 100
             sign = "+" if change > 0 else ""
             return f"{sign}{change:.1f}%"
             
         revenue_trend = calculate_trend(float(total_revenue), float(prev_total_revenue))
         orders_trend = calculate_trend(total_orders, prev_total_orders)
         customers_trend = calculate_trend(total_customers, prev_total_customers)
+
+        recognized_period_orders = recognized_sales(period_orders).select_related(
+            'payment'
+        ).prefetch_related('items__product')
+        recognized_prev_orders = recognized_sales(prev_period_orders).select_related(
+            'payment'
+        ).prefetch_related('items__product')
+        profit_metrics = calculate_gross_profit_metrics(recognized_period_orders)
+        previous_profit_metrics = calculate_gross_profit_metrics(recognized_prev_orders)
+        gross_profit_trend = calculate_trend(
+            float(profit_metrics['estimated_gross_profit']),
+            float(previous_profit_metrics['estimated_gross_profit']),
+        )
         
         if period == 'year':
             monthly_stats = period_orders.annotate(
@@ -683,6 +697,12 @@ class DashboardStatsView(APIView):
             'total_products': total_products,
             'total_customers': total_customers,
             'customers_trend': customers_trend,
+            'estimated_gross_profit': float(profit_metrics['estimated_gross_profit']),
+            'gross_profit_trend': gross_profit_trend,
+            'cost_of_goods_sold': float(profit_metrics['cost_of_goods_sold']),
+            'covered_product_revenue': float(profit_metrics['covered_product_revenue']),
+            'profit_margin_percent': float(profit_metrics['profit_margin_percent']),
+            'profit_coverage_percent': float(profit_metrics['profit_coverage_percent']),
             'chart_data': chart_data,
             'top_selling_products': top_selling_serializer.data,
             'revenue_by_category': revenue_by_category,
@@ -965,6 +985,7 @@ class BulkImportProductsView(APIView):
                     
                     # Calculate price using shared Pricing Service
                     price_usd = Decimal('0')
+                    cost_price_vnd = None
                     if price_jpy is not None:
                         calc_res = pricing_service.calculate(
                             source_price_jpy=price_jpy,
@@ -972,6 +993,9 @@ class BulkImportProductsView(APIView):
                             usd_vnd_rate=usd_to_vnd
                         )
                         price_usd = calc_res.selling_price_usd
+                        cost_price_vnd = (
+                            calc_res.import_cost_vnd + calc_res.shipping_vnd
+                        )
 
                     # Handle category
                     category = None
@@ -1023,6 +1047,7 @@ class BulkImportProductsView(APIView):
                             id=product_id,
                             name=name,
                             price=price_usd,
+                            cost_price_vnd=cost_price_vnd,
                             currency='USD',
                             category=category,
                             brand=brand[:100] if brand else '',

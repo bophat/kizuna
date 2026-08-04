@@ -5,6 +5,7 @@ export interface ProductFormData {
   name_ja: string;
   name_vi: string;
   price: string;
+  cost_price_vnd: string;
   category: string;
   stock: string;
   description: string;

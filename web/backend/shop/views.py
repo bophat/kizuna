@@ -505,7 +505,8 @@ class CheckoutViewSet(viewsets.ViewSet):
                     product=item.product,
                     product_name=item.product.name,
                     quantity=item.quantity,
-                    price=item.product.price
+                    price=item.product.price,
+                    unit_cost_vnd=item.product.cost_price_vnd,
                 )
                 
                 # Update Inventory
