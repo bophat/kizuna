@@ -274,12 +274,17 @@ export function ProductFormModal({
                             VND
                           </span>
                           <input
-                            type="number"
-                            min="0"
-                            step="1"
+                            required
+                            type="text"
+                            inputMode="numeric"
+                            pattern="[0-9., ]*"
+                            placeholder="200000"
                             className="w-full pl-14 pr-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:ring-4 focus:ring-brand-red/5 focus:border-brand-red transition-all"
                             value={formData.cost_price_vnd}
-                            onChange={(e) => setFormData({ ...formData, cost_price_vnd: e.target.value })}
+                            onChange={(e) => setFormData({
+                              ...formData,
+                              cost_price_vnd: e.target.value.replace(/[^0-9]/g, ''),
+                            })}
                           />
                         </div>
                         <p className="text-[10px] leading-relaxed text-brand-ink/40">

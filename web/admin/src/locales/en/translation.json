@@ -208,7 +208,10 @@
     "all_categories": "All categories",
     "errors": {
       "load_failed": "Failed to load artifacts.",
-      "fetch_error": "An error occurred while fetching data."
+      "fetch_error": "An error occurred while fetching data.",
+      "cost_price_required": "Enter a landed unit cost greater than 0 VND.",
+      "cost_price_not_saved": "The server did not save the landed unit cost. Please deploy the latest backend and try again.",
+      "save_failed": "Unable to save this product. Please check your connection and try again."
     },
     "table": {
       "artifact": "Artifact Details",

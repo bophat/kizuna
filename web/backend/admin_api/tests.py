@@ -130,6 +130,26 @@ class AdminDashboardProfitTests(TestCase):
         self.assertEqual(response.data['profit_coverage_percent'], 50.0)
         self.assertEqual(response.data['gross_profit_trend'], '+100.0%')
 
+    def test_admin_multipart_patch_persists_product_cost(self):
+        product = Product.objects.create(
+            id='PROFIT-COST-PATCH',
+            name='Product awaiting cost',
+            description='Cost will be entered by an administrator',
+            price=Decimal('11.00'),
+            stock=1,
+        )
+
+        response = self.client.patch(
+            f'/api/admin/products/{product.id}/',
+            {'cost_price_vnd': '200000'},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['cost_price_vnd'], '200000')
+        product.refresh_from_db()
+        self.assertEqual(product.cost_price_vnd, Decimal('200000'))
+
 
 class AdminStoreContentTests(TestCase):
     def setUp(self):

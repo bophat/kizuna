@@ -53,9 +53,21 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
 
   const handleSubmit = async (e?: React.FormEvent) => {
     e?.preventDefault();
+    const normalizedCostPriceVnd = formData.cost_price_vnd.replace(/[^0-9]/g, '');
+    if (!normalizedCostPriceVnd || Number(normalizedCostPriceVnd) <= 0) {
+      setCurrentStep(2);
+      alert(t('inventory.errors.cost_price_required'));
+      return;
+    }
+
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
-      data.append(key, String(formData[key as keyof ProductFormData]));
+      data.append(
+        key,
+        key === 'cost_price_vnd'
+          ? normalizedCostPriceVnd
+          : String(formData[key as keyof ProductFormData]),
+      );
     });
     if (imageFile) data.append('image', imageFile);
 
@@ -64,15 +76,28 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
 
     try {
       const response = await apiFetch(endpoint, { method, body: data, headers: {} });
+      const responseData = await response.json().catch(() => null);
       if (response.ok) {
+        const savedCostPriceVnd = String(responseData?.cost_price_vnd ?? '').replace(
+          /[^0-9]/g,
+          '',
+        );
+        if (
+          !savedCostPriceVnd
+          || Number(savedCostPriceVnd) !== Number(normalizedCostPriceVnd)
+        ) {
+          setCurrentStep(2);
+          alert(t('inventory.errors.cost_price_not_saved'));
+          return;
+        }
         setIsModalOpen(false);
         onSuccess();
       } else {
-        const errorData = await response.json();
-        alert(formatApiErrors(errorData));
+        alert(formatApiErrors(responseData || {}));
       }
     } catch (err) {
       console.error('Submit error:', err);
+      alert(t('inventory.errors.save_failed'));
     }
   };
 

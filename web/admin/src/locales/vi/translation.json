@@ -208,7 +208,10 @@
     "all_categories": "Tất cả danh mục",
     "errors": {
       "load_failed": "Không thể tải hiện vật.",
-      "fetch_error": "Đã xảy ra lỗi khi lấy dữ liệu."
+      "fetch_error": "Đã xảy ra lỗi khi lấy dữ liệu.",
+      "cost_price_required": "Hãy nhập giá vốn một sản phẩm lớn hơn 0 VND.",
+      "cost_price_not_saved": "Máy chủ chưa lưu giá vốn. Hãy deploy backend mới nhất rồi thử lại.",
+      "save_failed": "Không thể lưu sản phẩm. Hãy kiểm tra kết nối rồi thử lại."
     },
     "table": {
       "artifact": "Chi tiết Hiện vật",
