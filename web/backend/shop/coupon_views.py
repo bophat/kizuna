@@ -36,6 +36,9 @@ class OwnedCouponListView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        include_history = str(request.query_params.get('include_history', '')).lower() in {
+            '1', 'true', 'yes',
+        }
         _, subtotal = _cart_subtotal(request.user)
         results = []
         coupons = (
@@ -44,13 +47,16 @@ class OwnedCouponListView(APIView):
             .order_by('-created_at')
         )
         for coupon in coupons:
+            error_code = None
             try:
                 discount = validate_coupon(coupon, request.user, subtotal)
             except CouponValidationError as exc:
+                error_code = exc.code
                 # A coupon below the current minimum still belongs to the customer
                 # and should be visible. Coupons that can never be selected now are
-                # omitted from the checkout picker.
-                if exc.code != 'minimum_order_not_met':
+                # omitted from the checkout picker, but remain available in the
+                # customer's coupon-wallet history.
+                if exc.code != 'minimum_order_not_met' and not include_history:
                     continue
                 data = {
                     'valid': False,
@@ -76,6 +82,18 @@ class OwnedCouponListView(APIView):
             else:
                 data = coupon_payload(coupon, subtotal, discount)
                 data['error_code'] = None
+            ownership_status = {
+                'inactive': 'inactive',
+                'not_started': 'scheduled',
+                'expired': 'expired',
+                'usage_limit_reached': 'used',
+                'per_user_limit_reached': 'used',
+            }.get(error_code, 'available')
+            customer_redemptions = [
+                redemption
+                for redemption in coupon.redemptions.all()
+                if redemption.user_id == request.user.id
+            ]
             data.update(
                 {
                     'is_applicable': bool(data['valid']),
@@ -86,7 +104,14 @@ class OwnedCouponListView(APIView):
                     ),
                     'source': coupon.source,
                     'birthday_year': coupon.birthday_year,
+                    'ownership_status': ownership_status,
+                    'created_at': coupon.created_at,
                     'expires_at': coupon.expires_at,
+                    'redeemed_at': (
+                        max(item.created_at for item in customer_redemptions)
+                        if customer_redemptions
+                        else None
+                    ),
                 }
             )
             results.append(data)

@@ -330,6 +330,32 @@
     "order_number": "注文 {{id}}",
     "more_items": "他 {{count}} 点",
     "payment_method": "お支払い",
+    "coupons": {
+      "tab": "クーポン ({{count}})",
+      "title": "クーポンウォレット",
+      "description": "お客様のアカウントに発行されたクーポンを確認できます。利用可能なクーポンは決済時に直接選択できます。",
+      "load_error": "クーポンを読み込めませんでした。もう一度お試しください。",
+      "empty": "クーポンはまだありません",
+      "empty_hint": "アカウントに発行されたクーポンは自動的にここへ表示されます。",
+      "birthday_gift": "バースデー特典",
+      "percent": "{{percent}}%割引",
+      "fixed": "{{amount}}割引",
+      "minimum": "最低注文額: {{amount}}",
+      "maximum": "最大割引: {{amount}}",
+      "no_expiry": "有効期限なし",
+      "expires": "有効期限: {{date}}",
+      "used_on": "利用日: {{date}}",
+      "copy": "コードをコピー",
+      "copied": "クーポンコードをコピーしました。",
+      "use_at_checkout": "決済で使う",
+      "statuses": {
+        "available": "利用可能",
+        "used": "使用済み",
+        "inactive": "無効",
+        "expired": "期限切れ",
+        "scheduled": "開始前"
+      }
+    },
     "loyalty": {
       "tab": "ポイント",
       "balance": "利用可能残高",

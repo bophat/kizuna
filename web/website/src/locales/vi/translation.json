@@ -330,6 +330,32 @@
     "order_number": "Đơn hàng {{id}}",
     "more_items": "+{{count}} sản phẩm",
     "payment_method": "Thanh toán",
+    "coupons": {
+      "tab": "Coupon ({{count}})",
+      "title": "Ví coupon của bạn",
+      "description": "Kiểm tra các coupon được cấp riêng cho tài khoản. Coupon còn hiệu lực có thể được chọn trực tiếp khi thanh toán.",
+      "load_error": "Không thể tải coupon của bạn. Vui lòng thử lại.",
+      "empty": "Bạn chưa có coupon nào",
+      "empty_hint": "Coupon được cấp cho tài khoản sẽ tự động xuất hiện tại đây.",
+      "birthday_gift": "Quà sinh nhật",
+      "percent": "Giảm {{percent}}%",
+      "fixed": "Giảm {{amount}}",
+      "minimum": "Đơn tối thiểu: {{amount}}",
+      "maximum": "Giảm tối đa: {{amount}}",
+      "no_expiry": "Không hết hạn",
+      "expires": "Hết hạn: {{date}}",
+      "used_on": "Đã dùng ngày: {{date}}",
+      "copy": "Sao chép mã",
+      "copied": "Đã sao chép mã coupon.",
+      "use_at_checkout": "Dùng khi thanh toán",
+      "statuses": {
+        "available": "Có thể sử dụng",
+        "used": "Đã sử dụng",
+        "inactive": "Đã tắt",
+        "expired": "Đã hết hạn",
+        "scheduled": "Chưa bắt đầu"
+      }
+    },
     "loyalty": {
       "tab": "Điểm thưởng",
       "balance": "Số dư khả dụng",

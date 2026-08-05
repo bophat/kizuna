@@ -429,6 +429,11 @@ class CouponCheckoutTests(TestCase):
         exhausted = self.client.get('/api/shop/coupons/mine/')
         self.assertEqual(exhausted.data['results'], [])
 
+        history = self.client.get('/api/shop/coupons/mine/?include_history=1')
+        self.assertEqual(history.data['count'], 1)
+        self.assertEqual(history.data['results'][0]['code'], owned.code)
+        self.assertEqual(history.data['results'][0]['ownership_status'], 'used')
+
     @patch('shop.shipping.get_exchange_rates', return_value={'usd_to_vnd': 25000})
     def test_checkout_applies_coupon_and_recalculates_complete_total(self, _rates):
         response = self.client.post(

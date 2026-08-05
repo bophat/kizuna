@@ -330,6 +330,32 @@
     "order_number": "Order {{id}}",
     "more_items": "+{{count}} more",
     "payment_method": "Payment",
+    "coupons": {
+      "tab": "Coupons ({{count}})",
+      "title": "Your coupon wallet",
+      "description": "Review personal coupons issued to your account. Available coupons can be selected directly during checkout.",
+      "load_error": "Your coupons could not be loaded. Please try again.",
+      "empty": "You do not have any coupons yet",
+      "empty_hint": "Coupons issued to your account will appear here automatically.",
+      "birthday_gift": "Birthday gift",
+      "percent": "Save {{percent}}%",
+      "fixed": "Save {{amount}}",
+      "minimum": "Minimum order: {{amount}}",
+      "maximum": "Maximum discount: {{amount}}",
+      "no_expiry": "No expiry",
+      "expires": "Expires: {{date}}",
+      "used_on": "Used on: {{date}}",
+      "copy": "Copy code",
+      "copied": "Coupon code copied.",
+      "use_at_checkout": "Use at checkout",
+      "statuses": {
+        "available": "Available",
+        "used": "Used",
+        "inactive": "Inactive",
+        "expired": "Expired",
+        "scheduled": "Scheduled"
+      }
+    },
     "loyalty": {
       "tab": "Reward Points",
       "balance": "Available balance",

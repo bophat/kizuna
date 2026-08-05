@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/Icons';
-import { CircleAlert, Copy, Loader2, Package, Star, LogOut, CheckCircle2, KeyRound, Link2, MousePointerClick, WalletCards } from 'lucide-react';
+import { CircleAlert, Copy, Loader2, Package, Star, LogOut, CheckCircle2, KeyRound, Link2, MousePointerClick, TicketPercent, WalletCards } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
@@ -79,12 +79,27 @@ interface LoyaltyDashboard {
   transactions: LoyaltyTransaction[];
 }
 
+interface CustomerCoupon {
+  code: string;
+  discount_type: 'percentage' | 'fixed';
+  discount_value: string;
+  discount_value_base: string;
+  minimum_order_amount: string;
+  maximum_discount_amount: string | null;
+  source: 'manual' | 'birthday';
+  birthday_year: number | null;
+  ownership_status: 'available' | 'used' | 'inactive' | 'expired' | 'scheduled';
+  created_at: string;
+  expires_at: string | null;
+  redeemed_at: string | null;
+}
+
 
 
 export function ProfilePage() {
   const { t, i18n } = useTranslation();
   const { format: formatPrice } = useFormatPrice();
-  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items' | 'loyalty' | 'affiliate'>('info');
+  const [activeTab, setActiveTab] = useState<'info' | 'orders' | 'items' | 'coupons' | 'loyalty' | 'affiliate'>('info');
   const [user, setUser] = useState<UserData | null>(null);
   const [orders, setOrders] = useState<Order[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -94,6 +109,9 @@ export function ProfilePage() {
   const [passwordMessage, setPasswordMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [affiliate, setAffiliate] = useState<AffiliateDashboard | null>(null);
   const [loyalty, setLoyalty] = useState<LoyaltyDashboard | null>(null);
+  const [coupons, setCoupons] = useState<CustomerCoupon[]>([]);
+  const [couponsLoading, setCouponsLoading] = useState(true);
+  const [couponsError, setCouponsError] = useState('');
   const navigate = useNavigate();
   const { logout } = useAuth();
 
@@ -112,6 +130,7 @@ export function ProfilePage() {
     fetchOrders();
     fetchAffiliate();
     fetchLoyalty();
+    fetchCoupons();
   }, [i18n.language]);
 
   const fetchProfile = async () => {
@@ -166,6 +185,22 @@ export function ProfilePage() {
       if (response.ok) setLoyalty(await response.json());
     } catch (error) {
       console.error(error);
+    }
+  };
+
+  const fetchCoupons = async () => {
+    setCouponsLoading(true);
+    setCouponsError('');
+    try {
+      const response = await apiFetch('/shop/coupons/mine/?include_history=1');
+      if (!response.ok) throw new Error('coupon wallet');
+      const data = await response.json();
+      setCoupons(Array.isArray(data?.results) ? data.results : []);
+    } catch (error) {
+      console.error(error);
+      setCouponsError(t('profile.coupons.load_error'));
+    } finally {
+      setCouponsLoading(false);
     }
   };
 
@@ -301,6 +336,16 @@ export function ProfilePage() {
           }`}
         >
           {t('profile.loyalty.tab')}
+        </button>
+        <button
+          onClick={() => setActiveTab('coupons')}
+          className={`px-8 py-4 label-md tracking-normal border-b-2 transition-all whitespace-nowrap ${
+            activeTab === 'coupons' ? 'border-primary text-primary' : 'border-transparent text-secondary hover:text-primary'
+          }`}
+        >
+          {t('profile.coupons.tab', {
+            count: coupons.filter((coupon) => coupon.ownership_status === 'available').length,
+          })}
         </button>
         {affiliate?.is_affiliate && (
           <button
@@ -558,11 +603,154 @@ export function ProfilePage() {
             <LoyaltyDashboardPanel loyalty={loyalty} />
           )}
 
+          {activeTab === 'coupons' && (
+            <CouponWalletPanel
+              coupons={coupons}
+              loading={couponsLoading}
+              error={couponsError}
+              formatPrice={formatPrice}
+              onCheckout={() => navigate('/checkout')}
+            />
+          )}
+
           {activeTab === 'affiliate' && affiliate?.is_affiliate && (
             <AffiliateDashboardPanel affiliate={affiliate} formatPrice={formatPrice} />
           )}
         </div>
       </div>
+    </div>
+  );
+}
+
+function CouponWalletPanel({
+  coupons,
+  loading,
+  error,
+  formatPrice,
+  onCheckout,
+}: {
+  coupons: CustomerCoupon[];
+  loading: boolean;
+  error: string;
+  formatPrice: (value: number | string) => string;
+  onCheckout: () => void;
+}) {
+  const { t, i18n } = useTranslation();
+  const sortedCoupons = [...coupons].sort((left, right) => {
+    if (left.ownership_status === right.ownership_status) {
+      return new Date(right.created_at).getTime() - new Date(left.created_at).getTime();
+    }
+    if (left.ownership_status === 'available') return -1;
+    if (right.ownership_status === 'available') return 1;
+    return 0;
+  });
+  const statusClasses: Record<CustomerCoupon['ownership_status'], string> = {
+    available: 'border-emerald-200 bg-emerald-50 text-emerald-700',
+    used: 'border-zinc-200 bg-zinc-100 text-zinc-600',
+    inactive: 'border-zinc-200 bg-zinc-100 text-zinc-600',
+    expired: 'border-red-200 bg-red-50 text-red-600',
+    scheduled: 'border-blue-200 bg-blue-50 text-blue-700',
+  };
+
+  return (
+    <div className="space-y-7">
+      <div className="flex items-start gap-4 rounded-sm border border-primary/15 bg-primary/5 p-6 md:p-8">
+        <div className="rounded-full bg-primary p-3 text-white"><TicketPercent size={24} /></div>
+        <div>
+          <h2 className="headline-sm normal-case tracking-normal">{t('profile.coupons.title')}</h2>
+          <p className="mt-2 body-sm leading-relaxed text-secondary">{t('profile.coupons.description')}</p>
+        </div>
+      </div>
+
+      {loading ? (
+        <div className="flex min-h-48 items-center justify-center gap-3 text-secondary">
+          <Loader2 className="animate-spin text-primary" size={24} />
+          <span>{t('common.loading')}</span>
+        </div>
+      ) : error ? (
+        <div className="flex items-center gap-3 rounded-sm border border-red-200 bg-red-50 p-5 text-red-600">
+          <CircleAlert size={20} className="shrink-0" /><span>{error}</span>
+        </div>
+      ) : sortedCoupons.length === 0 ? (
+        <div className="rounded-sm border border-dashed border-surface-variant p-12 text-center">
+          <TicketPercent size={42} strokeWidth={1.25} className="mx-auto text-secondary" />
+          <h3 className="mt-4 font-semibold">{t('profile.coupons.empty')}</h3>
+          <p className="mt-2 body-sm text-secondary">{t('profile.coupons.empty_hint')}</p>
+        </div>
+      ) : (
+        <div className="grid gap-5 md:grid-cols-2">
+          {sortedCoupons.map((coupon) => {
+            const available = coupon.ownership_status === 'available';
+            const discountText = coupon.discount_type === 'percentage'
+              ? t('profile.coupons.percent', { percent: Number(coupon.discount_value) })
+              : t('profile.coupons.fixed', { amount: formatPrice(coupon.discount_value_base) });
+            return (
+              <article
+                key={coupon.code}
+                className={`overflow-hidden rounded-sm border bg-white ${available ? 'border-primary/30 shadow-sm' : 'border-surface-variant opacity-75'}`}
+              >
+                <div className="border-b border-surface-variant bg-surface-container/30 p-5">
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <code className="truncate font-mono text-lg font-bold tracking-wider text-primary">{coupon.code}</code>
+                        {coupon.source === 'birthday' && (
+                          <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">
+                            {t('profile.coupons.birthday_gift')}
+                          </span>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xl font-bold">{discountText}</p>
+                    </div>
+                    <span className={`shrink-0 rounded-full border px-2.5 py-1 text-[10px] font-bold ${statusClasses[coupon.ownership_status]}`}>
+                      {t(`profile.coupons.statuses.${coupon.ownership_status}`)}
+                    </span>
+                  </div>
+                </div>
+
+                <div className="space-y-2 p-5 text-sm text-secondary">
+                  {Number(coupon.minimum_order_amount) > 0 && (
+                    <p>{t('profile.coupons.minimum', { amount: formatPrice(coupon.minimum_order_amount) })}</p>
+                  )}
+                  {coupon.maximum_discount_amount && (
+                    <p>{t('profile.coupons.maximum', { amount: formatPrice(coupon.maximum_discount_amount) })}</p>
+                  )}
+                  <p>
+                    {coupon.expires_at
+                      ? t('profile.coupons.expires', { date: new Date(coupon.expires_at).toLocaleDateString(i18n.language) })
+                      : t('profile.coupons.no_expiry')}
+                  </p>
+                  {coupon.redeemed_at && (
+                    <p>{t('profile.coupons.used_on', { date: new Date(coupon.redeemed_at).toLocaleDateString(i18n.language) })}</p>
+                  )}
+                </div>
+
+                {available && (
+                  <div className="flex flex-col gap-2 border-t border-surface-variant p-4 sm:flex-row">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(coupon.code);
+                        alert(t('profile.coupons.copied'));
+                      }}
+                      className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm border border-primary px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
+                    >
+                      <Copy size={16} /> {t('profile.coupons.copy')}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={onCheckout}
+                      className="flex-1 rounded-sm bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:opacity-90"
+                    >
+                      {t('profile.coupons.use_at_checkout')}
+                    </button>
+                  </div>
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
