@@ -23,6 +23,18 @@ type AppliedCoupon = {
   total_after_discount: string;
 };
 
+type OwnedCoupon = AppliedCoupon & {
+  amount_currency: 'USD' | 'VND';
+  discount_value_base: string;
+  minimum_order_amount: string;
+  maximum_discount_amount: string | null;
+  source: 'manual' | 'birthday';
+  birthday_year: number | null;
+  expires_at: string | null;
+  is_applicable: boolean;
+  error_code: string | null;
+};
+
 type PaymentMethod = {
   code: 'cod' | 'bank_transfer';
   instructions: string;
@@ -69,10 +81,16 @@ export function CheckoutPage() {
   const [appliedCoupon, setAppliedCoupon] = useState<AppliedCoupon | null>(null);
   const [couponError, setCouponError] = useState('');
   const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+  const [ownedCoupons, setOwnedCoupons] = useState<OwnedCoupon[]>([]);
+  const [ownedCouponsLoading, setOwnedCouponsLoading] = useState(false);
+  const [ownedCouponsError, setOwnedCouponsError] = useState('');
   const [checkoutError, setCheckoutError] = useState('');
 
   const { cart, fetchCart } = useCart();
   const { isAuthenticated, loading: authLoading } = useAuth();
+  const cartCouponSignature = (cart?.items || [])
+    .map((item) => `${item.product_id}:${item.quantity}`)
+    .join('|');
 
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
@@ -128,6 +146,33 @@ export function CheckoutPage() {
       });
     return () => { cancelled = true; };
   }, [i18n.language, t]);
+
+  useEffect(() => {
+    if (!isAuthenticated || !cartCouponSignature) {
+      setOwnedCoupons([]);
+      setOwnedCouponsError('');
+      return undefined;
+    }
+
+    let cancelled = false;
+    setOwnedCouponsLoading(true);
+    setOwnedCouponsError('');
+    apiFetch('/shop/coupons/mine/')
+      .then(async (response) => {
+        if (!response.ok) throw new Error('owned coupons');
+        const data = await response.json();
+        if (!cancelled) {
+          setOwnedCoupons(Array.isArray(data?.results) ? data.results : []);
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setOwnedCouponsError(t('checkout.owned_coupons_error'));
+      })
+      .finally(() => {
+        if (!cancelled) setOwnedCouponsLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, [cartCouponSignature, isAuthenticated, t]);
 
   const trackedOrderId = orderData?.order?.id;
   const trackedPaymentMethod = orderData?.payment?.method || orderData?.order?.payment?.method;
@@ -194,9 +239,10 @@ export function CheckoutPage() {
     });
   };
 
-  const applyCoupon = async () => {
-    const code = couponCode.trim().toUpperCase();
+  const applyCoupon = async (selectedCode?: string) => {
+    const code = (selectedCode ?? couponCode).trim().toUpperCase();
     if (!code || isApplyingCoupon) return;
+    setCouponCode(code);
     setIsApplyingCoupon(true);
     setCouponError('');
     try {
@@ -628,14 +674,14 @@ export function CheckoutPage() {
                     onKeyDown={(event) => {
                       if (event.key === 'Enter') {
                         event.preventDefault();
-                        applyCoupon();
+                        void applyCoupon();
                       }
                     }}
                     placeholder={t('checkout.coupon_placeholder')}
                     className="min-w-0 flex-1 rounded-xl border border-zinc-700 bg-zinc-800 px-3 py-2.5 text-sm uppercase text-white outline-none transition placeholder:normal-case placeholder:text-zinc-600 focus:border-primary"
                   />
                   <button
-                    onClick={applyCoupon}
+                    onClick={() => void applyCoupon()}
                     disabled={!couponCode.trim() || isApplyingCoupon}
                     className="rounded-xl bg-white px-4 py-2.5 text-xs font-bold text-zinc-900 transition hover:bg-primary hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                   >
@@ -644,6 +690,94 @@ export function CheckoutPage() {
                 </div>
               )}
               {couponError && <p className="mt-2 text-xs leading-relaxed text-red-400">{couponError}</p>}
+              {(ownedCouponsLoading || ownedCouponsError || ownedCoupons.length > 0) && (
+                <div className="mt-5 border-t border-zinc-800 pt-4">
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-zinc-500">
+                      {t('checkout.owned_coupons_title')}
+                    </p>
+                    {ownedCoupons.length > 0 && (
+                      <span className="rounded-full bg-primary/15 px-2 py-0.5 text-[10px] font-bold text-primary">
+                        {ownedCoupons.length}
+                      </span>
+                    )}
+                  </div>
+                  {ownedCouponsLoading ? (
+                    <p className="text-xs text-zinc-500">{t('checkout.owned_coupons_loading')}</p>
+                  ) : ownedCouponsError ? (
+                    <p className="text-xs leading-relaxed text-red-400">{ownedCouponsError}</p>
+                  ) : (
+                    <div className="max-h-52 space-y-2 overflow-y-auto pr-1 custom-scrollbar">
+                      {ownedCoupons.map((coupon) => {
+                        const selected = appliedCoupon?.code === coupon.code;
+                        const minimumText = coupon.minimum_order_amount
+                          ? formatPrice(parseFloat(coupon.minimum_order_amount))
+                          : '';
+                        const maximumText = coupon.maximum_discount_amount
+                          ? formatPrice(parseFloat(coupon.maximum_discount_amount))
+                          : '';
+                        return (
+                          <button
+                            key={coupon.code}
+                            type="button"
+                            disabled={!coupon.is_applicable || selected || isApplyingCoupon}
+                            onClick={() => void applyCoupon(coupon.code)}
+                            className={cn(
+                              'w-full rounded-xl border px-3 py-3 text-left transition',
+                              selected
+                                ? 'border-emerald-500/40 bg-emerald-500/10'
+                                : coupon.is_applicable
+                                  ? 'border-zinc-700 bg-zinc-800/70 hover:border-primary hover:bg-primary/10'
+                                  : 'cursor-not-allowed border-zinc-800 bg-zinc-900/60 opacity-60',
+                            )}
+                          >
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="truncate font-mono text-sm font-bold text-white">{coupon.code}</p>
+                                <p className="mt-1 text-xs font-semibold text-primary">
+                                  {coupon.discount_type === 'percentage'
+                                    ? t('checkout.owned_coupon_percent', { percent: Number(coupon.discount_value) })
+                                    : t('checkout.owned_coupon_fixed', { amount: formatPrice(parseFloat(coupon.discount_value_base)) })}
+                                </p>
+                              </div>
+                              <span className={cn(
+                                'shrink-0 rounded-lg px-2 py-1 text-[10px] font-bold',
+                                selected
+                                  ? 'bg-emerald-500/20 text-emerald-300'
+                                  : coupon.is_applicable
+                                    ? 'bg-white text-zinc-900'
+                                    : 'bg-zinc-800 text-zinc-500',
+                              )}>
+                                {t(
+                                  selected
+                                    ? 'checkout.owned_coupon_selected'
+                                    : coupon.is_applicable
+                                      ? 'checkout.owned_coupon_select'
+                                      : 'checkout.owned_coupon_unavailable',
+                                )}
+                              </span>
+                            </div>
+                            <div className="mt-2 space-y-1 text-[11px] leading-relaxed text-zinc-500">
+                              {Number(coupon.minimum_order_amount) > 0 && (
+                                <p>{t('checkout.owned_coupon_minimum', { amount: minimumText })}</p>
+                              )}
+                              {coupon.maximum_discount_amount && (
+                                <p>{t('checkout.owned_coupon_maximum', { amount: maximumText })}</p>
+                              )}
+                              {!coupon.expires_at && <p>{t('checkout.owned_coupon_no_expiry')}</p>}
+                              {!coupon.is_applicable && coupon.error_code && (
+                                <p className="text-amber-400">
+                                  {couponErrorText(coupon.error_code, coupon.minimum_order_amount)}
+                                </p>
+                              )}
+                            </div>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="border-t border-zinc-800 pt-6 flex flex-col gap-3 mb-8">

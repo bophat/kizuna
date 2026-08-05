@@ -384,6 +384,51 @@ class CouponCheckoutTests(TestCase):
         self.assertEqual(response.data['subtotal_amount'], Decimal('200.00'))
         self.assertEqual(response.data['discount_amount'], Decimal('20.00'))
 
+    def test_owned_coupon_list_only_returns_selectable_customer_coupons(self):
+        owned = Coupon.objects.create(
+            code='MY-BIRTHDAY',
+            discount_type=Coupon.DiscountType.PERCENTAGE,
+            discount_value=Decimal('10.00'),
+            minimum_order_amount=Decimal('250.00'),
+            usage_limit=1,
+            per_user_limit=1,
+            assigned_user=self.user,
+        )
+        other_user = User.objects.create_user(
+            username='other-coupon-owner', email='other-coupon@example.com'
+        )
+        Coupon.objects.create(
+            code='NOT-MINE',
+            discount_type=Coupon.DiscountType.PERCENTAGE,
+            discount_value=Decimal('20.00'),
+            assigned_user=other_user,
+        )
+
+        below_minimum = self.client.get('/api/shop/coupons/mine/')
+
+        self.assertEqual(below_minimum.status_code, 200)
+        self.assertEqual(below_minimum.data['count'], 1)
+        self.assertEqual(below_minimum.data['results'][0]['code'], owned.code)
+        self.assertFalse(below_minimum.data['results'][0]['is_applicable'])
+        self.assertEqual(
+            below_minimum.data['results'][0]['error_code'],
+            'minimum_order_not_met',
+        )
+
+        owned.minimum_order_amount = Decimal('50.00')
+        owned.save()
+        applicable = self.client.get('/api/shop/coupons/mine/')
+        self.assertTrue(applicable.data['results'][0]['is_applicable'])
+        self.assertEqual(
+            applicable.data['results'][0]['discount_amount'],
+            Decimal('20.00'),
+        )
+
+        owned.used_count = 1
+        owned.save(update_fields=['used_count', 'updated_at'])
+        exhausted = self.client.get('/api/shop/coupons/mine/')
+        self.assertEqual(exhausted.data['results'], [])
+
     @patch('shop.shipping.get_exchange_rates', return_value={'usd_to_vnd': 25000})
     def test_checkout_applies_coupon_and_recalculates_complete_total(self, _rates):
         response = self.client.post(

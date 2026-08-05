@@ -15,6 +15,84 @@ from .coupons import (
 from .models import Cart, Coupon
 
 
+def _cart_subtotal(user):
+    cart = Cart.objects.filter(user=user).prefetch_related('items__product').first()
+    if not cart:
+        return None, Decimal('0.00')
+    subtotal = sum(
+        (
+            item.product.price * item.quantity
+            for item in cart.items.all()
+            if item.product_id
+        ),
+        Decimal('0.00'),
+    )
+    return cart, subtotal
+
+
+class OwnedCouponListView(APIView):
+    """List personal coupons that still belong to the authenticated customer."""
+
+    permission_classes = [IsAuthenticated]
+
+    def get(self, request):
+        _, subtotal = _cart_subtotal(request.user)
+        results = []
+        coupons = (
+            Coupon.objects.filter(assigned_user=request.user)
+            .prefetch_related('redemptions')
+            .order_by('-created_at')
+        )
+        for coupon in coupons:
+            try:
+                discount = validate_coupon(coupon, request.user, subtotal)
+            except CouponValidationError as exc:
+                # A coupon below the current minimum still belongs to the customer
+                # and should be visible. Coupons that can never be selected now are
+                # omitted from the checkout picker.
+                if exc.code != 'minimum_order_not_met':
+                    continue
+                data = {
+                    'valid': False,
+                    'code': coupon.code,
+                    'discount_type': coupon.discount_type,
+                    'discount_value': coupon.discount_value,
+                    'amount_currency': coupon.amount_currency,
+                    'minimum_order_amount': amount_to_base_currency(
+                        coupon, coupon.minimum_order_amount
+                    ),
+                    'maximum_discount_amount': (
+                        amount_to_base_currency(
+                            coupon, coupon.maximum_discount_amount
+                        )
+                        if coupon.maximum_discount_amount is not None
+                        else None
+                    ),
+                    'subtotal_amount': subtotal,
+                    'discount_amount': Decimal('0.00'),
+                    'total_after_discount': subtotal,
+                    'error_code': exc.code,
+                }
+            else:
+                data = coupon_payload(coupon, subtotal, discount)
+                data['error_code'] = None
+            data.update(
+                {
+                    'is_applicable': bool(data['valid']),
+                    'discount_value_base': (
+                        amount_to_base_currency(coupon, coupon.discount_value)
+                        if coupon.discount_type == Coupon.DiscountType.FIXED
+                        else coupon.discount_value
+                    ),
+                    'source': coupon.source,
+                    'birthday_year': coupon.birthday_year,
+                    'expires_at': coupon.expires_at,
+                }
+            )
+            results.append(data)
+        return Response({'count': len(results), 'results': results})
+
+
 class CouponValidateView(APIView):
     permission_classes = [IsAuthenticated]
 
@@ -26,7 +104,7 @@ class CouponValidateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        cart = Cart.objects.filter(user=request.user).prefetch_related('items__product').first()
+        cart, subtotal = _cart_subtotal(request.user)
         if not cart or not cart.items.exists():
             return Response(
                 {'valid': False, 'error_code': 'empty_cart'},
@@ -41,10 +119,6 @@ class CouponValidateView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        subtotal = sum(
-            (item.product.price * item.quantity for item in cart.items.all() if item.product_id),
-            Decimal('0.00'),
-        )
         try:
             discount = validate_coupon(coupon, request.user, subtotal)
         except CouponValidationError as exc:

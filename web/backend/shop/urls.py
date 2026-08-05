@@ -19,7 +19,7 @@ from .concierge_views import (
     ConciergeMessageView,
     ConciergeStreamView,
 )
-from .coupon_views import CouponValidateView
+from .coupon_views import CouponValidateView, OwnedCouponListView
 from .affiliate_views import AffiliateDashboardView, AffiliateTrackView
 from .payment_views import PublicPaymentMethodsView, PaymentProofUploadView
 from .payment_webhooks import SepayWebhookView
@@ -44,6 +44,7 @@ urlpatterns = [
     path('orders/<int:order_id>/payment-proof/', PaymentProofUploadView.as_view(), name='payment-proof'),
     path('affiliates/track/', AffiliateTrackView.as_view(), name='affiliate-track'),
     path('affiliates/me/', AffiliateDashboardView.as_view(), name='affiliate-dashboard'),
+    path('coupons/mine/', OwnedCouponListView.as_view(), name='owned-coupon-list'),
     path('coupons/validate/', CouponValidateView.as_view(), name='coupon-validate'),
     path('exchange-rates/', ExchangeRatesView.as_view(), name='exchange-rates'),
     path('settings/', PublicSettingsView.as_view(), name='public-settings'),
