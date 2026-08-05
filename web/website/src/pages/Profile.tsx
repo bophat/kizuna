@@ -32,6 +32,9 @@ interface UserProfile {
   phone: string;
   address: string;
   points: number;
+  date_of_birth: string | null;
+  preferred_language: 'en' | 'ja' | 'vi';
+  birthday_email_enabled: boolean;
 }
 
 interface UserData {
@@ -99,7 +102,9 @@ export function ProfilePage() {
     last_name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    date_of_birth: '',
+    birthday_email_enabled: true
   });
 
   useEffect(() => {
@@ -123,7 +128,9 @@ export function ProfilePage() {
         last_name: data.last_name || '',
         email: data.email || '',
         phone: data.profile?.phone || '',
-        address: data.profile?.address || ''
+        address: data.profile?.address || '',
+        date_of_birth: data.profile?.date_of_birth || '',
+        birthday_email_enabled: data.profile?.birthday_email_enabled ?? true
       });
     } catch (err) {
       console.error(err);
@@ -169,7 +176,11 @@ export function ProfilePage() {
     try {
       const res = await apiFetch('/shop/me/', {
         method: 'PATCH',
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          date_of_birth: formData.date_of_birth || null,
+          preferred_language: i18n.language.split('-')[0],
+        })
       });
       if (res.ok) {
         const updatedUser = await res.json();
@@ -345,6 +356,28 @@ export function ProfilePage() {
                     placeholder={t('profile.phone_placeholder')}
                   />
                 </div>
+                <div className="space-y-2 md:col-span-2">
+                  <label className="label-sm text-secondary lowercase">{t('profile.date_of_birth')}</label>
+                  <input
+                    type="date"
+                    value={formData.date_of_birth}
+                    max={new Date().toISOString().slice(0, 10)}
+                    onChange={(e) => setFormData({ ...formData, date_of_birth: e.target.value })}
+                    className="w-full bg-surface-container border border-surface-variant p-4 body-md focus:border-primary outline-none transition-all rounded-sm"
+                  />
+                </div>
+                <label className="flex cursor-pointer items-start gap-3 rounded-sm border border-surface-variant bg-surface-container/30 p-4 md:col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={formData.birthday_email_enabled}
+                    onChange={(e) => setFormData({ ...formData, birthday_email_enabled: e.target.checked })}
+                    className="mt-1 h-4 w-4 accent-primary"
+                  />
+                  <span className="min-w-0">
+                    <span className="block body-sm font-medium">{t('profile.birthday_email')}</span>
+                    <span className="block text-xs leading-relaxed text-secondary">{t('profile.birthday_email_hint')}</span>
+                  </span>
+                </label>
                 <div className="space-y-2 md:col-span-2">
                   <label className="label-sm text-secondary lowercase">{t('profile.default_address')}</label>
                   <textarea

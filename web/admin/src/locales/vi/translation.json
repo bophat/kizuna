@@ -635,6 +635,13 @@
       "last_name": "Họ",
       "email": "Email",
       "phone": "Điện thoại",
+      "date_of_birth": "Ngày sinh",
+      "email_language": "Ngôn ngữ email sinh nhật",
+      "birthday_email_enabled": "Gửi email sinh nhật hằng năm",
+      "birthday_test": "Gửi thử đến email admin của tôi",
+      "birthday_test_sending": "Đang gửi thử...",
+      "birthday_test_sent": "Đã gửi email sinh nhật thử đến {{email}}.",
+      "birthday_test_failed": "Không thể gửi email sinh nhật thử.",
       "address": "Địa chỉ",
       "cancel": "Hủy",
       "update_button": "Cập nhật sổ đăng ký"

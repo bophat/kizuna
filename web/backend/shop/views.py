@@ -21,6 +21,7 @@ from .models import (
 from .serializers import (
     CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer,
     CategorySerializer, FavoriteSerializer, PaymentTransactionPublicSerializer,
+    UserProfileSerializer,
 )
 from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
 from .shipping import calculate_shipping_amount
@@ -594,12 +595,15 @@ class MeView(APIView):
                 setattr(user, attr, request.data[attr])
         user.save()
         
-        # Update profile fields
+        # Validate profile fields instead of assigning raw request values.
         profile, created = UserProfile.objects.get_or_create(user=user)
-        for attr in ['phone', 'address']:
-            if attr in request.data:
-                setattr(profile, attr, request.data[attr])
-        profile.save()
+        profile_serializer = UserProfileSerializer(
+            profile,
+            data=request.data,
+            partial=True,
+        )
+        profile_serializer.is_valid(raise_exception=True)
+        profile_serializer.save()
         
         return Response(UserSerializer(user).data)
 

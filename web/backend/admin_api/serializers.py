@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from rest_framework import serializers
@@ -37,11 +38,30 @@ from shop.affiliate_payout_details import encrypt_payout_details, masked_payout_
 class UserSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(source='profile.phone', required=False, allow_null=True, allow_blank=True)
     address = serializers.CharField(source='profile.address', required=False, allow_null=True, allow_blank=True)
+    date_of_birth = serializers.DateField(source='profile.date_of_birth', required=False, allow_null=True)
+    preferred_language = serializers.ChoiceField(
+        source='profile.preferred_language',
+        choices=UserProfile.PreferredLanguage.choices,
+        required=False,
+    )
+    birthday_email_enabled = serializers.BooleanField(
+        source='profile.birthday_email_enabled',
+        required=False,
+    )
     password = serializers.CharField(write_only=True, required=False)
 
     class Meta:
         model = User
-        fields = ['id', 'username', 'email', 'first_name', 'last_name', 'is_staff', 'is_superuser', 'password', 'phone', 'address', 'date_joined']
+        fields = [
+            'id', 'username', 'email', 'first_name', 'last_name', 'is_staff',
+            'is_superuser', 'password', 'phone', 'address', 'date_of_birth',
+            'preferred_language', 'birthday_email_enabled', 'date_joined',
+        ]
+
+    def validate_date_of_birth(self, value):
+        if value and value > date.today():
+            raise serializers.ValidationError('Date of birth cannot be in the future.')
+        return value
 
     def create(self, validated_data):
         password = validated_data.pop('password', None)

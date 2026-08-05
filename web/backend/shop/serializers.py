@@ -1,3 +1,5 @@
+from datetime import date
+
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
@@ -94,7 +96,16 @@ class PublicProductSerializer(serializers.ModelSerializer):
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserProfile
-        fields = ['phone', 'address', 'points']
+        fields = [
+            'phone', 'address', 'points', 'date_of_birth',
+            'preferred_language', 'birthday_email_enabled',
+        ]
+        read_only_fields = ['points']
+
+    def validate_date_of_birth(self, value):
+        if value and value > date.today():
+            raise serializers.ValidationError('Date of birth cannot be in the future.')
+        return value
 
 
 class LoyaltyPointTransactionSerializer(serializers.ModelSerializer):

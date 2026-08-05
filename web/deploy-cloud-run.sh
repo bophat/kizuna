@@ -39,6 +39,12 @@ AMAZON_CREATORS_CREDENTIAL_VERSION="${AMAZON_CREATORS_CREDENTIAL_VERSION:-3.3}"
 AMAZON_JP_PARTNER_TAG="${AMAZON_JP_PARTNER_TAG:-}"
 QOO10_CERTIFICATION_KEY="${QOO10_CERTIFICATION_KEY:-}"
 SEPAY_WEBHOOK_SECRET="${SEPAY_WEBHOOK_SECRET:-}"
+BIRTHDAY_EMAIL_SCHEDULER_ENABLED="${BIRTHDAY_EMAIL_SCHEDULER_ENABLED:-true}"
+BIRTHDAY_EMAIL_JOB_NAME="${BIRTHDAY_EMAIL_JOB_NAME:-kizuna-birthday-email}"
+BIRTHDAY_EMAIL_SCHEDULER_NAME="${BIRTHDAY_EMAIL_SCHEDULER_NAME:-kizuna-birthday-email-daily}"
+BIRTHDAY_EMAIL_SCHEDULE="${BIRTHDAY_EMAIL_SCHEDULE:-0 1 * * *}"
+BIRTHDAY_EMAIL_TIME_ZONE="${BIRTHDAY_EMAIL_TIME_ZONE:-Asia/Ho_Chi_Minh}"
+BIRTHDAY_EMAIL_SCHEDULER_SA_NAME="${BIRTHDAY_EMAIL_SCHEDULER_SA_NAME:-kizuna-birthday-scheduler}"
 
 if [[ -z "$PROJECT_ID" ]]; then
   echo "Usage: ./deploy-cloud-run.sh <GCP_PROJECT_ID>"
@@ -106,6 +112,14 @@ case "$SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED" in
     exit 2
     ;;
 esac
+case "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED" in
+  1|true|TRUE|True|yes|YES) BIRTHDAY_EMAIL_SCHEDULER_ENABLED="True" ;;
+  0|false|FALSE|False|no|NO) BIRTHDAY_EMAIL_SCHEDULER_ENABLED="False" ;;
+  *)
+    echo "BIRTHDAY_EMAIL_SCHEDULER_ENABLED must be True or False."
+    exit 2
+    ;;
+esac
 if [[ "$EMAIL_USE_TLS" == "True" && "$EMAIL_USE_SSL" == "True" ]]; then
   echo "EMAIL_USE_TLS and EMAIL_USE_SSL cannot both be True."
   exit 2
@@ -159,6 +173,7 @@ gcloud services enable \
   secretmanager.googleapis.com \
   storage.googleapis.com \
   iam.googleapis.com \
+  cloudscheduler.googleapis.com \
   --project "$PROJECT_ID"
 
 if ! gcloud iam service-accounts describe "$RUNTIME_SA" \
@@ -290,6 +305,8 @@ secret_bindings_csv="$(
   echo "${secret_bindings[*]}"
 )"
 
+runtime_env_vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED=${SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED}|SOURCE_IMPORT_PUBLIC_PAGE_TIMEOUT_SECONDS=15|SOURCE_IMPORT_PUBLIC_PAGE_CACHE_SECONDS=900|SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED=${SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED}|SOURCE_PROVIDER_TIMEOUT_SECONDS=10|SOURCE_PROVIDER_MAX_ATTEMPTS=3|AMAZON_CREATORS_CREDENTIAL_VERSION=${AMAZON_CREATORS_CREDENTIAL_VERSION}|AFFILIATE_RETURN_WINDOW_DAYS=${AFFILIATE_RETURN_WINDOW_DAYS}|AFFILIATE_MIN_PAYOUT_USD=${AFFILIATE_MIN_PAYOUT_USD}|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|WEBSITE_URL=${WEBSITE_URL}|EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend|EMAIL_HOST=${EMAIL_HOST}|EMAIL_PORT=${EMAIL_PORT}|EMAIL_HOST_USER=${EMAIL_HOST_USER}|EMAIL_USE_TLS=${EMAIL_USE_TLS}|EMAIL_USE_SSL=${EMAIL_USE_SSL}|DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}|EMAIL_VERIFICATION_TIMEOUT=86400|BIRTHDAY_EMAIL_TIME_ZONE=${BIRTHDAY_EMAIL_TIME_ZONE}"
+
 echo "Building and deploying Django backend: $SERVICE"
 echo "Region: $REGION | min instances: $MIN_INSTANCES | max instances: $MAX_INSTANCES"
 gcloud run deploy "$SERVICE" \
@@ -304,8 +321,69 @@ gcloud run deploy "$SERVICE" \
   --min="$MIN_INSTANCES" \
   --max="$MAX_INSTANCES" \
   --timeout=300 \
-  --set-env-vars="^|^DJANGO_DEBUG=False|DJANGO_ALLOWED_HOSTS=.run.app|GCS_BUCKET_NAME=${BUCKET}|SECURE_SSL_REDIRECT=True|SOURCE_IMPORT_USE_FAKE_PROVIDERS=False|SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED=${SOURCE_IMPORT_PUBLIC_PAGE_FALLBACK_ENABLED}|SOURCE_IMPORT_PUBLIC_PAGE_TIMEOUT_SECONDS=15|SOURCE_IMPORT_PUBLIC_PAGE_CACHE_SECONDS=900|SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED=${SOURCE_IMPORT_IMAGE_DOWNLOAD_ENABLED}|SOURCE_PROVIDER_TIMEOUT_SECONDS=10|SOURCE_PROVIDER_MAX_ATTEMPTS=3|AMAZON_CREATORS_CREDENTIAL_VERSION=${AMAZON_CREATORS_CREDENTIAL_VERSION}|AFFILIATE_RETURN_WINDOW_DAYS=${AFFILIATE_RETURN_WINDOW_DAYS}|AFFILIATE_MIN_PAYOUT_USD=${AFFILIATE_MIN_PAYOUT_USD}|CORS_ALLOWED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|CSRF_TRUSTED_ORIGINS=${WEBSITE_URL},${ADMIN_URL}|WEBSITE_URL=${WEBSITE_URL}|EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend|EMAIL_HOST=${EMAIL_HOST}|EMAIL_PORT=${EMAIL_PORT}|EMAIL_HOST_USER=${EMAIL_HOST_USER}|EMAIL_USE_TLS=${EMAIL_USE_TLS}|EMAIL_USE_SSL=${EMAIL_USE_SSL}|DEFAULT_FROM_EMAIL=${DEFAULT_FROM_EMAIL}|EMAIL_VERIFICATION_TIMEOUT=86400" \
+  --set-env-vars="$runtime_env_vars" \
   --set-secrets="$secret_bindings_csv"
+
+if [[ "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED" == "True" ]]; then
+  DEPLOYED_IMAGE="$(
+    gcloud run services describe "$SERVICE" \
+      --project "$PROJECT_ID" \
+      --region "$REGION" \
+      --format='value(spec.template.spec.containers[0].image)'
+  )"
+
+  echo "Creating or updating birthday email job: $BIRTHDAY_EMAIL_JOB_NAME"
+  gcloud run jobs deploy "$BIRTHDAY_EMAIL_JOB_NAME" \
+    --project "$PROJECT_ID" \
+    --region "$REGION" \
+    --image "$DEPLOYED_IMAGE" \
+    --service-account "$RUNTIME_SA" \
+    --cpu="$CLOUD_RUN_CPU" \
+    --memory="$CLOUD_RUN_MEMORY" \
+    --task-timeout=600s \
+    --max-retries=1 \
+    --command=python \
+    --args=manage.py,send_birthday_emails \
+    --set-env-vars="$runtime_env_vars" \
+    --set-secrets="$secret_bindings_csv"
+
+  BIRTHDAY_SCHEDULER_SA="${BIRTHDAY_EMAIL_SCHEDULER_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+  if ! gcloud iam service-accounts describe "$BIRTHDAY_SCHEDULER_SA" \
+    --project "$PROJECT_ID" >/dev/null 2>&1; then
+    gcloud iam service-accounts create "$BIRTHDAY_EMAIL_SCHEDULER_SA_NAME" \
+      --project "$PROJECT_ID" \
+      --display-name="KIZUNA birthday email scheduler"
+  fi
+
+  gcloud run jobs add-iam-policy-binding "$BIRTHDAY_EMAIL_JOB_NAME" \
+    --project "$PROJECT_ID" \
+    --region "$REGION" \
+    --member="serviceAccount:${BIRTHDAY_SCHEDULER_SA}" \
+    --role="roles/run.invoker" >/dev/null
+
+  birthday_job_uri="https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}/jobs/${BIRTHDAY_EMAIL_JOB_NAME}:run"
+  scheduler_args=(
+    --project "$PROJECT_ID"
+    --location "$REGION"
+    --schedule "$BIRTHDAY_EMAIL_SCHEDULE"
+    --time-zone "$BIRTHDAY_EMAIL_TIME_ZONE"
+    --uri "$birthday_job_uri"
+    --http-method POST
+    --oauth-service-account-email "$BIRTHDAY_SCHEDULER_SA"
+    --oauth-token-scope "https://www.googleapis.com/auth/cloud-platform"
+    --attempt-deadline 320s
+  )
+  if gcloud scheduler jobs describe "$BIRTHDAY_EMAIL_SCHEDULER_NAME" \
+    --project "$PROJECT_ID" \
+    --location "$REGION" >/dev/null 2>&1; then
+    gcloud scheduler jobs update http "$BIRTHDAY_EMAIL_SCHEDULER_NAME" \
+      "${scheduler_args[@]}"
+  else
+    gcloud scheduler jobs create http "$BIRTHDAY_EMAIL_SCHEDULER_NAME" \
+      "${scheduler_args[@]}"
+  fi
+  echo "Birthday email schedule: $BIRTHDAY_EMAIL_SCHEDULE ($BIRTHDAY_EMAIL_TIME_ZONE)"
+fi
 
 NON_DETERMINISTIC_SERVICE_URL="$(
   gcloud run services describe "$SERVICE" \

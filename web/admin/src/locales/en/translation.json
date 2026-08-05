@@ -635,6 +635,13 @@
       "last_name": "Last Name",
       "email": "Email",
       "phone": "Phone",
+      "date_of_birth": "Date of birth",
+      "email_language": "Birthday email language",
+      "birthday_email_enabled": "Send the annual birthday email",
+      "birthday_test": "Send test to my admin email",
+      "birthday_test_sending": "Sending test...",
+      "birthday_test_sent": "Birthday test email sent to {{email}}.",
+      "birthday_test_failed": "Unable to send the birthday test email.",
       "address": "Address",
       "cancel": "Cancel",
       "update_button": "Update Registry"

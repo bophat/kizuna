@@ -635,6 +635,13 @@
       "last_name": "姓",
       "email": "メール",
       "phone": "電話",
+      "date_of_birth": "生年月日",
+      "email_language": "誕生日メールの言語",
+      "birthday_email_enabled": "毎年の誕生日メールを送信する",
+      "birthday_test": "管理者メールへテスト送信",
+      "birthday_test_sending": "テスト送信中...",
+      "birthday_test_sent": "{{email}} に誕生日テストメールを送信しました。",
+      "birthday_test_failed": "誕生日テストメールを送信できませんでした。",
       "address": "住所",
       "cancel": "キャンセル",
       "update_button": "登録を更新"

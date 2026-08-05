@@ -107,14 +107,58 @@ class CartItem(models.Model):
         return f"{self.quantity} x {self.product.name}"
 
 class UserProfile(models.Model):
+    class PreferredLanguage(models.TextChoices):
+        ENGLISH = 'en', 'English'
+        JAPANESE = 'ja', 'Japanese'
+        VIETNAMESE = 'vi', 'Vietnamese'
+
     user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
     phone = models.CharField(max_length=20, null=True, blank=True)
     address = models.TextField(null=True, blank=True)
     points = models.PositiveIntegerField(default=0)
     avatar = models.ImageField(upload_to='avatars/', null=True, blank=True)
+    date_of_birth = models.DateField(null=True, blank=True)
+    preferred_language = models.CharField(
+        max_length=2,
+        choices=PreferredLanguage.choices,
+        default=PreferredLanguage.VIETNAMESE,
+    )
+    birthday_email_enabled = models.BooleanField(default=True)
 
     def __str__(self):
         return f"Profile for {self.user.username}"
+
+
+class BirthdayEmailDelivery(models.Model):
+    class Status(models.TextChoices):
+        SENT = 'sent', 'Sent'
+        FAILED = 'failed', 'Failed'
+
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='birthday_email_deliveries',
+    )
+    birthday_year = models.PositiveSmallIntegerField()
+    email = models.EmailField()
+    status = models.CharField(max_length=10, choices=Status.choices)
+    attempt_count = models.PositiveSmallIntegerField(default=0)
+    sent_at = models.DateTimeField(null=True, blank=True)
+    error_message = models.CharField(max_length=500, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'birthday_year'],
+                name='unique_birthday_email_per_user_year',
+            ),
+        ]
+        ordering = ['-birthday_year', '-created_at']
+
+    def __str__(self):
+        return f'{self.user_id} - {self.birthday_year} - {self.status}'
 
 
 class AffiliateProfile(models.Model):

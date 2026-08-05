@@ -52,6 +52,7 @@ from shop.affiliates import refresh_available_commissions, sync_order_commission
 from shop.loyalty import sync_order_loyalty_points
 from shop.payments import expire_payment, expire_pending_payments, restore_order_inventory
 from shop.profit import calculate_gross_profit_metrics, recognized_sales
+from shop.birthday_emails import send_birthday_test_email
 
 import logging
 logger = logging.getLogger(__name__)
@@ -277,6 +278,31 @@ class AdminUserViewSet(viewsets.ModelViewSet):
         if is_staff is not None:
             queryset = queryset.filter(is_staff=is_staff.lower() == 'true')
         return queryset
+
+    @action(detail=True, methods=['post'], url_path='send-birthday-email-test')
+    def send_birthday_email_test(self, request, pk=None):
+        customer = self.get_object()
+        recipient_email = str(request.data.get('email') or request.user.email or '').strip()
+        if not recipient_email or '@' not in recipient_email:
+            return Response(
+                {'detail': 'The administrator account needs a valid email address.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+        try:
+            sent_to = send_birthday_test_email(
+                customer,
+                recipient_email,
+                language=request.data.get('language'),
+            )
+        except Exception:
+            logger.exception(
+                'Birthday test email failed for customer_id=%s', customer.pk
+            )
+            return Response(
+                {'detail': 'Unable to send the birthday test email.'},
+                status=status.HTTP_502_BAD_GATEWAY,
+            )
+        return Response({'sent_to': sent_to})
 
 
 class AdminPaymentMethodViewSet(

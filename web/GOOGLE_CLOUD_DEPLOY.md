@@ -232,3 +232,41 @@ Script sẽ dùng lại Neon secret, Django secret, bucket và service account �
 Lần đầu chuyển từ `us-central1` sang `asia-southeast1`, Cloud Run sẽ tạo URL mới;
 phải cập nhật `VITE_API_BASE_URL` và `VITE_MEDIA_BASE_URL` trên cả hai dự án
 Vercel. Các lần deploy tiếp theo trong cùng region sẽ giữ nguyên URL.
+## Email sinh nhật tự động
+
+Backend lưu ngày sinh và lựa chọn nhận email trong **Website > Hồ sơ**. Admin có
+thể chỉnh cùng thông tin tại **Admin > Người dùng** và dùng nút gửi thử; email
+thử được gửi đến email của tài khoản admin, không gửi đến khách hàng.
+
+`deploy-cloud-run.sh` tự tạo hoặc cập nhật các tài nguyên sau:
+
+- Cloud Run Job `kizuna-birthday-email`;
+- Cloud Scheduler `kizuna-birthday-email-daily`;
+- lịch mặc định `01:00` mỗi ngày theo `Asia/Ho_Chi_Minh`.
+
+Mỗi khách chỉ nhận một email sinh nhật trong một năm. Email lỗi có thể được thử
+lại; khách đã nhận thành công sẽ không bị gửi trùng. Khách đã tắt email sinh
+nhật hoặc hủy đăng ký email marketing sẽ được bỏ qua.
+
+Kiểm tra người sẽ nhận email mà không gửi thật:
+
+```bash
+gcloud run jobs execute kizuna-birthday-email \
+  --project kizuna-shop-503909 \
+  --region asia-southeast1 \
+  --args=manage.py,send_birthday_emails,--dry-run \
+  --wait
+```
+
+Chạy job thật thủ công:
+
+```bash
+gcloud run jobs execute kizuna-birthday-email \
+  --project kizuna-shop-503909 \
+  --region asia-southeast1 \
+  --wait
+```
+
+Có thể đổi lịch khi deploy bằng `BIRTHDAY_EMAIL_SCHEDULE` và
+`BIRTHDAY_EMAIL_TIME_ZONE`, hoặc tạm không tạo lịch với
+`BIRTHDAY_EMAIL_SCHEDULER_ENABLED=false`.

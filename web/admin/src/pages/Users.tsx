@@ -9,6 +9,8 @@ import {
   Loader2,
   AlertCircle,
   Calendar,
+  Cake,
+  Send,
   Trash2,
   X
 } from 'lucide-react';
@@ -30,12 +32,16 @@ export default function Users() {
   const [searchQuery, setSearchQuery] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
+  const [isSendingBirthdayTest, setIsSendingBirthdayTest] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
     email: '',
     phone: '',
-    address: ''
+    address: '',
+    date_of_birth: '',
+    preferred_language: 'vi',
+    birthday_email_enabled: true
   });
 
   const fetchCustomers = async () => {
@@ -67,7 +73,10 @@ export default function Users() {
       last_name: user.last_name || '',
       email: user.email || '',
       phone: user.phone || '',
-      address: user.address || ''
+      address: user.address || '',
+      date_of_birth: user.date_of_birth || '',
+      preferred_language: user.preferred_language || 'vi',
+      birthday_email_enabled: user.birthday_email_enabled ?? true
     });
     setIsModalOpen(true);
   };
@@ -77,7 +86,10 @@ export default function Users() {
     try {
       const response = await apiFetch(`/users/${editingUser.id}/`, {
         method: 'PATCH',
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          date_of_birth: formData.date_of_birth || null,
+        })
       });
 
       if (response.ok) {
@@ -89,6 +101,30 @@ export default function Users() {
       }
     } catch (err) {
       console.error('Submit error:', err);
+    }
+  };
+
+  const handleBirthdayEmailTest = async () => {
+    if (!editingUser) return;
+    setIsSendingBirthdayTest(true);
+    try {
+      const response = await apiFetch(
+        `/users/${editingUser.id}/send-birthday-email-test/`,
+        {
+          method: 'POST',
+          body: JSON.stringify({ language: formData.preferred_language }),
+        },
+      );
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        alert(data.detail || t('users.modal.birthday_test_failed'));
+        return;
+      }
+      alert(t('users.modal.birthday_test_sent', { email: data.sent_to }));
+    } catch {
+      alert(t('users.modal.birthday_test_failed'));
+    } finally {
+      setIsSendingBirthdayTest(false);
     }
   };
 
@@ -227,9 +263,17 @@ export default function Users() {
                         )}
                       </td>
                       <td className="px-6 py-4">
-                        <div className="flex items-center gap-2 text-xs text-brand-ink/40">
-                          <Calendar size={12} />
-                          <span>{new Date(user.date_joined).toLocaleDateString(i18n.language)}</span>
+                        <div className="space-y-1.5 text-xs text-brand-ink/40">
+                          <div className="flex items-center gap-2">
+                            <Calendar size={12} />
+                            <span>{new Date(user.date_joined).toLocaleDateString(i18n.language)}</span>
+                          </div>
+                          {user.date_of_birth && (
+                            <div className="flex items-center gap-2 text-brand-red/70">
+                              <Cake size={12} />
+                              <span>{new Date(`${user.date_of_birth}T00:00:00`).toLocaleDateString(i18n.language)}</span>
+                            </div>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 text-right">
@@ -292,7 +336,7 @@ export default function Users() {
               initial={{ scale: 0.95, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.95, opacity: 0, y: 20 }}
-              className="relative w-full max-w-md bg-white rounded-lg shadow-2xl overflow-hidden"
+              className="relative max-h-[calc(100vh-2rem)] w-full max-w-md overflow-y-auto rounded-lg bg-white shadow-2xl"
             >
               <div className="p-6 border-b border-brand-clay flex justify-between items-center bg-brand-paper/50">
                 <h2 className="text-xl font-serif font-bold">{t('users.modal.edit_title')}</h2>
@@ -337,6 +381,37 @@ export default function Users() {
                   />
                 </div>
                 <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.date_of_birth')}</label>
+                  <input
+                    type="date"
+                    max={new Date().toISOString().slice(0, 10)}
+                    className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
+                    value={formData.date_of_birth}
+                    onChange={(e) => setFormData({...formData, date_of_birth: e.target.value})}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.email_language')}</label>
+                  <select
+                    className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm bg-white"
+                    value={formData.preferred_language}
+                    onChange={(e) => setFormData({...formData, preferred_language: e.target.value})}
+                  >
+                    <option value="vi">Tiếng Việt</option>
+                    <option value="en">English</option>
+                    <option value="ja">日本語</option>
+                  </select>
+                </div>
+                <label className="flex items-center gap-3 rounded-md border border-brand-clay px-3 py-2 text-sm">
+                  <input
+                    type="checkbox"
+                    checked={formData.birthday_email_enabled}
+                    onChange={(e) => setFormData({...formData, birthday_email_enabled: e.target.checked})}
+                    className="accent-brand-red"
+                  />
+                  <span>{t('users.modal.birthday_email_enabled')}</span>
+                </label>
+                <div className="space-y-1">
                   <label className="text-[10px] uppercase tracking-wider text-brand-ink/50 font-bold">{t('users.modal.address')}</label>
                   <textarea 
                     className="w-full px-3 py-2 border border-brand-clay rounded-md text-sm"
@@ -345,6 +420,15 @@ export default function Users() {
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={handleBirthdayEmailTest}
+                  disabled={isSendingBirthdayTest}
+                  className="flex w-full items-center justify-center gap-2 rounded-md border border-brand-red px-4 py-2 text-sm text-brand-red transition-colors hover:bg-brand-red hover:text-white disabled:opacity-50"
+                >
+                  {isSendingBirthdayTest ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                  {isSendingBirthdayTest ? t('users.modal.birthday_test_sending') : t('users.modal.birthday_test')}
+                </button>
                 <div className="pt-4 flex gap-3">
                   <button 
                     type="button"

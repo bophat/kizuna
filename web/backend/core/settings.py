@@ -51,6 +51,9 @@ DEFAULT_FROM_EMAIL = os.environ.get('DEFAULT_FROM_EMAIL', 'KIZUNA <no-reply@loca
 WEBSITE_URL = os.environ.get('WEBSITE_URL', 'http://localhost:3000').rstrip('/')
 EMAIL_VERIFICATION_TIMEOUT = int(os.environ.get('EMAIL_VERIFICATION_TIMEOUT', '86400'))
 PASSWORD_RESET_TIMEOUT = int(os.environ.get('PASSWORD_RESET_TIMEOUT', '3600'))
+BIRTHDAY_EMAIL_TIME_ZONE = os.environ.get(
+    'BIRTHDAY_EMAIL_TIME_ZONE', 'Asia/Ho_Chi_Minh'
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
