@@ -215,31 +215,31 @@ export function CollectionPage() {
   return (
     <div className="min-h-screen bg-surface">
       {/* Sticky Header & Filter Bar */}
-      <div className="sticky top-20 z-30 bg-white/95 backdrop-blur-md border-b border-surface-variant/50 shadow-sm">
-        <div className="max-w-[1440px] mx-auto px-4 md:px-6 py-6 md:py-8 flex flex-col md:flex-row md:items-end justify-between gap-6">
+      <div className="z-30 border-b border-surface-variant/50 bg-white/95 shadow-sm backdrop-blur-md lg:sticky lg:top-20">
+        <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:py-8">
           
           {/* Title & Stats */}
-          <div>
-            <h1 className="headline-xl capitalize">
+          <div className="min-w-0">
+            <h1 className="truncate text-2xl font-bold capitalize leading-tight tracking-[-0.02em] sm:text-3xl lg:text-[40px]">
               {searchQuery
                 ? t('collection.search_results', { query: searchQuery })
                 : t('nav.products')}
             </h1>
-            <p className="body-md text-secondary mt-2">
+            <p className="mt-0.5 text-xs leading-5 text-secondary sm:mt-1 sm:text-sm lg:mt-2 lg:text-base">
               {t('filter.results', { count: filteredProducts.length })}
             </p>
           </div>
 
           {/* Unified Filter & Sort Button (Desktop & Mobile) */}
-          <div className="flex items-center shrink-0">
+          <div className="flex shrink-0 items-center">
             <button 
               onClick={() => setIsFilterDrawerOpen(true)}
               className={cn(
-                "flex items-center gap-2 text-sm font-bold bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 px-6 py-2.5 rounded-full hover:bg-primary transition-all duration-300",
+                "flex items-center gap-1.5 rounded-full bg-zinc-900 px-3 py-2 text-xs font-bold text-white transition-all duration-300 hover:bg-primary sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm dark:bg-zinc-100 dark:text-zinc-900 lg:px-6",
                 (brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0 || categoryFilters.length > 0) && "bg-primary"
               )}
             >
-              <SlidersHorizontal size={16} />
+              <SlidersHorizontal size={15} />
               <span>{t('filter.title')}</span>
               {(brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0 || categoryFilters.length > 0) && (
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -249,7 +249,7 @@ export function CollectionPage() {
         </div>
       </div>
 
-      <div className="max-w-[1440px] mx-auto px-6 py-10">
+      <div className="mx-auto max-w-[1440px] px-4 py-5 sm:px-6 sm:py-6 lg:py-10">
         {/* Active Filters Bar */}
         {(categoryFilters.length > 0 || brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-8 items-center">

@@ -94,3 +94,127 @@ class RepostLog(models.Model):
   class Meta:
     db_table = 'repost_logs'
     ordering = ['-created_at']
+
+
+class MarketingCampaign(models.Model):
+  """An email campaign sent to active customer accounts in resumable batches."""
+
+  class CampaignType(models.TextChoices):
+    EVENT = 'event', 'Event'
+    PRODUCT = 'product', 'Product'
+
+  class Status(models.TextChoices):
+    DRAFT = 'draft', 'Draft'
+    SENDING = 'sending', 'Sending'
+    SENT = 'sent', 'Sent'
+    PARTIAL = 'partial', 'Partially sent'
+
+  name = models.CharField(max_length=200)
+  campaign_type = models.CharField(
+    max_length=20, choices=CampaignType.choices, default=CampaignType.EVENT
+  )
+  product = models.ForeignKey(
+    'shop.Product',
+    null=True,
+    blank=True,
+    on_delete=models.SET_NULL,
+    related_name='marketing_campaigns',
+  )
+  subject = models.CharField(max_length=255)
+  body = models.TextField()
+  cta_text = models.CharField(max_length=100, blank=True, default='')
+  cta_url = models.URLField(max_length=1000, blank=True, default='')
+  image_url = models.URLField(max_length=1000, blank=True, default='')
+  status = models.CharField(
+    max_length=20, choices=Status.choices, default=Status.DRAFT, db_index=True
+  )
+  recipient_count = models.PositiveIntegerField(default=0)
+  sent_count = models.PositiveIntegerField(default=0)
+  failed_count = models.PositiveIntegerField(default=0)
+  created_by = models.ForeignKey(
+    User,
+    null=True,
+    blank=True,
+    on_delete=models.SET_NULL,
+    related_name='created_marketing_campaigns',
+  )
+  sent_by = models.ForeignKey(
+    User,
+    null=True,
+    blank=True,
+    on_delete=models.SET_NULL,
+    related_name='sent_marketing_campaigns',
+  )
+  started_at = models.DateTimeField(null=True, blank=True)
+  completed_at = models.DateTimeField(null=True, blank=True)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+
+  class Meta:
+    db_table = 'marketing_campaigns'
+    ordering = ['-created_at']
+
+  def __str__(self):
+    return f'{self.name} ({self.status})'
+
+
+class MarketingEmailDelivery(models.Model):
+  """Per-address delivery state makes campaign sending idempotent and resumable."""
+
+  class Status(models.TextChoices):
+    PENDING = 'pending', 'Pending'
+    SENT = 'sent', 'Sent'
+    FAILED = 'failed', 'Failed'
+    SUPPRESSED = 'suppressed', 'Suppressed'
+
+  campaign = models.ForeignKey(
+    MarketingCampaign, on_delete=models.CASCADE, related_name='deliveries'
+  )
+  user = models.ForeignKey(
+    User,
+    null=True,
+    blank=True,
+    on_delete=models.SET_NULL,
+    related_name='marketing_email_deliveries',
+  )
+  email = models.EmailField()
+  customer_name = models.CharField(max_length=255, blank=True, default='')
+  status = models.CharField(
+    max_length=20, choices=Status.choices, default=Status.PENDING, db_index=True
+  )
+  error_message = models.CharField(max_length=500, blank=True, default='')
+  attempt_count = models.PositiveSmallIntegerField(default=0)
+  sent_at = models.DateTimeField(null=True, blank=True)
+  created_at = models.DateTimeField(auto_now_add=True)
+  updated_at = models.DateTimeField(auto_now=True)
+
+  class Meta:
+    db_table = 'marketing_email_deliveries'
+    ordering = ['id']
+    constraints = [
+      models.UniqueConstraint(
+        fields=['campaign', 'email'], name='unique_campaign_recipient_email'
+      ),
+    ]
+
+  def __str__(self):
+    return f'{self.campaign_id}:{self.email} ({self.status})'
+
+
+class MarketingEmailSuppression(models.Model):
+  """Addresses that opted out of marketing email, independent of login state."""
+
+  email = models.EmailField(unique=True)
+  reason = models.CharField(max_length=100, blank=True, default='unsubscribe')
+  created_at = models.DateTimeField(auto_now_add=True)
+
+  class Meta:
+    db_table = 'marketing_email_suppressions'
+    ordering = ['-created_at']
+
+  def save(self, *args, **kwargs):
+    self.email = str(self.email or '').strip().lower()
+    return super().save(*args, **kwargs)
+
+  def __str__(self):
+    return self.email

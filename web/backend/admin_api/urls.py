@@ -45,6 +45,7 @@ from .views_chat_proxy import (
     ChatStatusView,
 )
 from .views_notifications import AdminNotificationFeedView
+from .views_marketing import MarketingCampaignViewSet
 
 router = DefaultRouter()
 router.register(r'affiliates', AdminAffiliateViewSet)
@@ -63,6 +64,7 @@ router.register(r'trending-leads', TrendingProductLeadViewSet, basename='trendin
 router.register(r'repost-logs', RepostLogViewSet, basename='repost-logs')
 router.register(r'pages', AdminStorePageViewSet, basename='admin-pages')
 router.register(r'contact-messages', AdminContactMessageViewSet, basename='admin-contact-messages')
+router.register(r'marketing-campaigns', MarketingCampaignViewSet, basename='marketing-campaigns')
 
 urlpatterns = [
     path('contact-info/', AdminContactInfoView.as_view(), name='admin-contact-info'),

@@ -20,7 +20,12 @@ from shop.models import (
 )
 from shop.content_sanitizer import sanitize_store_page_html
 from django.contrib.auth.models import User
-from .models import Setting, PendingReply, TrendingProductLead
+from .models import (
+    MarketingCampaign,
+    PendingReply,
+    Setting,
+    TrendingProductLead,
+)
 from .secrets import (
     expose_setting_for_api,
     is_secret_setting_key,
@@ -487,6 +492,53 @@ class TrendingProductLeadSerializer(serializers.ModelSerializer):
             'price_info', 'status', 'raw_data', 'created_at',
         ]
         read_only_fields = ['id', 'created_at']
+
+
+class MarketingCampaignSerializer(serializers.ModelSerializer):
+    product_name = serializers.CharField(source='product.name', read_only=True)
+    product_image = serializers.SerializerMethodField()
+    created_by_name = serializers.SerializerMethodField()
+
+    class Meta:
+        model = MarketingCampaign
+        fields = [
+            'id', 'name', 'campaign_type', 'product', 'product_name',
+            'product_image', 'subject', 'body', 'cta_text', 'cta_url',
+            'image_url', 'status', 'recipient_count', 'sent_count',
+            'failed_count', 'created_by_name', 'started_at', 'completed_at',
+            'created_at', 'updated_at',
+        ]
+        read_only_fields = [
+            'id', 'status', 'recipient_count', 'sent_count', 'failed_count',
+            'created_by_name', 'started_at', 'completed_at', 'created_at',
+            'updated_at',
+        ]
+
+    def get_product_image(self, obj):
+        if not obj.product:
+            return ''
+        return resolve_product_image_url(obj.product, self.context.get('request'))
+
+    def get_created_by_name(self, obj):
+        if not obj.created_by:
+            return ''
+        return obj.created_by.get_full_name().strip() or obj.created_by.username
+
+    def validate(self, attrs):
+        if self.instance and self.instance.status != MarketingCampaign.Status.DRAFT:
+            raise serializers.ValidationError(
+                'A campaign cannot be edited after sending has started.'
+            )
+        campaign_type = attrs.get(
+            'campaign_type',
+            getattr(self.instance, 'campaign_type', MarketingCampaign.CampaignType.EVENT),
+        )
+        product = attrs.get('product', getattr(self.instance, 'product', None))
+        if campaign_type == MarketingCampaign.CampaignType.PRODUCT and not product:
+            raise serializers.ValidationError(
+                {'product': 'Select a product for a product campaign.'}
+            )
+        return attrs
 
 
 class AdminStorePageSerializer(serializers.ModelSerializer):

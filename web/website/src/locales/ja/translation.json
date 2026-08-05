@@ -299,8 +299,6 @@
     "update_success": "プロフィールの更新に成功しました！",
     "update_error": "プロフィールの更新に失敗しました。",
     "change_password": "パスワードを変更",
-    "change_password_body": "アカウント保護のため、ログイン中のメールアドレスにパスワード変更リンクを送信します。",
-    "change_password_send": "変更メールを送信",
     "change_password_sending": "メールを送信中...",
     "change_password_sent": "パスワード変更リンクを送信しました。受信トレイと迷惑メールをご確認ください。",
     "change_password_failed": "パスワード変更メールを送信できませんでした。もう一度お試しください。",

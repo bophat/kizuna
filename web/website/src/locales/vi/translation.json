@@ -299,8 +299,6 @@
     "update_success": "Cập nhật hồ sơ thành công!",
     "update_error": "Cập nhật hồ sơ thất bại.",
     "change_password": "Đổi mật khẩu",
-    "change_password_body": "Để bảo vệ tài khoản, chúng tôi sẽ gửi liên kết đổi mật khẩu đến email đang đăng nhập.",
-    "change_password_send": "Gửi email đổi mật khẩu",
     "change_password_sending": "Đang gửi email...",
     "change_password_sent": "Đã gửi liên kết đổi mật khẩu. Hãy kiểm tra hộp thư và thư rác.",
     "change_password_failed": "Không thể gửi email đổi mật khẩu. Vui lòng thử lại.",

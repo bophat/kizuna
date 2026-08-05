@@ -384,26 +384,18 @@ export function ProfilePage() {
               </form>
 
               <section
-                className="mt-10 rounded-sm border border-surface-variant bg-surface-container/30 p-5 md:p-7"
-                aria-labelledby="change-password-title"
+                className="mt-10"
+                aria-label={t('profile.change_password')}
               >
-                <div className="grid w-full grid-cols-1 gap-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-start">
-                  <div className="min-w-0 w-full max-w-xl">
-                    <h2 id="change-password-title" className="headline-sm mb-2 normal-case tracking-normal">
-                      {t('profile.change_password')}
-                    </h2>
-                    <p className="body-sm text-secondary w-full leading-relaxed normal-case break-normal">
-                      {t('profile.change_password_body')}
-                    </p>
-                  </div>
+                <div className="flex justify-start sm:justify-end">
                   <button
                     type="button"
                     onClick={handlePasswordChangeRequest}
                     disabled={isSendingPasswordEmail}
-                    className="w-full md:w-auto md:self-start border border-primary text-primary px-6 py-3 label-md tracking-normal normal-case hover:bg-primary hover:text-white transition-all disabled:opacity-50 flex items-center justify-center gap-3 rounded-sm whitespace-nowrap"
+                    className="flex w-full items-center justify-center gap-3 whitespace-nowrap rounded-sm border border-primary px-6 py-3 text-primary transition-all hover:bg-primary hover:text-white disabled:opacity-50 sm:w-auto label-md tracking-normal normal-case"
                   >
                     {isSendingPasswordEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound size={18} />}
-                    {isSendingPasswordEmail ? t('profile.change_password_sending') : t('profile.change_password_send')}
+                    {isSendingPasswordEmail ? t('profile.change_password_sending') : t('profile.change_password')}
                   </button>
                 </div>
                 {passwordMessage && (

@@ -9,6 +9,7 @@ urlpatterns = [
     path('api/', include('shop.content_urls')),
     path('api/', include('users.urls')),
     path('api/shop/', include('shop.urls')),
+    path('api/marketing/', include('admin_api.public_urls')),
     path('api/admin/', include('admin_api.urls')),
     re_path(r'^media/(?P<path>.*)$', media_file, name='media-file'),
 ]

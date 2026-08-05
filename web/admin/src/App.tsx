@@ -27,6 +27,7 @@ const AiDiscovery = lazy(() => import('./pages/AiDiscovery'));
 const ContentPages = lazy(() => import('./pages/ContentPages'));
 const Coupons = lazy(() => import('./pages/Coupons'));
 const Affiliates = lazy(() => import('./pages/Affiliates'));
+const Marketing = lazy(() => import('./pages/Marketing'));
 
 function LoadingScreen() {
   const { t } = useTranslation();
@@ -95,6 +96,7 @@ function App() {
                     <Route path="/content-pages" element={<ContentPages />} />
                     <Route path="/coupons" element={<Coupons />} />
                     <Route path="/affiliates" element={<Affiliates />} />
+                    <Route path="/marketing" element={<Marketing />} />
                   </Routes>
                 </Layout>
               ) : (
