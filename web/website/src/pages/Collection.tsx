@@ -297,19 +297,19 @@ export function CollectionPage() {
               <ProductGrid products={paginatedProducts} layout="grid-6" />
               
               {/* Pagination Controls */}
-              <div className="mt-20 flex flex-col md:flex-row items-center justify-between gap-8 py-8 border-t border-surface-variant">
+              <div className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-surface-variant py-4 sm:mt-10 sm:justify-between sm:gap-4 sm:py-5 lg:mt-20 lg:py-8">
                 {/* Items Per Page */}
-                <div className="flex items-center gap-4">
-                  <span className="text-xs font-bold uppercase tracking-widest text-secondary">
+                {filteredProducts.length > 10 && <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+                  <span className="text-[10px] font-bold uppercase tracking-wide text-secondary sm:text-xs sm:tracking-widest">
                     {t('filter.show_per_page', { defaultValue: 'Show' })}:
                   </span>
-                  <div className="flex gap-2">
+                  <div className="flex gap-1 sm:gap-2">
                     {[10, 20, 50].map(size => (
                       <button
                         key={size}
                         onClick={() => setItemsPerPage(size)}
                         className={cn(
-                          "w-10 h-10 rounded-full text-xs font-bold transition-all duration-300 border",
+                          "h-8 w-8 rounded-full border text-[10px] font-bold transition-all duration-300 sm:h-9 sm:w-9 sm:text-xs lg:h-10 lg:w-10",
                           itemsPerPage === size 
                             ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
                             : "bg-white border-zinc-200 text-secondary hover:border-primary hover:text-primary"
@@ -319,16 +319,16 @@ export function CollectionPage() {
                       </button>
                     ))}
                   </div>
-                </div>
+                </div>}
 
                 {/* Page Navigation */}
-                <div className="flex items-center gap-2">
+                {totalPages > 1 && <div className="flex items-center gap-1 sm:gap-2">
                   <button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center text-secondary hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-secondary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
                   >
-                    <ChevronLeft size={20} />
+                    <ChevronLeft size={16} />
                   </button>
                   
                   <div className="flex items-center gap-1">
@@ -346,7 +346,7 @@ export function CollectionPage() {
                           <button
                             onClick={() => setCurrentPage(p)}
                             className={cn(
-                              "w-10 h-10 rounded-full text-xs font-bold transition-all duration-300",
+                              "h-8 w-8 rounded-full text-[10px] font-bold transition-all duration-300 sm:h-9 sm:w-9 sm:text-xs lg:h-10 lg:w-10",
                               currentPage === p 
                                 ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xl" 
                                 : "text-secondary hover:bg-surface-variant"
@@ -362,14 +362,14 @@ export function CollectionPage() {
                   <button
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className="w-10 h-10 rounded-full border border-zinc-200 flex items-center justify-center text-secondary hover:border-primary hover:text-primary disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-secondary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
                   >
-                    <ChevronRight size={20} />
+                    <ChevronRight size={16} />
                   </button>
-                </div>
+                </div>}
 
                 {/* Summary */}
-                <p className="text-[10px] font-bold uppercase tracking-widest text-secondary italic">
+                <p className="w-full text-center text-[9px] font-semibold uppercase tracking-wide text-secondary italic sm:ml-auto sm:w-auto sm:text-[10px] sm:tracking-widest">
                   {t('filter.showing_range', { 
                     defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
                     start: Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1),

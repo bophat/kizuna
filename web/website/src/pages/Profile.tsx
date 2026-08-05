@@ -255,13 +255,6 @@ export function ProfilePage() {
             {t('profile.welcome_back', { name: user?.first_name || user?.username })}
           </p>
         </div>
-        <button 
-          onClick={handleLogout}
-          className="flex items-center gap-2 text-secondary hover:text-red-500 transition-colors label-md tracking-normal lowercase"
-        >
-          <LogOut size={18} />
-          {t('profile.sign_out')}
-        </button>
       </header>
 
       {/* Tabs Navigation */}
@@ -363,31 +356,23 @@ export function ProfilePage() {
                   />
                 </div>
                 
-                <div className="md:col-span-2 pt-4">
+                <div className="flex flex-wrap items-center justify-start gap-3 pt-4 md:col-span-2">
+                  <button
+                    type="button"
+                    onClick={handleLogout}
+                    className="flex w-full items-center justify-center gap-2 rounded-sm border border-red-200 px-6 py-3 text-red-600 transition-all hover:border-red-600 hover:bg-red-600 hover:text-white sm:w-auto label-md tracking-normal normal-case"
+                  >
+                    <LogOut size={18} />
+                    {t('profile.sign_out')}
+                  </button>
                   <button
                     type="submit"
                     disabled={isUpdating}
-                    className="bg-primary text-white px-10 py-4 label-md tracking-normal lowercase hover:opacity-90 transition-all disabled:opacity-50 flex items-center gap-3 rounded-sm"
+                    className="flex w-full items-center justify-center gap-3 rounded-sm bg-primary px-6 py-3 text-white transition-all hover:opacity-90 disabled:opacity-50 sm:w-auto label-md tracking-normal normal-case"
                   >
                     {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 size={18} />}
                     {t('profile.update_profile')}
                   </button>
-                  
-                  {message && (
-                    <p
-                      className={`mt-4 body-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-500'}`}
-                    >
-                      {message.text}
-                    </p>
-                  )}
-                </div>
-              </form>
-
-              <section
-                className="mt-10"
-                aria-label={t('profile.change_password')}
-              >
-                <div className="flex justify-start sm:justify-end">
                   <button
                     type="button"
                     onClick={handlePasswordChangeRequest}
@@ -398,9 +383,17 @@ export function ProfilePage() {
                     {isSendingPasswordEmail ? t('profile.change_password_sending') : t('profile.change_password')}
                   </button>
                 </div>
+
+                {message && (
+                  <p
+                    className={`md:col-span-2 body-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-500'}`}
+                  >
+                    {message.text}
+                  </p>
+                )}
                 {passwordMessage && (
                   <div
-                    className={`mt-5 flex items-start gap-3 rounded-sm border px-4 py-3 body-sm ${
+                    className={`flex items-start gap-3 rounded-sm border px-4 py-3 md:col-span-2 body-sm ${
                       passwordMessage.type === 'success'
                         ? 'border-green-200 bg-green-50 text-green-700'
                         : 'border-red-200 bg-red-50 text-red-600'
@@ -413,7 +406,7 @@ export function ProfilePage() {
                     <span className="min-w-0 leading-relaxed normal-case">{passwordMessage.text}</span>
                   </div>
                 )}
-              </section>
+              </form>
             </div>
           )}
 
