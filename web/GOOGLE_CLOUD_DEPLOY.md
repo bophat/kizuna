@@ -244,9 +244,16 @@ thử được gửi đến email của tài khoản admin, không gửi đến 
 - Cloud Scheduler `kizuna-birthday-email-daily`;
 - lịch mặc định `01:00` mỗi ngày theo `Asia/Ho_Chi_Minh`.
 
-Mỗi khách chỉ nhận một email sinh nhật trong một năm. Email lỗi có thể được thử
-lại; khách đã nhận thành công sẽ không bị gửi trùng. Khách đã tắt email sinh
-nhật hoặc hủy đăng ký email marketing sẽ được bỏ qua.
+Mỗi khách chỉ nhận một email sinh nhật trong một năm. Email kèm một coupon riêng
+cho đúng tài khoản đó: mặc định giảm 10%, đơn tối thiểu 300.000 VND, giảm tối đa
+100.000 VND, không hết hạn và chỉ dùng một lần. Checkout chỉ nhận một coupon cho
+mỗi đơn hàng nên coupon sinh nhật không thể cộng dồn với mã khác. Có thể thay đổi
+ba giá trị mặc định bằng `BIRTHDAY_COUPON_DISCOUNT_PERCENT`,
+`BIRTHDAY_COUPON_MINIMUM_ORDER_VND` và
+`BIRTHDAY_COUPON_MAX_DISCOUNT_VND` khi deploy.
+
+Email lỗi có thể được thử lại; khách đã nhận thành công sẽ không bị gửi trùng.
+Khách đã tắt email sinh nhật hoặc hủy đăng ký email marketing sẽ được bỏ qua.
 
 Kiểm tra người sẽ nhận email mà không gửi thật:
 

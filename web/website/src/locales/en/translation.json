@@ -219,6 +219,7 @@
       "expired": "This coupon has expired.",
       "usage_limit_reached": "This coupon has reached its usage limit.",
       "per_user_limit_reached": "You have already used this coupon the maximum number of times.",
+      "not_assigned": "This coupon belongs to another account.",
       "minimum_order_not_met": "Your product subtotal must be at least {{amount}} to use this coupon.",
       "empty_cart": "Your cart is empty.",
       "connection": "Coupon could not be checked. Please try again."

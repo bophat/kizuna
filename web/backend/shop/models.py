@@ -219,10 +219,23 @@ class Coupon(models.Model):
         PERCENTAGE = 'percentage', 'Percentage'
         FIXED = 'fixed', 'Fixed amount'
 
+    class Source(models.TextChoices):
+        MANUAL = 'manual', 'Manual'
+        BIRTHDAY = 'birthday', 'Birthday'
+
+    class AmountCurrency(models.TextChoices):
+        USD = 'USD', 'USD'
+        VND = 'VND', 'VND'
+
     code = models.CharField(max_length=50, unique=True, db_index=True)
     description = models.CharField(max_length=255, blank=True, default='')
     discount_type = models.CharField(max_length=12, choices=DiscountType.choices)
     discount_value = models.DecimalField(max_digits=10, decimal_places=2)
+    amount_currency = models.CharField(
+        max_length=3,
+        choices=AmountCurrency.choices,
+        default=AmountCurrency.USD,
+    )
     minimum_order_amount = models.DecimalField(
         max_digits=10, decimal_places=2, default=Decimal('0.00')
     )
@@ -249,11 +262,32 @@ class Coupon(models.Model):
         blank=True,
         related_name='coupons',
     )
+    assigned_user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='assigned_coupons',
+    )
+    source = models.CharField(
+        max_length=12,
+        choices=Source.choices,
+        default=Source.MANUAL,
+        db_index=True,
+    )
+    birthday_year = models.PositiveSmallIntegerField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     class Meta:
         ordering = ['-created_at']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['assigned_user', 'birthday_year'],
+                condition=models.Q(source='birthday'),
+                name='unique_birthday_coupon_per_user_year',
+            ),
+        ]
 
     def clean(self):
         errors = {}
@@ -278,6 +312,17 @@ class Coupon(models.Model):
             errors['per_user_limit'] = 'Per-user limit must be at least one.'
         if self.starts_at and self.expires_at and self.starts_at >= self.expires_at:
             errors['expires_at'] = 'Expiry time must be after the start time.'
+        if self.source == self.Source.BIRTHDAY:
+            if not self.assigned_user_id:
+                errors['assigned_user'] = 'Birthday coupons must belong to a customer.'
+            if not self.birthday_year:
+                errors['birthday_year'] = 'Birthday coupons require a birthday year.'
+            if self.expires_at is not None:
+                errors['expires_at'] = 'Birthday coupons do not expire.'
+            if self.usage_limit != 1:
+                errors['usage_limit'] = 'Birthday coupons can only be used once.'
+            if self.per_user_limit != 1:
+                errors['per_user_limit'] = 'Birthday coupons can only be used once.'
         if errors:
             raise ValidationError(errors)
 

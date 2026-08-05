@@ -219,6 +219,7 @@
       "expired": "このクーポンは有効期限切れです。",
       "usage_limit_reached": "このクーポンは利用上限に達しました。",
       "per_user_limit_reached": "このクーポンはすでに利用上限回数まで使用されています。",
+      "not_assigned": "このクーポンは別のアカウント専用です。",
       "minimum_order_not_met": "このクーポンの利用には商品小計が {{amount}} 以上必要です。",
       "empty_cart": "カートは空です。",
       "connection": "クーポンを確認できませんでした。もう一度お試しください。"

@@ -113,17 +113,25 @@ class CategorySerializer(serializers.ModelSerializer):
 class CouponSerializer(serializers.ModelSerializer):
     created_by_name = serializers.SerializerMethodField()
     affiliate_code = serializers.CharField(source='affiliate.code', read_only=True)
+    assigned_user_email = serializers.EmailField(
+        source='assigned_user.email', read_only=True
+    )
 
     class Meta:
         model = Coupon
         fields = [
             'id', 'code', 'description', 'discount_type', 'discount_value',
-            'minimum_order_amount', 'maximum_discount_amount', 'usage_limit',
+            'amount_currency', 'minimum_order_amount',
+            'maximum_discount_amount', 'usage_limit',
             'per_user_limit', 'used_count', 'starts_at', 'expires_at',
             'is_active', 'created_by_name', 'created_at', 'updated_at',
             'affiliate', 'affiliate_code',
+            'source', 'birthday_year', 'assigned_user', 'assigned_user_email',
         ]
-        read_only_fields = ['id', 'used_count', 'created_by_name', 'created_at', 'updated_at']
+        read_only_fields = [
+            'id', 'used_count', 'created_by_name', 'created_at', 'updated_at',
+            'source', 'birthday_year', 'assigned_user', 'assigned_user_email',
+        ]
 
     def get_created_by_name(self, obj):
         if not obj.created_by:
@@ -146,6 +154,14 @@ class CouponSerializer(serializers.ModelSerializer):
         return code
 
     def validate(self, attrs):
+        if self.instance and self.instance.source == Coupon.Source.BIRTHDAY:
+            protected_fields = set(attrs) - {'is_active'}
+            if protected_fields:
+                raise serializers.ValidationError(
+                    'Birthday coupon terms are generated automatically. '
+                    'Only the active status can be changed.'
+                )
+
         discount_type = attrs.get(
             'discount_type', getattr(self.instance, 'discount_type', None)
         )

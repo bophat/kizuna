@@ -14,6 +14,10 @@ from django.utils import timezone
 
 from admin_api.models import MarketingEmailSuppression
 
+from .birthday_coupons import (
+    birthday_coupon_email_context,
+    issue_birthday_coupon,
+)
 from .models import BirthdayEmailDelivery, UserProfile
 
 
@@ -23,7 +27,11 @@ EMAIL_COPY = {
         'title': 'Happy birthday!',
         'greeting': 'Hello {name},',
         'body': 'KIZUNA wishes you a joyful birthday and a wonderful year ahead.',
-        'button': 'Visit KIZUNA',
+        'gift': 'Your birthday gift',
+        'coupon_intro': 'Use this personal coupon on your next order:',
+        'terms': 'Save {percent}% · minimum order {minimum} · maximum discount {maximum}',
+        'no_expiry': 'No expiry · one use · only valid for your account',
+        'button': 'Shop with your coupon',
         'preference': 'You can manage birthday email preferences in your profile.',
     },
     'ja': {
@@ -31,7 +39,11 @@ EMAIL_COPY = {
         'title': 'お誕生日おめでとうございます！',
         'greeting': '{name} 様',
         'body': '素敵なお誕生日と、幸せに満ちた一年になりますようKIZUNAより心を込めてお祝い申し上げます。',
-        'button': 'KIZUNAを見る',
+        'gift': 'バースデー特典',
+        'coupon_intro': '次回のご注文で、このお客様専用クーポンをご利用ください：',
+        'terms': '{percent}%割引 · 最低注文額 {minimum} · 最大割引 {maximum}',
+        'no_expiry': '有効期限なし · 1回限り · ご本人のアカウントのみ利用可能',
+        'button': 'クーポンを使って買い物する',
         'preference': '誕生日メールの設定はプロフィールから変更できます。',
     },
     'vi': {
@@ -39,7 +51,11 @@ EMAIL_COPY = {
         'title': 'Chúc mừng sinh nhật!',
         'greeting': 'Xin chào {name},',
         'body': 'KIZUNA chúc bạn có một sinh nhật thật vui và một năm mới nhiều điều tuyệt vời.',
-        'button': 'Ghé thăm KIZUNA',
+        'gift': 'Quà sinh nhật dành cho bạn',
+        'coupon_intro': 'Sử dụng mã riêng này cho đơn hàng tiếp theo:',
+        'terms': 'Giảm {percent}% · đơn tối thiểu {minimum} · giảm tối đa {maximum}',
+        'no_expiry': 'Không hết hạn · dùng một lần · chỉ áp dụng cho tài khoản của bạn',
+        'button': 'Mua sắm với coupon',
         'preference': 'Bạn có thể quản lý email sinh nhật trong hồ sơ cá nhân.',
     },
 }
@@ -73,6 +89,8 @@ def build_birthday_message(
     *,
     recipient_email: str | None = None,
     language: str | None = None,
+    coupon=None,
+    include_coupon: bool = False,
 ) -> EmailMultiAlternatives:
     email = normalize_email(recipient_email or user.email)
     if not email:
@@ -86,13 +104,46 @@ def build_birthday_message(
     name = _customer_name(user)
     website_url = settings.WEBSITE_URL.rstrip('/')
     profile_url = f'{website_url}/profile'
+    collection_url = f'{website_url}/collections'
     greeting = copy['greeting'].format(name=name)
+    coupon_context = birthday_coupon_email_context(coupon) if include_coupon else None
+    coupon_terms = ''
+    coupon_text = []
+    coupon_html = ''
+    if coupon_context:
+        minimum = f"{int(coupon_context['minimum_order_vnd']):,} ₫".replace(',', '.')
+        maximum = f"{int(coupon_context['maximum_discount_vnd']):,} ₫".replace(',', '.')
+        percent = f"{coupon_context['discount_percent']:g}"
+        coupon_terms = copy['terms'].format(
+            percent=percent,
+            minimum=minimum,
+            maximum=maximum,
+        )
+        coupon_text = [
+            copy['gift'],
+            copy['coupon_intro'],
+            coupon_context['code'],
+            coupon_terms,
+            copy['no_expiry'],
+        ]
+        coupon_html = f"""
+            <div style="margin:26px 0;padding:22px;border:1px dashed #b10f2e;background:#fff">
+              <h2 style="font-size:19px;margin:0 0 10px">{escape(copy['gift'])}</h2>
+              <p style="margin:0 0 14px">{escape(copy['coupon_intro'])}</p>
+              <div style="font:700 22px monospace;letter-spacing:0.08em;color:#b10f2e;padding:12px;background:#fff3f3;text-align:center">
+                {escape(coupon_context['code'])}
+              </div>
+              <p style="font-size:13px;margin:14px 0 5px">{escape(coupon_terms)}</p>
+              <p style="font-size:12px;color:#666;margin:0">{escape(copy['no_expiry'])}</p>
+            </div>
+        """
 
     text_body = '\n\n'.join(
         [
             greeting,
             copy['body'],
-            website_url,
+            *coupon_text,
+            collection_url,
             f"{copy['preference']} {profile_url}",
         ]
     )
@@ -103,8 +154,9 @@ def build_birthday_message(
             <h1 style="font-size:28px;margin:0 0 22px">{escape(copy['title'])}</h1>
             <p>{escape(greeting)}</p>
             <p style="line-height:1.7">{escape(copy['body'])}</p>
+            {coupon_html}
             <p style="margin:30px 0">
-              <a href="{escape(website_url, quote=True)}"
+              <a href="{escape(collection_url, quote=True)}"
                  style="background:#111;color:#fff;padding:14px 22px;text-decoration:none;border-radius:4px">
                 {escape(copy['button'])}
               </a>
@@ -132,6 +184,7 @@ def send_birthday_test_email(user, recipient_email: str, language: str | None = 
         user,
         recipient_email=recipient_email,
         language=language,
+        include_coupon=True,
     )
     if message.send(fail_silently=False) != 1:
         raise RuntimeError('Birthday test email was not accepted by the email backend.')
@@ -191,13 +244,25 @@ def send_birthday_email_for_customer(
                 'status': BirthdayEmailDelivery.Status.FAILED,
             },
         )
-        if delivery.status == BirthdayEmailDelivery.Status.SENT:
-            return {'status': 'already_sent', 'sent_to': delivery.email}
+        try:
+            coupon, coupon_created = issue_birthday_coupon(user, run_date.year)
+        except Exception as exc:
+            return {'status': 'failed', 'error': str(exc)}
+        if delivery.status == BirthdayEmailDelivery.Status.SENT and not coupon_created:
+            return {
+                'status': 'already_sent',
+                'sent_to': delivery.email,
+                'coupon_code': coupon.code,
+            }
 
         delivery.email = email
         delivery.attempt_count += 1
         try:
-            message = build_birthday_message(user)
+            message = build_birthday_message(
+                user,
+                coupon=coupon,
+                include_coupon=True,
+            )
             if message.send(fail_silently=False) != 1:
                 raise RuntimeError('Email backend did not accept the message.')
         except Exception as exc:
@@ -211,7 +276,7 @@ def send_birthday_email_for_customer(
         delivery.error_message = ''
         delivery.sent_at = timezone.now()
         delivery.save()
-        return {'status': 'sent', 'sent_to': email}
+        return {'status': 'sent', 'sent_to': email, 'coupon_code': coupon.code}
 
 
 def process_birthday_emails(run_date: date, *, dry_run: bool = False) -> dict:

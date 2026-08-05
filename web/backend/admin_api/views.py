@@ -364,7 +364,11 @@ class AdminCategoryViewSet(viewsets.ModelViewSet):
 
 
 class AdminCouponViewSet(viewsets.ModelViewSet):
-    queryset = Coupon.objects.select_related('created_by', 'affiliate').all().order_by('-created_at')
+    queryset = (
+        Coupon.objects.select_related('created_by', 'affiliate', 'assigned_user')
+        .all()
+        .order_by('-created_at')
+    )
     serializer_class = CouponSerializer
     permission_classes = [permissions.IsAdminUser]
 
@@ -373,6 +377,11 @@ class AdminCouponViewSet(viewsets.ModelViewSet):
 
     def destroy(self, request, *args, **kwargs):
         coupon = self.get_object()
+        if coupon.source == Coupon.Source.BIRTHDAY:
+            return Response(
+                {'detail': 'Birthday coupons cannot be deleted. Disable this coupon instead.'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
         if coupon.used_count or coupon.redemptions.exists():
             return Response(
                 {'detail': 'Used coupons cannot be deleted. Disable this coupon instead.'},

@@ -146,8 +146,14 @@ export default function Users() {
       }
       alert(
         data.status === 'already_sent'
-          ? t('users.birthday_email.already_sent', { email: data.sent_to })
-          : t('users.birthday_email.sent', { email: data.sent_to }),
+          ? t('users.birthday_email.already_sent', {
+              email: data.sent_to,
+              coupon: data.coupon_code,
+            })
+          : t('users.birthday_email.sent', {
+              email: data.sent_to,
+              coupon: data.coupon_code,
+            }),
       );
     } catch {
       alert(t('users.birthday_email.failed'));

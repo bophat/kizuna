@@ -219,6 +219,7 @@
       "expired": "Mã giảm giá đã hết hạn.",
       "usage_limit_reached": "Mã giảm giá đã hết lượt sử dụng.",
       "per_user_limit_reached": "Bạn đã dùng mã này đủ số lần cho phép.",
+      "not_assigned": "Mã giảm giá này được cấp cho một tài khoản khác.",
       "minimum_order_not_met": "Tổng tiền sản phẩm phải từ {{amount}} để dùng mã này.",
       "empty_cart": "Giỏ hàng đang trống.",
       "connection": "Không thể kiểm tra mã giảm giá. Vui lòng thử lại."

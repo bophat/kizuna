@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from .coupons import (
     CouponValidationError,
+    amount_to_base_currency,
     coupon_payload,
     normalize_coupon_code,
     validate_coupon,
@@ -51,7 +52,9 @@ class CouponValidateView(APIView):
                 {
                     'valid': False,
                     'error_code': exc.code,
-                    'minimum_order_amount': coupon.minimum_order_amount,
+                    'minimum_order_amount': amount_to_base_currency(
+                        coupon, coupon.minimum_order_amount
+                    ),
                 },
                 status=status.HTTP_400_BAD_REQUEST,
             )

@@ -22,6 +22,7 @@ type Coupon = {
   description: string;
   discount_type: 'percentage' | 'fixed';
   discount_value: string;
+  amount_currency: 'USD' | 'VND';
   minimum_order_amount: string;
   maximum_discount_amount: string | null;
   usage_limit: number | null;
@@ -32,6 +33,10 @@ type Coupon = {
   is_active: boolean;
   affiliate: number | null;
   affiliate_code: string;
+  source: 'manual' | 'birthday';
+  birthday_year: number | null;
+  assigned_user: number | null;
+  assigned_user_email: string;
   created_at: string;
 };
 
@@ -122,7 +127,7 @@ export default function Coupons() {
     const query = search.trim().toLowerCase();
     if (!query) return coupons;
     return coupons.filter((coupon) =>
-      `${coupon.code} ${coupon.description} ${coupon.affiliate_code}`.toLowerCase().includes(query),
+      `${coupon.code} ${coupon.description || ''} ${coupon.affiliate_code || ''} ${coupon.assigned_user_email || ''}`.toLowerCase().includes(query),
     );
   }, [coupons, search]);
 
@@ -237,6 +242,12 @@ export default function Coupons() {
     dateStyle: 'medium',
     timeStyle: 'short',
   });
+  const formatCouponAmount = (value: string, currency: Coupon['amount_currency']) =>
+    new Intl.NumberFormat(i18n.language, {
+      style: 'currency',
+      currency,
+      maximumFractionDigits: currency === 'VND' ? 0 : 2,
+    }).format(Number(value || 0));
 
   return (
     <div className="ma-spacing space-y-8">
@@ -308,16 +319,31 @@ export default function Coupons() {
                     <tr key={coupon.id} className="transition hover:bg-brand-paper/40">
                       <td className="px-6 py-4">
                         <code className="rounded bg-brand-red/10 px-2.5 py-1 font-bold text-brand-red">{coupon.code}</code>
+                        {coupon.source === 'birthday' && (
+                          <p className="mt-2 text-xs font-semibold text-fuchsia-700">
+                            {t('coupons.birthday_badge', { year: coupon.birthday_year })}
+                          </p>
+                        )}
+                        {coupon.assigned_user_email && (
+                          <p className="mt-1 text-xs text-brand-ink/55">
+                            {t('coupons.assigned_to', { email: coupon.assigned_user_email })}
+                          </p>
+                        )}
                         {coupon.description && <p className="mt-2 max-w-xs truncate text-xs text-brand-ink/50">{coupon.description}</p>}
                         {coupon.affiliate_code && <p className="mt-2 text-xs font-semibold text-emerald-700">{t('coupons.affiliate_badge', { code: coupon.affiliate_code })}</p>}
                       </td>
                       <td className="px-6 py-4 text-sm font-semibold">
                         {coupon.discount_type === 'percentage'
                           ? `${Number(coupon.discount_value)}%`
-                          : `$${Number(coupon.discount_value).toFixed(2)}`}
-                        {coupon.minimum_order_amount !== '0.00' && (
+                          : formatCouponAmount(coupon.discount_value, coupon.amount_currency)}
+                        {Number(coupon.minimum_order_amount) > 0 && (
                           <p className="mt-1 text-xs font-normal text-brand-ink/45">
-                            {t('coupons.minimum_short', { amount: `$${Number(coupon.minimum_order_amount).toFixed(2)}` })}
+                            {t('coupons.minimum_short', { amount: formatCouponAmount(coupon.minimum_order_amount, coupon.amount_currency) })}
+                          </p>
+                        )}
+                        {coupon.maximum_discount_amount && (
+                          <p className="mt-1 text-xs font-normal text-brand-ink/45">
+                            {t('coupons.maximum_short', { amount: formatCouponAmount(coupon.maximum_discount_amount, coupon.amount_currency) })}
                           </p>
                         )}
                       </td>
@@ -343,8 +369,14 @@ export default function Coupons() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="flex justify-end gap-2">
-                          <button onClick={() => openEdit(coupon)} className="rounded-md p-2 transition hover:bg-brand-ink hover:text-white" aria-label={t('common.edit')}><Edit3 size={16} /></button>
-                          <button onClick={() => deleteCoupon(coupon)} className="rounded-md p-2 transition hover:bg-brand-red hover:text-white" aria-label={t('common.delete')}><Trash2 size={16} /></button>
+                          {coupon.source === 'birthday' ? (
+                            <span className="self-center text-xs text-brand-ink/40">{t('coupons.managed_automatically')}</span>
+                          ) : (
+                            <>
+                              <button onClick={() => openEdit(coupon)} className="rounded-md p-2 transition hover:bg-brand-ink hover:text-white" aria-label={t('common.edit')}><Edit3 size={16} /></button>
+                              <button onClick={() => deleteCoupon(coupon)} className="rounded-md p-2 transition hover:bg-brand-red hover:text-white" aria-label={t('common.delete')}><Trash2 size={16} /></button>
+                            </>
+                          )}
                         </div>
                       </td>
                     </tr>

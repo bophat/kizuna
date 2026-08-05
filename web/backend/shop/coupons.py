@@ -2,6 +2,7 @@ from decimal import Decimal, ROUND_HALF_UP
 
 from django.utils import timezone
 
+from .exchange_rates import get_exchange_rates
 from .models import Coupon
 
 
@@ -18,15 +19,41 @@ def normalize_coupon_code(code):
     return str(code or '').strip().upper()
 
 
+def _usd_to_vnd_rate():
+    return Decimal(str(get_exchange_rates()['usd_to_vnd']))
+
+
+def amount_to_base_currency(coupon, amount):
+    amount = Decimal(amount)
+    if coupon.amount_currency == Coupon.AmountCurrency.VND:
+        return (amount / _usd_to_vnd_rate()).quantize(
+            MONEY_STEP,
+            rounding=ROUND_HALF_UP,
+        )
+    return amount.quantize(MONEY_STEP, rounding=ROUND_HALF_UP)
+
+
+def amount_from_base_currency(coupon, amount):
+    amount = Decimal(amount)
+    if coupon.amount_currency == Coupon.AmountCurrency.VND:
+        return amount * _usd_to_vnd_rate()
+    return amount
+
+
 def calculate_discount(coupon, subtotal):
     subtotal = Decimal(subtotal).quantize(MONEY_STEP, rounding=ROUND_HALF_UP)
+    calculation_subtotal = amount_from_base_currency(coupon, subtotal)
     if coupon.discount_type == Coupon.DiscountType.PERCENTAGE:
-        discount = subtotal * coupon.discount_value / Decimal('100')
+        discount = calculation_subtotal * coupon.discount_value / Decimal('100')
         if coupon.maximum_discount_amount is not None:
             discount = min(discount, coupon.maximum_discount_amount)
     else:
         discount = coupon.discount_value
-    return min(subtotal, discount).quantize(MONEY_STEP, rounding=ROUND_HALF_UP)
+    discount_in_base = amount_to_base_currency(coupon, discount)
+    return min(subtotal, discount_in_base).quantize(
+        MONEY_STEP,
+        rounding=ROUND_HALF_UP,
+    )
 
 
 def validate_coupon(coupon, user, subtotal, now=None):
@@ -35,13 +62,15 @@ def validate_coupon(coupon, user, subtotal, now=None):
 
     if not coupon.is_active:
         raise CouponValidationError('inactive')
+    if coupon.assigned_user_id and coupon.assigned_user_id != user.id:
+        raise CouponValidationError('not_assigned')
     if coupon.starts_at and now < coupon.starts_at:
         raise CouponValidationError('not_started')
     if coupon.expires_at and now >= coupon.expires_at:
         raise CouponValidationError('expired')
     if coupon.usage_limit is not None and coupon.used_count >= coupon.usage_limit:
         raise CouponValidationError('usage_limit_reached')
-    if subtotal < coupon.minimum_order_amount:
+    if amount_from_base_currency(coupon, subtotal) < coupon.minimum_order_amount:
         raise CouponValidationError('minimum_order_not_met')
     if (
         coupon.per_user_limit is not None
@@ -60,8 +89,15 @@ def coupon_payload(coupon, subtotal, discount_amount):
         'code': coupon.code,
         'discount_type': coupon.discount_type,
         'discount_value': coupon.discount_value,
-        'minimum_order_amount': coupon.minimum_order_amount,
-        'maximum_discount_amount': coupon.maximum_discount_amount,
+        'minimum_order_amount': amount_to_base_currency(
+            coupon, coupon.minimum_order_amount
+        ),
+        'maximum_discount_amount': (
+            amount_to_base_currency(coupon, coupon.maximum_discount_amount)
+            if coupon.maximum_discount_amount is not None
+            else None
+        ),
+        'amount_currency': coupon.amount_currency,
         'subtotal_amount': subtotal,
         'discount_amount': discount_amount,
         'total_after_discount': max(Decimal('0.00'), subtotal - discount_amount),

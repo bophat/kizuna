@@ -54,6 +54,15 @@ PASSWORD_RESET_TIMEOUT = int(os.environ.get('PASSWORD_RESET_TIMEOUT', '3600'))
 BIRTHDAY_EMAIL_TIME_ZONE = os.environ.get(
     'BIRTHDAY_EMAIL_TIME_ZONE', 'Asia/Ho_Chi_Minh'
 )
+BIRTHDAY_COUPON_DISCOUNT_PERCENT = int(
+    os.environ.get('BIRTHDAY_COUPON_DISCOUNT_PERCENT', '10')
+)
+BIRTHDAY_COUPON_MINIMUM_ORDER_VND = int(
+    os.environ.get('BIRTHDAY_COUPON_MINIMUM_ORDER_VND', '300000')
+)
+BIRTHDAY_COUPON_MAX_DISCOUNT_VND = int(
+    os.environ.get('BIRTHDAY_COUPON_MAX_DISCOUNT_VND', '100000')
+)
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
