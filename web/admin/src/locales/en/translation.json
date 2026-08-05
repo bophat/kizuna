@@ -620,6 +620,22 @@
     "confirm_delete": "Are you sure you want to remove this collector profile? This action cannot be undone.",
     "error_load": "Failed to load customer profiles.",
     "error_delete": "Failed to delete collector profile.",
+    "birthday_email": {
+      "action": "Send birthday email to customer",
+      "sending": "Sending birthday email...",
+      "confirm": "Send a birthday email manually to {{email}}?",
+      "sent": "Birthday email sent to {{email}}.",
+      "already_sent": "The birthday email was already sent to {{email}} this year.",
+      "failed": "Unable to send the birthday email.",
+      "errors": {
+        "not_birthday": "Today is not this customer's birthday.",
+        "missing_birthday": "This customer does not have a date of birth.",
+        "missing_email": "This customer does not have an email address.",
+        "disabled": "This customer has disabled birthday email.",
+        "suppressed": "This customer has unsubscribed from marketing email.",
+        "ineligible": "This account is not eligible for birthday email."
+      }
+    },
     "table": {
       "collector": "Collector",
       "contact": "Contact Info",

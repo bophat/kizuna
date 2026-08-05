@@ -1,9 +1,12 @@
 from datetime import date
 from unittest.mock import patch
+from zoneinfo import ZoneInfo
 
+from django.conf import settings
 from django.contrib.auth.models import User
 from django.core import mail
 from django.test import TestCase, override_settings
+from django.utils import timezone
 from rest_framework.test import APIClient
 
 from admin_api.models import MarketingEmailSuppression
@@ -181,3 +184,47 @@ class BirthdayProfileApiTests(TestCase):
         self.assertEqual(response.data['date_of_birth'], '1995-12-24')
         self.assertEqual(response.data['preferred_language'], 'vi')
         self.assertTrue(response.data['birthday_email_enabled'])
+
+    def test_admin_can_manually_send_todays_birthday_email_to_customer_once(self):
+        run_date = timezone.localdate(
+            timezone=ZoneInfo(settings.BIRTHDAY_EMAIL_TIME_ZONE)
+        )
+        birth_year = 2000 if (run_date.month, run_date.day) == (2, 29) else 1994
+        UserProfile.objects.create(
+            user=self.customer,
+            date_of_birth=date(birth_year, run_date.month, run_date.day),
+            preferred_language='vi',
+        )
+        self.client.force_authenticate(self.admin)
+        url = f'/api/admin/users/{self.customer.pk}/send-birthday-email/'
+
+        sent = self.client.post(url, format='json')
+        repeated = self.client.post(url, format='json')
+
+        self.assertEqual(sent.status_code, 200, sent.data)
+        self.assertEqual(sent.data['status'], 'sent')
+        self.assertEqual(sent.data['sent_to'], self.customer.email)
+        self.assertEqual(repeated.status_code, 200, repeated.data)
+        self.assertEqual(repeated.data['status'], 'already_sent')
+        self.assertEqual(len(mail.outbox), 1)
+        self.assertEqual(mail.outbox[0].to, [self.customer.email])
+
+    def test_admin_manual_send_requires_a_birthday_today(self):
+        run_date = timezone.localdate(
+            timezone=ZoneInfo(settings.BIRTHDAY_EMAIL_TIME_ZONE)
+        )
+        wrong_birthday = date(1994, 1, 2) if (run_date.month, run_date.day) == (1, 1) else date(1994, 1, 1)
+        UserProfile.objects.create(
+            user=self.customer,
+            date_of_birth=wrong_birthday,
+        )
+        self.client.force_authenticate(self.admin)
+
+        response = self.client.post(
+            f'/api/admin/users/{self.customer.pk}/send-birthday-email/',
+            format='json',
+        )
+
+        self.assertEqual(response.status_code, 400, response.data)
+        self.assertEqual(response.data['error_code'], 'not_birthday')
+        self.assertEqual(len(mail.outbox), 0)

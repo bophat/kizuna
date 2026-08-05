@@ -52,7 +52,10 @@ from shop.affiliates import refresh_available_commissions, sync_order_commission
 from shop.loyalty import sync_order_loyalty_points
 from shop.payments import expire_payment, expire_pending_payments, restore_order_inventory
 from shop.profit import calculate_gross_profit_metrics, recognized_sales
-from shop.birthday_emails import send_birthday_test_email
+from shop.birthday_emails import (
+    send_birthday_email_for_customer,
+    send_birthday_test_email,
+)
 
 import logging
 logger = logging.getLogger(__name__)
@@ -303,6 +306,41 @@ class AdminUserViewSet(viewsets.ModelViewSet):
                 status=status.HTTP_502_BAD_GATEWAY,
             )
         return Response({'sent_to': sent_to})
+
+    @action(detail=True, methods=['post'], url_path='send-birthday-email')
+    def send_birthday_email(self, request, pk=None):
+        customer = self.get_object()
+        from zoneinfo import ZoneInfo
+
+        run_date = timezone.localdate(
+            timezone=ZoneInfo(settings.BIRTHDAY_EMAIL_TIME_ZONE)
+        )
+        result = send_birthday_email_for_customer(customer, run_date)
+        result_status = result['status']
+        if result_status in {'sent', 'already_sent'}:
+            return Response(result)
+
+        response_status = (
+            status.HTTP_502_BAD_GATEWAY
+            if result_status == 'failed'
+            else status.HTTP_400_BAD_REQUEST
+        )
+        messages = {
+            'not_birthday': 'Today is not this customer\'s birthday.',
+            'missing_birthday': 'This customer does not have a date of birth.',
+            'missing_email': 'This customer does not have an email address.',
+            'disabled': 'This customer has disabled birthday email.',
+            'suppressed': 'This customer has unsubscribed from marketing email.',
+            'ineligible': 'This account is not eligible for customer birthday email.',
+            'failed': 'Unable to send the birthday email.',
+        }
+        return Response(
+            {
+                'error_code': result_status,
+                'detail': messages.get(result_status, 'Unable to send the birthday email.'),
+            },
+            status=response_status,
+        )
 
 
 class AdminPaymentMethodViewSet(

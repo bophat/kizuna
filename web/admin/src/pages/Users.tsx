@@ -33,6 +33,7 @@ export default function Users() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingUser, setEditingUser] = useState<any>(null);
   const [isSendingBirthdayTest, setIsSendingBirthdayTest] = useState(false);
+  const [sendingBirthdayCustomerId, setSendingBirthdayCustomerId] = useState<number | null>(null);
   const [formData, setFormData] = useState({
     first_name: '',
     last_name: '',
@@ -125,6 +126,33 @@ export default function Users() {
       alert(t('users.modal.birthday_test_failed'));
     } finally {
       setIsSendingBirthdayTest(false);
+    }
+  };
+
+  const handleSendBirthdayEmail = async (user: any) => {
+    if (!confirm(t('users.birthday_email.confirm', { email: user.email }))) return;
+    setSendingBirthdayCustomerId(user.id);
+    try {
+      const response = await apiFetch(`/users/${user.id}/send-birthday-email/`, {
+        method: 'POST',
+      });
+      const data = await response.json().catch(() => ({}));
+      if (!response.ok) {
+        const errorKey = data.error_code
+          ? `users.birthday_email.errors.${data.error_code}`
+          : 'users.birthday_email.failed';
+        alert(t(errorKey, { defaultValue: data.detail || t('users.birthday_email.failed') }));
+        return;
+      }
+      alert(
+        data.status === 'already_sent'
+          ? t('users.birthday_email.already_sent', { email: data.sent_to })
+          : t('users.birthday_email.sent', { email: data.sent_to }),
+      );
+    } catch {
+      alert(t('users.birthday_email.failed'));
+    } finally {
+      setSendingBirthdayCustomerId(null);
     }
   };
 
@@ -278,6 +306,16 @@ export default function Users() {
                       </td>
                       <td className="px-6 py-4 text-right">
                         <div className="flex justify-end gap-2">
+                          <button
+                            onClick={() => handleSendBirthdayEmail(user)}
+                            disabled={!user.date_of_birth || sendingBirthdayCustomerId === user.id}
+                            className="p-2 text-brand-red transition-colors hover:bg-brand-red hover:text-white rounded-md disabled:cursor-not-allowed disabled:opacity-30"
+                            title={t('users.birthday_email.action')}
+                          >
+                            {sendingBirthdayCustomerId === user.id
+                              ? <Loader2 size={16} className="animate-spin" />
+                              : <Cake size={16} />}
+                          </button>
                           <button 
                             onClick={() => handleOpenModal(user)}
                             className="p-2 hover:bg-brand-ink hover:text-white rounded-md transition-colors"
@@ -420,6 +458,19 @@ export default function Users() {
                     onChange={(e) => setFormData({...formData, address: e.target.value})}
                   />
                 </div>
+                <button
+                  type="button"
+                  onClick={() => handleSendBirthdayEmail(editingUser)}
+                  disabled={!editingUser?.date_of_birth || sendingBirthdayCustomerId === editingUser?.id}
+                  className="flex w-full items-center justify-center gap-2 rounded-md bg-brand-red px-4 py-2 text-sm text-white transition-opacity hover:opacity-90 disabled:cursor-not-allowed disabled:opacity-40"
+                >
+                  {sendingBirthdayCustomerId === editingUser?.id
+                    ? <Loader2 size={16} className="animate-spin" />
+                    : <Cake size={16} />}
+                  {sendingBirthdayCustomerId === editingUser?.id
+                    ? t('users.birthday_email.sending')
+                    : t('users.birthday_email.action')}
+                </button>
                 <button
                   type="button"
                   onClick={handleBirthdayEmailTest}

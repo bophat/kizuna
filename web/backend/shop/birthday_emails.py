@@ -138,6 +138,82 @@ def send_birthday_test_email(user, recipient_email: str, language: str | None = 
     return message.to[0]
 
 
+def birthday_matches(profile: UserProfile, run_date: date) -> bool:
+    birthday = profile.date_of_birth
+    if not birthday:
+        return False
+    if (birthday.month, birthday.day) == (run_date.month, run_date.day):
+        return True
+    return (
+        birthday.month == 2
+        and birthday.day == 29
+        and run_date.month == 2
+        and run_date.day == 28
+        and not calendar.isleap(run_date.year)
+    )
+
+
+def send_birthday_email_for_customer(
+    user,
+    run_date: date,
+    *,
+    suppressed_emails: set[str] | None = None,
+) -> dict:
+    """Send one tracked birthday email to a selected customer."""
+
+    if not user.is_active or user.is_staff or user.is_superuser:
+        return {'status': 'ineligible'}
+    email = normalize_email(user.email)
+    if not email:
+        return {'status': 'missing_email'}
+    try:
+        profile = user.profile
+    except UserProfile.DoesNotExist:
+        return {'status': 'missing_birthday'}
+    if not birthday_matches(profile, run_date):
+        return {'status': 'not_birthday'}
+    if not profile.birthday_email_enabled:
+        return {'status': 'disabled'}
+    is_suppressed = (
+        email in suppressed_emails
+        if suppressed_emails is not None
+        else MarketingEmailSuppression.objects.filter(email__iexact=email).exists()
+    )
+    if is_suppressed:
+        return {'status': 'suppressed'}
+
+    with transaction.atomic():
+        delivery, _ = BirthdayEmailDelivery.objects.select_for_update().get_or_create(
+            user=user,
+            birthday_year=run_date.year,
+            defaults={
+                'email': email,
+                'status': BirthdayEmailDelivery.Status.FAILED,
+            },
+        )
+        if delivery.status == BirthdayEmailDelivery.Status.SENT:
+            return {'status': 'already_sent', 'sent_to': delivery.email}
+
+        delivery.email = email
+        delivery.attempt_count += 1
+        try:
+            message = build_birthday_message(user)
+            if message.send(fail_silently=False) != 1:
+                raise RuntimeError('Email backend did not accept the message.')
+        except Exception as exc:
+            delivery.status = BirthdayEmailDelivery.Status.FAILED
+            delivery.error_message = str(exc)[:500]
+            delivery.sent_at = None
+            delivery.save()
+            return {'status': 'failed', 'error': str(exc)}
+
+        delivery.status = BirthdayEmailDelivery.Status.SENT
+        delivery.error_message = ''
+        delivery.sent_at = timezone.now()
+        delivery.save()
+        return {'status': 'sent', 'sent_to': email}
+
+
 def process_birthday_emails(run_date: date, *, dry_run: bool = False) -> dict:
     profiles = (
         UserProfile.objects.select_related('user')
@@ -170,46 +246,34 @@ def process_birthday_emails(run_date: date, *, dry_run: bool = False) -> dict:
     for profile in profiles.iterator(chunk_size=200):
         user = profile.user
         email = normalize_email(user.email)
-        if email in suppressed:
-            result['suppressed'] += 1
-            continue
-
-        result['eligible'] += 1
         if dry_run:
+            if email in suppressed:
+                result['suppressed'] += 1
+                continue
+            result['eligible'] += 1
             result['recipients'].append(email)
             continue
 
-        with transaction.atomic():
-            delivery, _ = BirthdayEmailDelivery.objects.select_for_update().get_or_create(
-                user=user,
-                birthday_year=run_date.year,
-                defaults={
-                    'email': email,
-                    'status': BirthdayEmailDelivery.Status.FAILED,
-                },
-            )
-            if delivery.status == BirthdayEmailDelivery.Status.SENT:
-                result['already_sent'] += 1
-                continue
-
-            delivery.email = email
-            delivery.attempt_count += 1
-            try:
-                message = build_birthday_message(user)
-                if message.send(fail_silently=False) != 1:
-                    raise RuntimeError('Email backend did not accept the message.')
-            except Exception as exc:
-                delivery.status = BirthdayEmailDelivery.Status.FAILED
-                delivery.error_message = str(exc)[:500]
-                delivery.sent_at = None
-                delivery.save()
-                result['failed'] += 1
-                result['errors'].append({'user_id': user.id, 'email': email, 'error': str(exc)})
-            else:
-                delivery.status = BirthdayEmailDelivery.Status.SENT
-                delivery.error_message = ''
-                delivery.sent_at = timezone.now()
-                delivery.save()
-                result['sent'] += 1
+        delivery_result = send_birthday_email_for_customer(
+            user,
+            run_date,
+            suppressed_emails=suppressed,
+        )
+        delivery_status = delivery_result['status']
+        if delivery_status == 'suppressed':
+            result['suppressed'] += 1
+            continue
+        result['eligible'] += 1
+        if delivery_status == 'sent':
+            result['sent'] += 1
+        elif delivery_status == 'already_sent':
+            result['already_sent'] += 1
+        elif delivery_status == 'failed':
+            result['failed'] += 1
+            result['errors'].append({
+                'user_id': user.id,
+                'email': email,
+                'error': delivery_result.get('error', 'Unknown email error'),
+            })
 
     return result

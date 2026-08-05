@@ -620,6 +620,22 @@
     "confirm_delete": "Bạn có chắc chắn muốn xóa hồ sơ nhà sưu tập này không? Hành động này không thể hoàn tác.",
     "error_load": "Không thể tải hồ sơ khách hàng.",
     "error_delete": "Không thể xóa hồ sơ nhà sưu tập.",
+    "birthday_email": {
+      "action": "Gửi email sinh nhật cho khách",
+      "sending": "Đang gửi email sinh nhật...",
+      "confirm": "Gửi thủ công email sinh nhật đến {{email}}?",
+      "sent": "Đã gửi email sinh nhật đến {{email}}.",
+      "already_sent": "Email sinh nhật năm nay đã được gửi đến {{email}}.",
+      "failed": "Không thể gửi email sinh nhật.",
+      "errors": {
+        "not_birthday": "Hôm nay không phải ngày sinh nhật của khách hàng này.",
+        "missing_birthday": "Khách hàng chưa có ngày sinh.",
+        "missing_email": "Khách hàng chưa có địa chỉ email.",
+        "disabled": "Khách hàng đã tắt email sinh nhật.",
+        "suppressed": "Khách hàng đã hủy đăng ký email marketing.",
+        "ineligible": "Tài khoản này không đủ điều kiện nhận email sinh nhật."
+      }
+    },
     "table": {
       "collector": "Nhà sưu tập",
       "contact": "Thông tin liên hệ",
