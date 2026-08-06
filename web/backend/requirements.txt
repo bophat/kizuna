@@ -1,5 +1,7 @@
-django
-djangorestframework
+# Keep Django and DRF on the verified compatible pair. Django 6.1 removed
+# django.utils.cache.cc_delim_re, which DRF 3.17.x still imports at startup.
+django==6.0.7
+djangorestframework==3.17.1
 django-cors-headers
 djangorestframework-simplejwt
 Pillow
