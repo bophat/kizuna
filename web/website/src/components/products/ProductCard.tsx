@@ -52,7 +52,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
   return (
     <Link 
       to={`/product/${product.id}`}
-      className={`group relative flex flex-col bg-white overflow-hidden border border-surface-variant rounded-sm gpu-transform transition-[transform,box-shadow] duration-300 ease-out hover:shadow-lg hover:-translate-y-0.5 ${isLarge ? 'h-full' : ''}`}
+      className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-surface-variant bg-white gpu-transform transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
     >
       {/* Image Container */}
       <div className={`relative overflow-hidden ${isLarge ? 'flex-grow' : 'aspect-square'}`}>
@@ -98,11 +98,22 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
       </div>
 
       {/* Product Info */}
-      <div className={`p-6 flex flex-col gap-2 ${isLarge ? 'bg-surface/50' : ''}`}>
-        <div className="flex justify-between items-start">
-          <div>
-            <p className="text-[10px] uppercase tracking-[0.2em] text-secondary font-medium">{product.category}</p>
-            <h3 className={`${isLarge ? 'headline-md' : 'body-lg'} font-medium group-hover:text-primary transition-colors mt-1`}>
+      <div className={cn(
+        'flex flex-col gap-2 p-3 sm:p-4 lg:p-5',
+        isLarge ? 'flex-1 bg-surface/50' : 'h-[138px] sm:h-[150px] lg:h-[158px]',
+      )}>
+        <div className="flex min-w-0 items-start justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-[10px] font-medium uppercase tracking-[0.2em] text-secondary">
+              {product.category}
+            </p>
+            <h3
+              title={product.name}
+              className={cn(
+                isLarge ? 'headline-md' : 'body-lg min-h-[3rem] line-clamp-2',
+                'mt-1 break-words font-medium transition-colors group-hover:text-primary',
+              )}
+            >
               {product.name}
             </h3>
           </div>
@@ -125,10 +136,10 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
           )}
         </div>
         
-        <div className="flex items-center justify-between mt-2">
-          <p className="label-lg font-bold">{formatPrice(product.price)}</p>
+        <div className="mt-auto flex min-w-0 items-center justify-between gap-2 pt-2">
+          <p className="label-lg min-w-0 truncate font-bold">{formatPrice(product.price)}</p>
           {product.sales > 0 && (
-            <p className="text-[10px] text-secondary italic">
+            <p className="shrink-0 whitespace-nowrap text-[10px] italic text-secondary">
               {t('product.sold', { count: product.sales })}
             </p>
           )}
