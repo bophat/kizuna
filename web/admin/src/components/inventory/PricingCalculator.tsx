@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useMemo, useState, useEffect, useRef } from 'react';
 import { Calculator, ArrowRight, RefreshCw } from 'lucide-react';
 import { shopApiFetch, type ExchangeRatesResponse } from '../../lib/shopApi';
 import { useTranslation } from 'react-i18next';
@@ -16,6 +16,8 @@ import {
 
 interface PricingCalculatorProps {
   weight?: number;
+  initialInputs?: PricingInputs | null;
+  onInputsChange?: (inputs: PricingInputs) => void;
   onApplyPrice: (usdPrice: string, costVnd: string) => void;
 }
 
@@ -73,17 +75,36 @@ function NumField({
   );
 }
 
-export function PricingCalculator({ weight = 0, onApplyPrice }: PricingCalculatorProps) {
+export function PricingCalculator({
+  weight = 0,
+  initialInputs = null,
+  onInputsChange,
+  onApplyPrice,
+}: PricingCalculatorProps) {
   const { t } = useTranslation();
   const { format: formatPrice, formatUsd } = useFormatPrice();
   const [inputs, setInputs] = useState<PricingInputs>(() => {
+    if (initialInputs) {
+      return { ...DEFAULT_PRICING_INPUTS, ...initialInputs };
+    }
     try {
       const saved = localStorage.getItem('izuna_pricing_defaults');
-      return saved ? { ...DEFAULT_PRICING_INPUTS, ...JSON.parse(saved) } : DEFAULT_PRICING_INPUTS;
+      return saved
+        ? { ...DEFAULT_PRICING_INPUTS, ...JSON.parse(saved) }
+        : { ...DEFAULT_PRICING_INPUTS };
     } catch {
-      return DEFAULT_PRICING_INPUTS;
+      return { ...DEFAULT_PRICING_INPUTS };
     }
   });
+  const onInputsChangeRef = useRef(onInputsChange);
+
+  useEffect(() => {
+    onInputsChangeRef.current = onInputsChange;
+  }, [onInputsChange]);
+
+  useEffect(() => {
+    onInputsChangeRef.current?.(inputs);
+  }, [inputs]);
 
   const result = useMemo(() => calculatePricing(inputs, weight), [inputs, weight]);
   const [localMargin, setLocalMargin] = useState(String(inputs.profitMarginPercent));

@@ -1,3 +1,5 @@
+import type { PricingInputs } from '../pricing/types';
+
 export interface ProductFormData {
   id: string;
   name: string;
@@ -6,6 +8,7 @@ export interface ProductFormData {
   name_vi: string;
   price: string;
   cost_price_vnd: string;
+  pricing_inputs: PricingInputs | null;
   status: 'draft' | 'review' | 'published' | 'suspended';
   category: string;
   stock: string;

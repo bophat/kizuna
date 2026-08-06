@@ -71,7 +71,8 @@ export function FeaturedProducts() {
                 src={main.image}
                 alt={main.name}
                 preset="detail"
-                className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                fit="contain"
+                className="h-full w-full"
               />
             ) : (
               <div className="h-full w-full bg-surface-container" />
@@ -100,7 +101,8 @@ export function FeaturedProducts() {
                     src={product.image}
                     alt={product.name}
                     preset="card"
-                    className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+                    fit="contain"
+                    className="h-full w-full"
                   />
                 ) : (
                   <div className="h-full w-full bg-surface-container" />

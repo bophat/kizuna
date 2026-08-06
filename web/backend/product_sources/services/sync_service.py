@@ -15,7 +15,10 @@ from product_sources.models import ProductPriceHistory, ProductSource, SourceImp
 from product_sources.providers import build_provider_registry
 from product_sources.services.audit_service import AuditService
 from product_sources.services.normalize_service import normalize_provider_product
-from product_sources.services.pricing_service import ProductPricingService
+from product_sources.services.pricing_service import (
+    ProductPricingService,
+    pricing_inputs_from_result,
+)
 from shop.models import ProductStatus
 
 def _safe_provider_error(exc: Exception) -> str:
@@ -122,6 +125,10 @@ class SyncService:
                 calculated_price = pricing.selling_price_usd
                 calculation_snapshot = pricing.calculation_snapshot
                 updates['cost_price_vnd'] = pricing.import_cost_vnd + pricing.shipping_vnd
+                updates['pricing_inputs'] = pricing_inputs_from_result(
+                    pricing,
+                    weight_kg=weight,
+                )
 
                 if new_source_currency != old_source_currency:
                     warnings.append(
@@ -195,6 +202,8 @@ class SyncService:
                 product.stock = updates['stock']
             if 'cost_price_vnd' in updates:
                 product.cost_price_vnd = updates['cost_price_vnd']
+            if 'pricing_inputs' in updates:
+                product.pricing_inputs = updates['pricing_inputs']
             if updates:
                 product.save()
 

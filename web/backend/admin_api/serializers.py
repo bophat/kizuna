@@ -1,5 +1,6 @@
 from datetime import date
 from decimal import Decimal
+import json
 
 from rest_framework import serializers
 from shop.models import (
@@ -354,12 +355,54 @@ class ProductSerializer(serializers.ModelSerializer):
         model = Product
         fields = [
             'id', 'name', 'name_en', 'name_ja', 'name_vi',
-            'price', 'cost_price_vnd', 'currency', 'category', 'category_name',
+            'price', 'cost_price_vnd', 'pricing_inputs', 'currency',
+            'category', 'category_name',
             'brand', 'location', 'description', 'description_en',
             'description_ja', 'description_vi', 'image', 'status',
             'is_limited', 'is_new', 'is_featured', 'is_cheap',
             'likes', 'sales', 'stock', 'weight', 'created_at', 'updated_at'
         ]
+
+    def validate_pricing_inputs(self, value):
+        if isinstance(value, str):
+            try:
+                value = json.loads(value)
+            except json.JSONDecodeError as exc:
+                raise serializers.ValidationError('Invalid pricing input JSON.') from exc
+        if value in (None, ''):
+            return {}
+        if not isinstance(value, dict):
+            raise serializers.ValidationError('Pricing inputs must be an object.')
+
+        allowed_fields = {
+            'originCost', 'originCurrency', 'exchangeRate', 'taxJapanPercent',
+            'taxVietnamVnd', 'shipInternationalPerKgVnd',
+            'shipJapanLocalVnd', 'shipVietnamLocalVnd', 'hiddenCostVnd',
+            'profitMarginPercent', 'usdToVndRate',
+        }
+        unknown_fields = set(value) - allowed_fields
+        if unknown_fields:
+            raise serializers.ValidationError(
+                f'Unknown pricing inputs: {", ".join(sorted(unknown_fields))}.'
+            )
+        currency = str(value.get('originCurrency') or 'JPY').upper()
+        if currency not in {'JPY', 'USD'}:
+            raise serializers.ValidationError('Origin currency must be JPY or USD.')
+
+        normalized = {'originCurrency': currency}
+        for field in allowed_fields - {'originCurrency'}:
+            try:
+                number = Decimal(str(value.get(field, 0)))
+            except Exception as exc:
+                raise serializers.ValidationError(
+                    f'{field} must be a non-negative number.'
+                ) from exc
+            if not number.is_finite() or number < 0:
+                raise serializers.ValidationError(
+                    f'{field} must be a non-negative number.'
+                )
+            normalized[field] = float(number)
+        return normalized
 
     def to_representation(self, instance):
         ret = super().to_representation(instance)

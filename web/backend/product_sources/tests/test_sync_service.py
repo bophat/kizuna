@@ -83,6 +83,8 @@ class SyncServiceTests(TestCase):
         # Check DB
         product = Product.objects.get(id=self.product.id)
         self.assertEqual(product.status, ProductStatus.SUSPENDED)
+        self.assertEqual(product.pricing_inputs['originCurrency'], 'JPY')
+        self.assertEqual(product.pricing_inputs['originCost'], 3980.0)
         history = ProductPriceHistory.objects.get(product=product)
         self.assertEqual(history.previous_product_price_usd, Decimal('46.62'))
         self.assertEqual(history.calculation_snapshot['usd_vnd_rate'], '25000')

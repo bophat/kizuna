@@ -62,6 +62,10 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
 
     const data = new FormData();
     Object.keys(formData).forEach((key) => {
+      if (key === 'pricing_inputs') {
+        data.append(key, JSON.stringify(formData.pricing_inputs || {}));
+        return;
+      }
       data.append(
         key,
         key === 'cost_price_vnd'

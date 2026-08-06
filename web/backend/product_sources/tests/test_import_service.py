@@ -87,6 +87,10 @@ class SourceImportServiceTests(TestCase):
         self.assertEqual(product.name, "[Fake Amazon] Sample Product B07HG6S41K")
         self.assertEqual(product.price, Decimal("46.62"))
         self.assertEqual(product.cost_price_vnd, Decimal("1016000"))
+        self.assertEqual(product.pricing_inputs['originCost'], 3980.0)
+        self.assertEqual(product.pricing_inputs['originCurrency'], 'JPY')
+        self.assertEqual(product.pricing_inputs['exchangeRate'], 200.0)
+        self.assertGreater(product.pricing_inputs['profitMarginPercent'], 0)
         self.assertFalse(product.image)
 
         source = ProductSource.objects.get(id=res.source_id)

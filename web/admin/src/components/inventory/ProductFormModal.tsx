@@ -254,6 +254,11 @@ export function ProductFormModal({
                   >
                     <PricingCalculator
                       weight={parseFloat(formData.weight) || 0}
+                      initialInputs={formData.pricing_inputs}
+                      onInputsChange={(pricingInputs) => setFormData((current) => ({
+                        ...current,
+                        pricing_inputs: pricingInputs,
+                      }))}
                       onApplyPrice={(usd, costVnd) => setFormData((current) => ({
                         ...current,
                         price: usd,

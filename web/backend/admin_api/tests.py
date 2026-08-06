@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User
 from decimal import Decimal
+import json
 
 from django.core.cache import cache
 from django.test import TestCase, override_settings
@@ -151,6 +152,44 @@ class AdminDashboardProfitTests(TestCase):
         self.assertEqual(response.data['cost_price_vnd'], '200000')
         product.refresh_from_db()
         self.assertEqual(product.cost_price_vnd, Decimal('200000'))
+
+    def test_admin_multipart_patch_round_trips_pricing_inputs(self):
+        product = Product.objects.create(
+            id='PRICING-INPUT-PATCH',
+            name='Product with pricing calculation',
+            description='Pricing inputs must survive subsequent edits',
+            price=Decimal('10.09'),
+            cost_price_vnd=Decimal('222000'),
+            stock=1,
+        )
+        pricing_inputs = {
+            'originCost': 980,
+            'originCurrency': 'JPY',
+            'exchangeRate': 170,
+            'taxJapanPercent': 10,
+            'taxVietnamVnd': 12000,
+            'shipInternationalPerKgVnd': 180000,
+            'shipJapanLocalVnd': 15000,
+            'shipVietnamLocalVnd': 30000,
+            'hiddenCostVnd': 5000,
+            'profitMarginPercent': 20,
+            'usdToVndRate': 25000,
+        }
+
+        response = self.client.patch(
+            f'/api/admin/products/{product.id}/',
+            {'pricing_inputs': json.dumps(pricing_inputs)},
+            format='multipart',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['pricing_inputs'], pricing_inputs)
+        product.refresh_from_db()
+        self.assertEqual(product.pricing_inputs, pricing_inputs)
+
+        detail = self.client.get(f'/api/admin/products/{product.id}/')
+        self.assertEqual(detail.status_code, 200)
+        self.assertEqual(detail.data['pricing_inputs'], pricing_inputs)
 
     @override_settings(PUBLIC_API_CACHE_SECONDS=60)
     def test_publishing_draft_refreshes_public_catalog_cache(self):

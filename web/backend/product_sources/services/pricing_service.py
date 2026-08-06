@@ -108,3 +108,63 @@ class ProductPricingService:
                 'usd_vnd_rate': str(usd_vnd_rate),
             },
         )
+
+
+def pricing_inputs_from_result(
+    result: PricingResult,
+    *,
+    weight_kg: Decimal,
+) -> dict:
+    """Translate importer pricing into the admin calculator's persisted inputs."""
+    source_currency = str(result.source_currency or 'JPY').upper()
+    snapshot = result.calculation_snapshot or {}
+    usd_vnd_rate = Decimal(str(snapshot.get('usd_vnd_rate') or '25000'))
+    source_to_vnd_rate = Decimal(
+        str(snapshot.get('source_to_vnd_rate') or '0'),
+    )
+
+    if source_currency not in {'JPY', 'USD'}:
+        source_currency = 'USD'
+        source_to_vnd_rate = usd_vnd_rate
+        origin_cost = (
+            result.source_price_vnd / usd_vnd_rate
+            if usd_vnd_rate > 0
+            else Decimal('0')
+        )
+    else:
+        origin_cost = result.source_price_jpy
+
+    safe_weight = max(Decimal(str(weight_kg or 0)), Decimal('0'))
+    shipping_per_kg = (
+        result.shipping_vnd / safe_weight
+        if safe_weight > 0
+        else Decimal('0')
+    )
+    source_buffer_vnd = max(
+        result.import_cost_vnd - result.source_price_vnd,
+        Decimal('0'),
+    )
+    total_cost_vnd = result.import_cost_vnd + result.shipping_vnd
+    effective_margin = (
+        ((result.selling_price_vnd / total_cost_vnd) - Decimal('1'))
+        * Decimal('100')
+        if total_cost_vnd > 0
+        else Decimal('0')
+    )
+
+    def number(value: Decimal) -> float:
+        return float(value.quantize(Decimal('0.0001'), rounding=ROUND_HALF_UP))
+
+    return {
+        'originCost': number(origin_cost),
+        'originCurrency': source_currency,
+        'exchangeRate': number(source_to_vnd_rate),
+        'taxJapanPercent': 0,
+        'taxVietnamVnd': 0,
+        'shipInternationalPerKgVnd': number(shipping_per_kg),
+        'shipJapanLocalVnd': 0,
+        'shipVietnamLocalVnd': 0,
+        'hiddenCostVnd': number(source_buffer_vnd),
+        'profitMarginPercent': number(effective_margin),
+        'usdToVndRate': number(usd_vnd_rate),
+    }

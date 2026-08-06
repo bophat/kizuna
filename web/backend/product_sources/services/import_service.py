@@ -37,7 +37,11 @@ from product_sources.services.compliance_service import get_allowed_source_hosts
 from product_sources.services.description_service import build_description_draft
 from product_sources.services.image_download_service import ImageDownloadService
 from product_sources.services.normalize_service import normalize_provider_product
-from product_sources.services.pricing_service import ProductPricingService, PricingResult
+from product_sources.services.pricing_service import (
+    ProductPricingService,
+    PricingResult,
+    pricing_inputs_from_result,
+)
 from product_sources.services.product_id_generator import generate_product_id, provider_location
 from shop.models import Category, Product, ProductStatus
 
@@ -243,6 +247,10 @@ class SourceImportService:
                     cost_price_vnd=(
                         prepared.pricing.import_cost_vnd
                         + prepared.pricing.shipping_vnd
+                    ),
+                    pricing_inputs=pricing_inputs_from_result(
+                        prepared.pricing,
+                        weight_kg=Decimal(preview.product_payload.weight),
                     ),
                     currency='USD',
                     category=category,

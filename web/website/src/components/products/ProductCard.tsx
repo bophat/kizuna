@@ -60,7 +60,8 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
           src={product.image}
           alt={product.name}
           preset="card"
-          className="w-full h-full gpu-transform transition-transform duration-500 ease-out group-hover:scale-[1.03]"
+          fit="contain"
+          className="w-full h-full gpu-transform"
         />
         
         {/* Badges */}

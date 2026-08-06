@@ -36,6 +36,11 @@ class Product(models.Model):
         blank=True,
         help_text='Landed unit cost in VND, used for gross profit reporting.',
     )
+    pricing_inputs = models.JSONField(
+        default=dict,
+        blank=True,
+        help_text='Saved admin pricing-calculator inputs for subsequent edits.',
+    )
     currency = models.CharField(max_length=10, default='USD')
     status = models.CharField(
         max_length=20,

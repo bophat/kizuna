@@ -183,7 +183,7 @@ export function ProductDetail() {
           
           {/* Column 1: Image Gallery */}
           <div className="flex flex-col gap-4">
-            <div className="aspect-square bg-surface-variant/20 rounded-2xl overflow-hidden border border-surface-variant relative group">
+            <div className="aspect-square bg-white rounded-2xl overflow-hidden border border-surface-variant relative group">
               <motion.div
                 key={selectedImage}
                 initial={{ opacity: 0 }}
@@ -195,6 +195,7 @@ export function ProductDetail() {
                   src={selectedImage}
                   alt={product.name}
                   preset="detail"
+                  fit="contain"
                   priority
                   className="w-full h-full gpu-transform"
                 />
@@ -241,7 +242,7 @@ export function ProductDetail() {
                     key={idx}
                     onClick={() => setSelectedImage(img)}
                     className={cn(
-                      "aspect-square rounded-lg overflow-hidden border-2 transition-all",
+                      "aspect-square rounded-lg overflow-hidden border-2 bg-white transition-all",
                       selectedImage === img ? "border-primary" : "border-transparent hover:border-surface-variant"
                     )}
                   >
@@ -249,6 +250,7 @@ export function ProductDetail() {
                       src={img}
                       alt={`${product.name} ${idx + 1}`}
                       preset="thumb"
+                      fit="contain"
                       className="w-full h-full"
                     />
                   </button>

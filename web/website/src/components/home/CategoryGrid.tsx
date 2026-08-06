@@ -84,6 +84,7 @@ export function CategoryGrid() {
               src={getCategoryImage(cat)}
               alt={cat.name}
               preset="card"
+              fit="cover"
               className="h-full w-full transition-transform duration-500 ease-out group-hover:scale-[1.03]"
             />
             <div className="absolute inset-0 bg-black/10 group-hover:bg-black/20 transition-colors" />

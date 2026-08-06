@@ -33,7 +33,11 @@ from product_sources.schemas.import_result import (
 from product_sources.schemas.manual_import import ManualBulkRequest, ManualProductInput
 from product_sources.services.audit_service import AuditService
 from product_sources.services.image_download_service import ImageDownloadService
-from product_sources.services.pricing_service import ProductPricingService, PricingResult
+from product_sources.services.pricing_service import (
+    ProductPricingService,
+    PricingResult,
+    pricing_inputs_from_result,
+)
 from shop.models import Category, Product, ProductStatus
 
 
@@ -226,6 +230,10 @@ class ManualImportService:
                     cost_price_vnd=(
                         prepared.pricing.import_cost_vnd
                         + prepared.pricing.shipping_vnd
+                    ),
+                    pricing_inputs=pricing_inputs_from_result(
+                        prepared.pricing,
+                        weight_kg=Decimal(preview.product_payload.weight),
                     ),
                     currency='USD',
                     status=ProductStatus.DRAFT,

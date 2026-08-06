@@ -14,6 +14,7 @@ type ProductImageProps = {
   preset?: ImageWidthPreset;
   width?: number;
   className?: string;
+  fit?: 'contain' | 'cover';
   /** Ảnh LCP (hero / gallery chính) — không lazy */
   priority?: boolean;
   sizes?: string;
@@ -25,6 +26,7 @@ export function ProductImage({
   preset = 'card',
   width,
   className,
+  fit = 'contain',
   priority = false,
   sizes,
 }: ProductImageProps) {
@@ -69,7 +71,10 @@ export function ProductImage({
       decoding="async"
       fetchPriority={priority ? 'high' : 'auto'}
       referrerPolicy="no-referrer"
-      className={cn('object-cover', className)}
+      className={cn(
+        fit === 'contain' ? 'object-contain object-center' : 'object-cover',
+        className,
+      )}
     />
   );
 }
