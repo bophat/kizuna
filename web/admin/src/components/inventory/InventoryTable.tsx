@@ -1,4 +1,4 @@
-import { Package, Search, Edit, Trash2 } from 'lucide-react';
+import { Package, Search, Edit, Trash2, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
@@ -9,9 +9,17 @@ interface InventoryTableProps {
   products: any[];
   onEdit: (product: any) => void;
   onDelete: (id: string) => void;
+  onStatusChange: (product: any, nextStatus: string) => void;
+  updatingStatusId: string | null;
 }
 
-export function InventoryTable({ products, onEdit, onDelete }: InventoryTableProps) {
+export function InventoryTable({
+  products,
+  onEdit,
+  onDelete,
+  onStatusChange,
+  updatingStatusId,
+}: InventoryTableProps) {
   const { t } = useTranslation();
 
   if (products.length === 0) {
@@ -68,6 +76,20 @@ export function InventoryTable({ products, onEdit, onDelete }: InventoryTablePro
                 <p className="text-xs text-brand-ink/40 font-medium tracking-wide">
                   {product.brand || t('inventory.table.unknown_artisan')}
                 </p>
+                <span
+                  className={cn(
+                    'inline-flex rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider',
+                    product.status === 'published'
+                      ? 'bg-emerald-100 text-emerald-700'
+                      : product.status === 'suspended'
+                        ? 'bg-red-100 text-red-700'
+                        : product.status === 'review'
+                          ? 'bg-blue-100 text-blue-700'
+                          : 'bg-amber-100 text-amber-700',
+                  )}
+                >
+                  {t(`inventory.status.${product.status || 'draft'}`)}
+                </span>
               </div>
             </div>
           </td>
@@ -107,7 +129,31 @@ export function InventoryTable({ products, onEdit, onDelete }: InventoryTablePro
             </div>
           </td>
           <td className="px-8 py-6 text-right">
-            <div className="flex justify-end gap-3 opacity-0 group-hover:opacity-100 transition-all duration-300 translate-x-2 group-hover:translate-x-0">
+            <div className="flex justify-end gap-3 transition-all duration-300">
+              <button
+                onClick={() => onStatusChange(
+                  product,
+                  product.status === 'published' ? 'suspended' : 'published',
+                )}
+                disabled={updatingStatusId === product.id}
+                className={cn(
+                  'p-2.5 border rounded-sm transition-all shadow-sm hover:shadow-md disabled:cursor-wait disabled:opacity-50',
+                  product.status === 'published'
+                    ? 'bg-white border-brand-clay text-amber-700 hover:bg-amber-600 hover:text-white'
+                    : 'bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-600 hover:text-white',
+                )}
+                title={product.status === 'published'
+                  ? t('inventory.table.suspend')
+                  : t('inventory.table.publish')}
+              >
+                {updatingStatusId === product.id ? (
+                  <Loader2 size={16} className="animate-spin" />
+                ) : product.status === 'published' ? (
+                  <EyeOff size={16} />
+                ) : (
+                  <Eye size={16} />
+                )}
+              </button>
               <button
                 onClick={() => onEdit(product)}
                 className="p-2.5 bg-white border border-brand-clay text-brand-ink hover:bg-brand-ink hover:text-white rounded-sm transition-all shadow-sm hover:shadow-md"

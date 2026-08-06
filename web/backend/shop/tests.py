@@ -1,6 +1,7 @@
 from unittest.mock import patch
 from datetime import timedelta
 from decimal import Decimal
+from io import StringIO
 import base64
 import hashlib
 import hmac
@@ -11,6 +12,7 @@ from urllib.parse import parse_qs, urlparse
 from django.contrib.auth.models import User
 from django.core.cache import cache
 from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.management import call_command
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -41,6 +43,59 @@ from .affiliates import refresh_available_commissions, sync_order_commission
 ONE_PIXEL_PNG = base64.b64decode(
     'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mNk+A8AAQUBAScY42YAAAAASUVORK5CYII='
 )
+
+
+class SeedDataCommandTests(TestCase):
+    def test_seed_is_idempotent_and_clear_only_removes_generated_rows(self):
+        output = StringIO()
+        call_command(
+            'seed_data',
+            products=1000,
+            coupons=50,
+            seed=123,
+            stdout=output,
+        )
+
+        self.assertEqual(Product.objects.filter(id__startswith='SEED-P').count(), 1000)
+        self.assertEqual(Category.objects.filter(slug__startswith='seed-').count(), 20)
+        self.assertEqual(Coupon.objects.filter(code__startswith='SEED-').count(), 50)
+        product = Product.objects.get(pk='SEED-P000001')
+        self.assertEqual(product.status, 'published')
+        self.assertTrue(product.name_en)
+        self.assertTrue(product.name_ja)
+        self.assertTrue(product.name_vi)
+        self.assertIsNotNone(product.cost_price_vnd)
+
+        call_command(
+            'seed_data',
+            products=1000,
+            coupons=50,
+            seed=123,
+            stdout=StringIO(),
+        )
+        self.assertEqual(Product.objects.filter(id__startswith='SEED-P').count(), 1000)
+        self.assertEqual(Category.objects.filter(slug__startswith='seed-').count(), 20)
+        self.assertEqual(Coupon.objects.filter(code__startswith='SEED-').count(), 50)
+
+        call_command('seed_data', clear_only=True, stdout=StringIO())
+        self.assertFalse(Product.objects.filter(id__startswith='SEED-P').exists())
+        self.assertFalse(Category.objects.filter(slug__startswith='seed-').exists())
+        self.assertFalse(Coupon.objects.filter(code__startswith='SEED-').exists())
+
+    def test_dry_run_does_not_write_data(self):
+        output = StringIO()
+        call_command(
+            'seed_data',
+            products=1000,
+            coupons=50,
+            dry_run=True,
+            stdout=output,
+        )
+
+        self.assertIn('products=1000', output.getvalue())
+        self.assertFalse(Product.objects.filter(id__startswith='SEED-P').exists())
+        self.assertFalse(Category.objects.filter(slug__startswith='seed-').exists())
+        self.assertFalse(Coupon.objects.filter(code__startswith='SEED-').exists())
 
 
 class PublicCatalogLocalizationTests(TestCase):
@@ -147,7 +202,9 @@ class PublicCatalogLocalizationTests(TestCase):
         first = self.client.get('/api/shop/products/home/')
         self.assertEqual(first.status_code, 200)
 
-        with self.assertNumQueries(0):
+        # One lightweight query checks the cross-worker product cache version;
+        # the cached payload itself must not query or serialize products again.
+        with self.assertNumQueries(1):
             second = self.client.get('/api/shop/products/home/')
 
         self.assertEqual(second.status_code, 200)

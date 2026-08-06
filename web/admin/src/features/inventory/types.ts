@@ -6,6 +6,7 @@ export interface ProductFormData {
   name_vi: string;
   price: string;
   cost_price_vnd: string;
+  status: 'draft' | 'review' | 'published' | 'suspended';
   category: string;
   stock: string;
   description: string;

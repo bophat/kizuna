@@ -1,6 +1,7 @@
 from django.contrib.auth.models import User
 from decimal import Decimal
 
+from django.core.cache import cache
 from django.test import TestCase, override_settings
 from django.utils import timezone
 from rest_framework.test import APIClient
@@ -18,6 +19,7 @@ from shop.models import (
     PaymentMethodConfig,
     PaymentTransaction,
     Product,
+    ProductStatus,
     StorePage,
     UserProfile,
 )
@@ -149,6 +151,36 @@ class AdminDashboardProfitTests(TestCase):
         self.assertEqual(response.data['cost_price_vnd'], '200000')
         product.refresh_from_db()
         self.assertEqual(product.cost_price_vnd, Decimal('200000'))
+
+    @override_settings(PUBLIC_API_CACHE_SECONDS=60)
+    def test_publishing_draft_refreshes_public_catalog_cache(self):
+        cache.clear()
+        product = Product.objects.create(
+            id='AMZ-PUBLISH-TEST',
+            name='Imported draft product',
+            description='Awaiting administrator review',
+            price=Decimal('10.00'),
+            cost_price_vnd=Decimal('150000'),
+            stock=1,
+            status=ProductStatus.DRAFT,
+        )
+
+        before_publish = self.client.get('/api/shop/products/')
+        self.assertEqual(before_publish.status_code, 200)
+        self.assertNotIn(product.id, {item['id'] for item in before_publish.data})
+
+        update = self.client.patch(
+            f'/api/admin/products/{product.id}/',
+            {'status': ProductStatus.PUBLISHED},
+            format='json',
+        )
+        self.assertEqual(update.status_code, 200)
+        self.assertEqual(update.data['status'], ProductStatus.PUBLISHED)
+
+        after_publish = self.client.get('/api/shop/products/')
+        self.assertEqual(after_publish.status_code, 200)
+        self.assertIn(product.id, {item['id'] for item in after_publish.data})
+        cache.clear()
 
 
 class AdminStoreContentTests(TestCase):

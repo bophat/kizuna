@@ -21,6 +21,7 @@ export default function InventoryPage() {
   const [csvImportOpen, setCsvImportOpen] = useState(false);
   const [manualImportOpen, setManualImportOpen] = useState(false);
   const [sourceImportOpen, setSourceImportOpen] = useState(false);
+  const [updatingStatusId, setUpdatingStatusId] = useState<string | null>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -67,6 +68,30 @@ export default function InventoryPage() {
       if (response.ok) fetchData();
     } catch (err) {
       console.error('Delete all error:', err);
+    }
+  };
+
+  const handleStatusChange = async (product: any, nextStatus: string) => {
+    if (
+      nextStatus === 'published'
+      && !window.confirm(t('inventory.confirm_publish', { name: product.name }))
+    ) return;
+
+    setUpdatingStatusId(product.id);
+    try {
+      const response = await apiFetch(`/products/${product.id}/`, {
+        method: 'PATCH',
+        body: JSON.stringify({ status: nextStatus }),
+      });
+      if (!response.ok) {
+        throw new Error(`Status update failed with ${response.status}`);
+      }
+      await fetchData();
+    } catch (err) {
+      console.error('Product status update error:', err);
+      alert(t('inventory.errors.status_update_failed'));
+    } finally {
+      setUpdatingStatusId(null);
     }
   };
 
@@ -209,6 +234,8 @@ export default function InventoryPage() {
                   products={pagination.paginatedItems}
                   onEdit={productModal.handleOpenModal}
                   onDelete={handleDelete}
+                  onStatusChange={handleStatusChange}
+                  updatingStatusId={updatingStatusId}
                 />
               </tbody>
             </table>

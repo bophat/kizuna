@@ -249,6 +249,7 @@
     "search_placeholder": "Search collection by name, ID, or artisan...",
     "loading": "Cataloging collection...",
     "confirm_delete": "Are you sure you want to decommission this artifact?",
+    "confirm_publish": "Publish “{{name}}” to the storefront?",
     "filter_by": "Filter by",
     "all_categories": "All categories",
     "errors": {
@@ -256,7 +257,8 @@
       "fetch_error": "An error occurred while fetching data.",
       "cost_price_required": "Enter a landed unit cost greater than 0 VND.",
       "cost_price_not_saved": "The server did not save the landed unit cost. Please deploy the latest backend and try again.",
-      "save_failed": "Unable to save this product. Please check your connection and try again."
+      "save_failed": "Unable to save this product. Please check your connection and try again.",
+      "status_update_failed": "Unable to update the product status. Please try again."
     },
     "table": {
       "artifact": "Artifact Details",
@@ -270,7 +272,15 @@
       "depleted": "DEPLETED",
       "empty": "No artifacts match your search...",
       "refine": "Refine Registry",
-      "decommission": "Decommission"
+      "decommission": "Decommission",
+      "publish": "Publish to storefront",
+      "suspend": "Hide from storefront"
+    },
+    "status": {
+      "draft": "Draft",
+      "review": "Needs review",
+      "published": "Published",
+      "suspended": "Hidden"
     },
     "modal": {
       "new_title": "New Taxonomy Entry",
@@ -278,6 +288,8 @@
       "id_label": "Registry Reference ID",
       "category_label": "Classification",
       "category_placeholder": "Select Classification",
+      "status_label": "Storefront status",
+      "status_help": "Only published products are visible and purchasable on the storefront.",
       "name_label": "Artifact Nomenclature",
       "languages": { "default": "Original", "en": "English", "ja": "Japanese", "vi": "Vietnamese" },
       "attributes_label": "Collection Attributes",

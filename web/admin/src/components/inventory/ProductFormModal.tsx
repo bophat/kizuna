@@ -51,16 +51,17 @@ export function ProductFormModal({
   onDragLeave,
   onDrop,
 }: ProductFormModalProps) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
   const { format: formatPrice, formatUsd } = useFormatPrice();
-  const [contentLanguage, setContentLanguage] = React.useState<'default' | 'en' | 'ja' | 'vi'>(() => {
-    const language = i18n.language.split('-')[0];
-    return language === 'en' || language === 'ja' || language === 'vi' ? language : 'default';
-  });
+  const [contentLanguage, setContentLanguage] = React.useState<'default' | 'en' | 'ja' | 'vi'>('default');
   const nameField = contentLanguage === 'default' ? 'name' : `name_${contentLanguage}` as keyof ProductFormData;
   const descriptionField = contentLanguage === 'default'
     ? 'description'
     : `description_${contentLanguage}` as keyof ProductFormData;
+
+  React.useEffect(() => {
+    if (isOpen) setContentLanguage('default');
+  }, [isOpen, editingProduct?.id]);
 
   if (!isOpen) return null;
 
@@ -157,6 +158,28 @@ export function ProductFormModal({
                           ))}
                         </select>
                       </div>
+                    </div>
+                    <div className="space-y-2">
+                      <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
+                        {t('inventory.modal.status_label')}
+                      </label>
+                      <select
+                        className="w-full px-4 py-3 bg-white border border-brand-clay rounded-sm text-sm font-medium focus:outline-none focus:border-brand-red transition-all appearance-none cursor-pointer"
+                        value={formData.status}
+                        onChange={(e) => setFormData({
+                          ...formData,
+                          status: e.target.value as ProductFormData['status'],
+                        })}
+                      >
+                        {(['draft', 'review', 'published', 'suspended'] as const).map((status) => (
+                          <option key={status} value={status}>
+                            {t(`inventory.status.${status}`)}
+                          </option>
+                        ))}
+                      </select>
+                      <p className="text-[10px] leading-relaxed text-brand-ink/40">
+                        {t('inventory.modal.status_help')}
+                      </p>
                     </div>
                     <div className="space-y-2">
                       <div className="flex flex-wrap gap-2">

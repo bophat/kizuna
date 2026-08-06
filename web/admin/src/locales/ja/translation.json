@@ -249,6 +249,7 @@
     "search_placeholder": "名前、ID、または職人でコレクションを検索...",
     "loading": "コレクションをカタログ化中...",
     "confirm_delete": "このアーティファクトを廃止してもよろしいですか？",
+    "confirm_publish": "「{{name}}」をストアに公開しますか？",
     "filter_by": "絞り込み",
     "all_categories": "すべてのカテゴリー",
     "errors": {
@@ -256,7 +257,8 @@
       "fetch_error": "データの取得中にエラーが発生しました。",
       "cost_price_required": "0 VNDより大きい商品1点あたり原価を入力してください。",
       "cost_price_not_saved": "サーバーに商品原価が保存されませんでした。最新のバックエンドをデプロイして再試行してください。",
-      "save_failed": "商品を保存できませんでした。接続を確認して再試行してください。"
+      "save_failed": "商品を保存できませんでした。接続を確認して再試行してください。",
+      "status_update_failed": "商品の公開状態を更新できませんでした。もう一度お試しください。"
     },
     "table": {
       "artifact": "アーティファクト詳細",
@@ -270,7 +272,15 @@
       "depleted": "在庫切れ",
       "empty": "検索条件に一致するアーティファクトが見つかりません...",
       "refine": "登録を修正",
-      "decommission": "廃止"
+      "decommission": "廃止",
+      "publish": "ストアに公開",
+      "suspend": "ストアで非表示"
+    },
+    "status": {
+      "draft": "下書き",
+      "review": "要確認",
+      "published": "公開中",
+      "suspended": "非表示"
     },
     "modal": {
       "new_title": "新規分類エントリ",
@@ -278,6 +288,8 @@
       "id_label": "登録リファレンスID",
       "category_label": "分類",
       "category_placeholder": "分類を選択",
+      "status_label": "ストア公開状態",
+      "status_help": "公開中の商品だけがストアに表示され、購入できます。",
       "name_label": "アーティファクト名称",
       "languages": { "default": "原文", "en": "英語", "ja": "日本語", "vi": "ベトナム語" },
       "attributes_label": "コレクション属性",

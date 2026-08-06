@@ -12,7 +12,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Case, IntegerField, Value, When
+from django.db.models import Case, IntegerField, Max, Value, When
 from .models import (
     AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
     OrderItem, PaymentMethodConfig, UserProfile, Product, ProductStatus,
@@ -55,6 +55,13 @@ def _cache_set(key, value):
     if PUBLIC_API_CACHE_SECONDS > 0:
         cache.set(key, value, PUBLIC_API_CACHE_SECONDS)
 
+
+def _product_cache_version():
+    """Return a database-backed version shared by every Cloud Run worker."""
+    latest_update = Product.objects.aggregate(latest=Max('updated_at'))['latest']
+    return latest_update.isoformat() if latest_update else 'empty'
+
+
 class ExchangeRatesView(APIView):
     permission_classes = [AllowAny]
 
@@ -73,7 +80,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = PublicProductSerializer
 
     def list(self, request, *args, **kwargs):
-        cache_key = f'shop:products:list:{_language_code(request)}:{request.get_full_path()}'
+        cache_key = (
+            f'shop:products:list:{_product_cache_version()}:'
+            f'{_language_code(request)}:{request.get_full_path()}'
+        )
         payload = _cache_get(cache_key)
         if payload is None:
             queryset = self.filter_queryset(self.get_queryset())
@@ -82,7 +92,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         return Response(payload)
 
     def retrieve(self, request, *args, **kwargs):
-        cache_key = f'shop:products:detail:{_language_code(request)}:{kwargs.get("pk", "")}'
+        cache_key = (
+            f'shop:products:detail:{_product_cache_version()}:'
+            f'{_language_code(request)}:{kwargs.get("pk", "")}'
+        )
         payload = _cache_get(cache_key)
         if payload is None:
             payload = self.get_serializer(self.get_object()).data
@@ -91,7 +104,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=False, methods=['get'])
     def home(self, request):
-        cache_key = f'shop:products:home:{_language_code(request)}'
+        cache_key = (
+            f'shop:products:home:{_product_cache_version()}:'
+            f'{_language_code(request)}'
+        )
         payload = _cache_get(cache_key)
         if payload is None:
             queryset = self.get_queryset()
@@ -122,7 +138,10 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
 
     @action(detail=True, methods=['get'])
     def related(self, request, pk=None):
-        cache_key = f'shop:products:related:{_language_code(request)}:{pk}'
+        cache_key = (
+            f'shop:products:related:{_product_cache_version()}:'
+            f'{_language_code(request)}:{pk}'
+        )
         payload = _cache_get(cache_key)
         if payload is None:
             product = self.get_object()

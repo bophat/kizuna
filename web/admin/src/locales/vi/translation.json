@@ -249,6 +249,7 @@
     "search_placeholder": "Tìm kiếm bộ sưu tập theo tên, ID hoặc nghệ nhân...",
     "loading": "Đang lập danh mục bộ sưu tập...",
     "confirm_delete": "Bạn có chắc chắn muốn gỡ bỏ hiện vật này không?",
+    "confirm_publish": "Xuất bản “{{name}}” lên website?",
     "filter_by": "Lọc theo",
     "all_categories": "Tất cả danh mục",
     "errors": {
@@ -256,7 +257,8 @@
       "fetch_error": "Đã xảy ra lỗi khi lấy dữ liệu.",
       "cost_price_required": "Hãy nhập giá vốn một sản phẩm lớn hơn 0 VND.",
       "cost_price_not_saved": "Máy chủ chưa lưu giá vốn. Hãy deploy backend mới nhất rồi thử lại.",
-      "save_failed": "Không thể lưu sản phẩm. Hãy kiểm tra kết nối rồi thử lại."
+      "save_failed": "Không thể lưu sản phẩm. Hãy kiểm tra kết nối rồi thử lại.",
+      "status_update_failed": "Không thể cập nhật trạng thái sản phẩm. Vui lòng thử lại."
     },
     "table": {
       "artifact": "Chi tiết Hiện vật",
@@ -270,7 +272,15 @@
       "depleted": "HẾT HÀNG",
       "empty": "Không có hiện vật nào khớp với tìm kiếm của bạn...",
       "refine": "Chỉnh sửa đăng ký",
-      "decommission": "Gỡ bỏ"
+      "decommission": "Gỡ bỏ",
+      "publish": "Xuất bản lên website",
+      "suspend": "Ẩn khỏi website"
+    },
+    "status": {
+      "draft": "Bản nháp",
+      "review": "Cần kiểm tra",
+      "published": "Đã xuất bản",
+      "suspended": "Đang ẩn"
     },
     "modal": {
       "new_title": "Mục phân loại mới",
@@ -278,6 +288,8 @@
       "id_label": "Mã tham chiếu đăng ký",
       "category_label": "Phân loại",
       "category_placeholder": "Chọn phân loại",
+      "status_label": "Trạng thái trên website",
+      "status_help": "Chỉ sản phẩm đã xuất bản mới hiển thị và có thể mua trên website.",
       "name_label": "Tên gọi hiện vật",
       "languages": { "default": "Nguyên bản", "en": "Tiếng Anh", "ja": "Tiếng Nhật", "vi": "Tiếng Việt" },
       "attributes_label": "Thuộc tính bộ sưu tập",
