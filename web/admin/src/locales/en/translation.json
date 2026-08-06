@@ -312,10 +312,16 @@
         "identity": "Identity",
         "logistics": "Logistics",
         "imagery": "Imagery",
-        "narrative": "Narrative"
+        "narrative": "Narrative",
+        "preview": "Preview"
       },
       "next": "Next",
       "back": "Back",
+      "save_draft": "Save draft",
+      "preview_button": "Preview",
+      "back_to_form": "Back to form",
+      "create_button": "Create product",
+      "update_button": "Update product",
       "submit": "Complete Registry",
       "cancel": "Cancel",
       "finalize": "Finalize Registry",
@@ -327,7 +333,17 @@
       "description_title": "Historical & Technical Narrative",
       "description_help": "This narrative provides essential context for the AI Sales Concierge.",
       "description_placeholder": "Detail the craftsmanship, material choices, historical lineage, and cultural significance of this piece...",
-      "weight_label": "Weight (kg)"
+      "weight_label": "Weight (kg)",
+      "preview_title": "Storefront preview",
+      "preview_help": "Review the current form data before saving. This preview does not publish or change the product.",
+      "preview_card": "Product card",
+      "preview_detail": "Product detail",
+      "preview_unnamed": "Untitled product",
+      "preview_no_description": "No product description has been entered.",
+      "preview_uncategorized": "Uncategorized",
+      "preview_stock": "{{count}} in stock",
+      "preview_status_warning": "This product is currently {{status}} and will not appear on the storefront.",
+      "preview_storefront_action": "Storefront action preview"
     },
     "csv_import": {
       "button": "Import CSV",

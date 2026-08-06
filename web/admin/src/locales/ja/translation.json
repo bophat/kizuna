@@ -312,10 +312,16 @@
         "identity": "アイデンティティ",
         "logistics": "ロジスティクス",
         "imagery": "画像",
-        "narrative": "ナラティブ"
+        "narrative": "ナラティブ",
+        "preview": "プレビュー"
       },
       "next": "次へ",
       "back": "戻る",
+      "save_draft": "下書き保存",
+      "preview_button": "プレビュー",
+      "back_to_form": "フォームに戻る",
+      "create_button": "商品を作成",
+      "update_button": "商品を更新",
       "submit": "登録を完了",
       "cancel": "キャンセル",
       "finalize": "登録を確定",
@@ -327,7 +333,17 @@
       "description_title": "歴史的・技術的ナラティブ",
       "description_help": "このナラティブは、AIセールスコンシェルジュに不可欠なコンテキストを提供します。",
       "description_placeholder": "職人技、素材の選択、歴史的な系統、およびこの作品の文化的意義を詳細に記述してください...",
-      "weight_label": "重量 (kg)"
+      "weight_label": "重量 (kg)",
+      "preview_title": "ストア表示プレビュー",
+      "preview_help": "保存前に現在の入力内容を確認します。プレビューでは商品の公開や変更は行われません。",
+      "preview_card": "商品カード",
+      "preview_detail": "商品詳細",
+      "preview_unnamed": "商品名未入力",
+      "preview_no_description": "商品説明が入力されていません。",
+      "preview_uncategorized": "未分類",
+      "preview_stock": "在庫 {{count}} 点",
+      "preview_status_warning": "この商品は現在「{{status}}」のため、ストアには表示されません。",
+      "preview_storefront_action": "ストア操作のプレビュー"
     },
     "csv_import": {
       "button": "CSV取込",

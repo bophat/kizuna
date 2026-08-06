@@ -1,5 +1,5 @@
 import React from 'react';
-import { Package, Filter, Image as ImageIcon, Edit, X, Upload } from 'lucide-react';
+import { Package, Filter, Image as ImageIcon, Edit, Eye, X, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useTranslation } from 'react-i18next';
 import { cn } from '../../lib/utils';
@@ -8,11 +8,10 @@ import type { ProductFormData } from '../../features/inventory/types';
 import { PRODUCT_ATTRIBUTE_FLAGS } from '../../features/inventory/constants';
 import { PricingCalculator } from './PricingCalculator';
 import { useFormatPrice } from '../../hooks/useFormatPrice';
+import { ProductStorefrontPreview } from './ProductStorefrontPreview';
 
 interface ProductFormModalProps {
   isOpen: boolean;
-  currentStep: number;
-  setCurrentStep: React.Dispatch<React.SetStateAction<number>>;
   editingProduct: any;
   formData: ProductFormData;
   setFormData: React.Dispatch<React.SetStateAction<ProductFormData>>;
@@ -20,24 +19,15 @@ interface ProductFormModalProps {
   previewUrl: string | null;
   isDragging: boolean;
   onClose: () => void;
-  onSubmit: (e?: React.FormEvent) => void;
+  onSubmit: (statusOverride?: ProductFormData['status']) => void;
   onImageChange: (file: File) => void;
   onDragOver: (e: React.DragEvent) => void;
   onDragLeave: () => void;
   onDrop: (e: React.DragEvent) => void;
 }
 
-const STEPS = [
-  { number: 1, icon: Package, key: 'inventory.modal.steps.identity' },
-  { number: 2, icon: Filter, key: 'inventory.modal.steps.logistics' },
-  { number: 3, icon: ImageIcon, key: 'inventory.modal.steps.imagery' },
-  { number: 4, icon: Edit, key: 'inventory.modal.steps.narrative' },
-];
-
 export function ProductFormModal({
   isOpen,
-  currentStep,
-  setCurrentStep,
   editingProduct,
   formData,
   setFormData,
@@ -54,13 +44,17 @@ export function ProductFormModal({
   const { t } = useTranslation();
   const { format: formatPrice, formatUsd } = useFormatPrice();
   const [contentLanguage, setContentLanguage] = React.useState<'default' | 'en' | 'ja' | 'vi'>('default');
+  const [showPreview, setShowPreview] = React.useState(false);
   const nameField = contentLanguage === 'default' ? 'name' : `name_${contentLanguage}` as keyof ProductFormData;
   const descriptionField = contentLanguage === 'default'
     ? 'description'
     : `description_${contentLanguage}` as keyof ProductFormData;
 
   React.useEffect(() => {
-    if (isOpen) setContentLanguage('default');
+    if (isOpen) {
+      setContentLanguage('default');
+      setShowPreview(false);
+    }
   }, [isOpen, editingProduct?.id]);
 
   if (!isOpen) return null;
@@ -81,33 +75,18 @@ export function ProductFormModal({
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
           className={cn(
             'relative w-full bg-white rounded-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]',
-            currentStep === 2 ? 'max-w-5xl' : 'max-w-4xl'
+            'max-w-7xl'
           )}
         >
           <div className="p-6 border-b border-brand-clay flex justify-between items-center bg-brand-paper/50">
-            <div className="flex items-center gap-6">
+            <div className="flex items-center gap-3">
               <h2 className="text-2xl font-serif font-bold">
-                {editingProduct ? t('inventory.modal.update_title') : t('inventory.modal.new_title')}
+                {showPreview
+                  ? t('inventory.modal.preview_title')
+                  : editingProduct
+                    ? t('inventory.modal.update_title')
+                    : t('inventory.modal.new_title')}
               </h2>
-              <div className="flex items-center gap-2">
-                {STEPS.map((step) => (
-                  <div key={step.number} className="flex items-center gap-2">
-                    <div
-                      className={cn(
-                        'w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-bold transition-all',
-                        currentStep === step.number
-                          ? 'bg-brand-red text-white scale-110 shadow-lg shadow-brand-red/20'
-                          : currentStep > step.number
-                            ? 'bg-brand-ink text-white'
-                            : 'bg-brand-clay/30 text-brand-ink/30'
-                      )}
-                    >
-                      {step.number}
-                    </div>
-                    {step.number < 4 && <div className="w-4 h-[1px] bg-brand-clay" />}
-                  </div>
-                ))}
-              </div>
             </div>
             <button onClick={onClose} className="text-brand-ink/40 hover:text-brand-red transition-colors">
               <X size={24} />
@@ -115,17 +94,27 @@ export function ProductFormModal({
           </div>
 
           <div className="flex-1 overflow-y-auto bg-brand-paper/5">
-            <form onSubmit={onSubmit} className="p-8">
-              <AnimatePresence mode="wait">
-                {currentStep === 1 && (
+            <form
+              onSubmit={(event) => {
+                event.preventDefault();
+                onSubmit();
+              }}
+              className="space-y-8 p-5 sm:p-8"
+            >
+              <AnimatePresence>
+                {!showPreview && (
                   <motion.div
                     key="step1"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -20, opacity: 0 }}
-                    className="space-y-8"
+                    className="space-y-8 rounded-lg border border-brand-clay bg-white p-5 sm:p-6"
                   >
-                    <div className="grid grid-cols-2 gap-8">
+                    <div className="flex items-center gap-3 border-b border-brand-clay pb-4">
+                      <Package size={18} className="text-brand-red" />
+                      <h3 className="font-serif text-lg font-bold">{t('inventory.modal.steps.identity')}</h3>
+                    </div>
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                           {t('inventory.modal.id_label')}
@@ -213,7 +202,7 @@ export function ProductFormModal({
                       <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                         {t('inventory.modal.attributes_label')}
                       </label>
-                      <div className="grid grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 sm:gap-4">
                         {PRODUCT_ATTRIBUTE_FLAGS.map((flag) => (
                           <label
                             key={flag.id}
@@ -244,14 +233,18 @@ export function ProductFormModal({
                   </motion.div>
                 )}
 
-                {currentStep === 2 && (
+                {!showPreview && (
                   <motion.div
                     key="step2"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -20, opacity: 0 }}
-                    className="space-y-6"
+                    className="space-y-6 rounded-lg border border-brand-clay bg-white p-5 sm:p-6"
                   >
+                    <div className="flex items-center gap-3 border-b border-brand-clay pb-4">
+                      <Filter size={18} className="text-brand-red" />
+                      <h3 className="font-serif text-lg font-bold">{t('inventory.modal.steps.logistics')}</h3>
+                    </div>
                     <PricingCalculator
                       weight={parseFloat(formData.weight) || 0}
                       initialInputs={formData.pricing_inputs}
@@ -332,7 +325,7 @@ export function ProductFormModal({
                         />
                       </div>
                     </div>
-                    <div className="grid grid-cols-2 gap-8">
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 md:gap-8">
                       <div className="space-y-2">
                         <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                           {t('inventory.modal.brand_label')}
@@ -374,14 +367,18 @@ export function ProductFormModal({
                   </motion.div>
                 )}
 
-                {currentStep === 3 && (
+                {!showPreview && (
                   <motion.div
                     key="step3"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -20, opacity: 0 }}
-                    className="space-y-4"
+                    className="space-y-4 rounded-lg border border-brand-clay bg-white p-5 sm:p-6"
                   >
+                    <div className="flex items-center gap-3 border-b border-brand-clay pb-4">
+                      <ImageIcon size={18} className="text-brand-red" />
+                      <h3 className="font-serif text-lg font-bold">{t('inventory.modal.steps.imagery')}</h3>
+                    </div>
                     <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                       {t('inventory.modal.image_label')}
                     </label>
@@ -439,14 +436,18 @@ export function ProductFormModal({
                   </motion.div>
                 )}
 
-                {currentStep === 4 && (
+                {!showPreview && (
                   <motion.div
                     key="step4"
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     exit={{ x: -20, opacity: 0 }}
-                    className="space-y-6"
+                    className="space-y-6 rounded-lg border border-brand-clay bg-white p-5 sm:p-6"
                   >
+                    <div className="flex items-center gap-3 border-b border-brand-clay pb-4">
+                      <Edit size={18} className="text-brand-red" />
+                      <h3 className="font-serif text-lg font-bold">{t('inventory.modal.steps.narrative')}</h3>
+                    </div>
                     <div className="space-y-2">
                       <label className="text-[10px] uppercase tracking-[0.2em] text-brand-ink/40 font-bold">
                         {t('inventory.modal.description_title')}
@@ -462,46 +463,57 @@ export function ProductFormModal({
                     </div>
                   </motion.div>
                 )}
+
+                {showPreview && (
+                  <motion.div
+                    key="step5"
+                    initial={{ x: 20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -20, opacity: 0 }}
+                  >
+                    <ProductStorefrontPreview
+                      formData={formData}
+                      categories={categories}
+                      previewUrl={previewUrl}
+                      language={contentLanguage}
+                      onLanguageChange={setContentLanguage}
+                    />
+                  </motion.div>
+                )}
               </AnimatePresence>
             </form>
           </div>
 
-          <div className="p-6 bg-brand-paper/50 border-t border-brand-clay flex items-center justify-between">
+          <div className="flex flex-wrap items-center justify-end gap-3 border-t border-brand-clay bg-brand-paper/50 p-4 sm:p-6">
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 text-[10px] font-bold uppercase tracking-widest text-brand-ink/40 hover:text-brand-red transition-colors"
+              className="rounded-sm border border-brand-clay px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-brand-ink/50 transition-colors hover:border-brand-red hover:text-brand-red"
             >
               {t('inventory.modal.cancel')}
             </button>
-            <div className="flex items-center gap-4">
-              {currentStep > 1 && (
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep((prev) => prev - 1)}
-                  className="px-8 py-3 border border-brand-clay rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-white transition-all"
-                >
-                  {t('inventory.modal.prev')}
-                </button>
-              )}
-              {currentStep < 4 ? (
-                <button
-                  type="button"
-                  onClick={() => setCurrentStep((prev) => prev + 1)}
-                  className="px-12 py-3 bg-brand-ink text-white rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-brand-red transition-all shadow-xl hover:shadow-brand-red/20"
-                >
-                  {t('inventory.modal.next')}
-                </button>
-              ) : (
-                <button
-                  type="button"
-                  onClick={() => onSubmit()}
-                  className="px-12 py-3 bg-brand-red text-white rounded-sm text-[10px] font-bold uppercase tracking-widest hover:bg-brand-ink transition-all shadow-xl shadow-brand-red/10"
-                >
-                  {editingProduct ? t('inventory.modal.finalize') : t('inventory.modal.confirm')}
-                </button>
-              )}
-            </div>
+            <button
+              type="button"
+              onClick={() => onSubmit('draft')}
+              className="rounded-sm border border-brand-ink px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-brand-ink transition-colors hover:bg-brand-ink hover:text-white"
+            >
+              {t('inventory.modal.save_draft')}
+            </button>
+            <button
+              type="button"
+              onClick={() => setShowPreview((value) => !value)}
+              className="inline-flex items-center gap-2 rounded-sm bg-brand-ink px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-white transition-colors hover:bg-brand-red"
+            >
+              <Eye size={15} />
+              {showPreview ? t('inventory.modal.back_to_form') : t('inventory.modal.preview_button')}
+            </button>
+            <button
+              type="button"
+              onClick={() => onSubmit()}
+              className="rounded-sm bg-brand-red px-7 py-3 text-[10px] font-bold uppercase tracking-widest text-white shadow-xl shadow-brand-red/10 transition-colors hover:bg-brand-ink"
+            >
+              {editingProduct ? t('inventory.modal.update_button') : t('inventory.modal.create_button')}
+            </button>
           </div>
         </motion.div>
       </div>

@@ -258,8 +258,6 @@ export default function InventoryPage() {
 
       <ProductFormModal
         isOpen={productModal.isModalOpen}
-        currentStep={productModal.currentStep}
-        setCurrentStep={productModal.setCurrentStep}
         editingProduct={productModal.editingProduct}
         formData={productModal.formData}
         setFormData={productModal.setFormData}

@@ -8,7 +8,6 @@ import { createEmptyProductForm, productToFormData } from './constants';
 export function useProductModal(categories: any[], onSuccess: () => void) {
   const { t } = useTranslation();
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentStep, setCurrentStep] = useState(1);
   const [editingProduct, setEditingProduct] = useState<any>(null);
   const [formData, setFormData] = useState<ProductFormData>(createEmptyProductForm());
   const [imageFile, setImageFile] = useState<File | null>(null);
@@ -16,7 +15,6 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
   const [isDragging, setIsDragging] = useState(false);
 
   const handleOpenModal = (product: any = null) => {
-    setCurrentStep(1);
     if (product) {
       setEditingProduct(product);
       setFormData(productToFormData(product));
@@ -51,11 +49,9 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
     if (file?.type.startsWith('image/')) handleImageChange(file);
   };
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    e?.preventDefault();
+  const handleSubmit = async (statusOverride?: ProductFormData['status']) => {
     const normalizedCostPriceVnd = formData.cost_price_vnd.replace(/[^0-9]/g, '');
     if (!normalizedCostPriceVnd || Number(normalizedCostPriceVnd) <= 0) {
-      setCurrentStep(2);
       alert(t('inventory.errors.cost_price_required'));
       return;
     }
@@ -68,7 +64,9 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
       }
       data.append(
         key,
-        key === 'cost_price_vnd'
+        key === 'status' && statusOverride
+          ? statusOverride
+          : key === 'cost_price_vnd'
           ? normalizedCostPriceVnd
           : String(formData[key as keyof ProductFormData]),
       );
@@ -90,7 +88,6 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
           !savedCostPriceVnd
           || Number(savedCostPriceVnd) !== Number(normalizedCostPriceVnd)
         ) {
-          setCurrentStep(2);
           alert(t('inventory.errors.cost_price_not_saved'));
           return;
         }
@@ -109,8 +106,6 @@ export function useProductModal(categories: any[], onSuccess: () => void) {
 
   return {
     isModalOpen,
-    currentStep,
-    setCurrentStep,
     editingProduct,
     formData,
     setFormData,

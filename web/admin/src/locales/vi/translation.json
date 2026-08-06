@@ -312,10 +312,16 @@
         "identity": "Danh tính",
         "logistics": "Hậu cần",
         "imagery": "Hình ảnh",
-        "narrative": "Mô tả"
+        "narrative": "Mô tả",
+        "preview": "Xem trước"
       },
       "next": "Tiếp theo",
       "back": "Quay lại",
+      "save_draft": "Lưu nháp",
+      "preview_button": "Xem trước",
+      "back_to_form": "Quay lại biểu mẫu",
+      "create_button": "Tạo sản phẩm",
+      "update_button": "Cập nhật sản phẩm",
       "submit": "Hoàn tất đăng ký",
       "cancel": "Hủy",
       "finalize": "Hoàn tất đăng ký",
@@ -327,7 +333,17 @@
       "description_title": "Mô tả Lịch sử & Kỹ thuật",
       "description_help": "Mô tả này cung cấp bối cảnh thiết yếu cho Trợ lý Bán hàng AI.",
       "description_placeholder": "Chi tiết về tay nghề, lựa chọn vật liệu, dòng dõi lịch sử và ý nghĩa văn hóa của tác phẩm này...",
-      "weight_label": "Cân nặng (kg)"
+      "weight_label": "Cân nặng (kg)",
+      "preview_title": "Xem trước trên website",
+      "preview_help": "Kiểm tra dữ liệu đang nhập trước khi lưu. Preview không xuất bản hoặc thay đổi sản phẩm.",
+      "preview_card": "Thẻ sản phẩm",
+      "preview_detail": "Chi tiết sản phẩm",
+      "preview_unnamed": "Sản phẩm chưa có tên",
+      "preview_no_description": "Chưa nhập mô tả cho sản phẩm.",
+      "preview_uncategorized": "Chưa phân loại",
+      "preview_stock": "Còn {{count}} sản phẩm",
+      "preview_status_warning": "Sản phẩm đang ở trạng thái {{status}} nên sẽ chưa xuất hiện trên website.",
+      "preview_storefront_action": "Mô phỏng thao tác trên website"
     },
     "csv_import": {
       "button": "Nhập CSV",
