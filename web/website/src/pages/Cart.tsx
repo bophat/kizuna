@@ -70,17 +70,33 @@ export function CartPage() {
     if (!items || items.length === 0) return 0;
     const usdToVnd = rates?.usdToVnd || 25000;
     let shippingVnd = 0;
+    let totalQuantity = 0;
+    let totalHeavyWeight = 0;
+    let hasHeavyItems = false;
     items.forEach(item => {
       const product = productCache[item.product_id];
       const weight = product ? parseFloat(product.weight) || 0.3 : 0.3;
       const qty = item.quantity;
+      totalQuantity += qty;
       if (weight > 0.5) {
-        const roundedWeight = Math.ceil(weight);
-        shippingVnd += 180000 * roundedWeight * qty;
+        hasHeavyItems = true;
+        totalHeavyWeight += weight * qty;
       } else {
         shippingVnd += 50000 * qty;
       }
     });
+    // Heavy items: calculate shipping based on total weight of entire order
+    // Round up to nearest 0.5kg (n.0 or n.5), minimum 0.5kg
+    if (hasHeavyItems) {
+      const doubled = Math.ceil(totalHeavyWeight * 2);
+      let roundedTotalWeight = doubled / 2;
+      if (roundedTotalWeight < 0.5) roundedTotalWeight = 0.5;
+      shippingVnd += 180000 * roundedTotalWeight;
+    }
+    // Bulk discount: 100k VND off shipping when buying 5+ items
+    if (totalQuantity >= 5) {
+      shippingVnd = Math.max(shippingVnd - 100000, 0);
+    }
     return shippingVnd / usdToVnd;
   };
 
