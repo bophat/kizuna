@@ -7,6 +7,14 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 
 WORKDIR /app
 
+# Install system dependencies including fonts for PDF generation
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    fonts-dejavu-core \
+    fonts-liberation2 \
+    fontconfig \
+    && rm -rf /var/lib/apt/lists/* \
+    && fc-cache -fv
+
 COPY requirements.txt .
 RUN pip install -r requirements.txt
 
