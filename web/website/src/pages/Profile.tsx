@@ -4,7 +4,7 @@ import { CircleAlert, Copy, Loader2, Package, Star, LogOut, CheckCircle2, KeyRou
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
-import { apiFetch } from '@/lib/api';
+import { apiFetch, API_BASE_URL } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { ProductImage } from '@/components/products/ProductImage';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -549,7 +549,25 @@ export function ProfilePage() {
                       </div>
                       <div className="mt-6 pt-6 border-t border-surface-variant flex flex-wrap items-center justify-end gap-3">
                         <button
-                          onClick={() => window.open(`/api/shop/orders/${order.id}/invoice/`, '_blank')}
+                          onClick={async () => {
+                            try {
+                              const res = await fetch(`${API_BASE_URL}/shop/orders/${order.id}/invoice/`, {
+                                credentials: 'include',
+                              });
+                              if (!res.ok) throw new Error('Download failed');
+                              const blob = await res.blob();
+                              const url = window.URL.createObjectURL(blob);
+                              const a = document.createElement('a');
+                              a.href = url;
+                              a.download = `invoice_${order.order_code || order.id}.pdf`;
+                              document.body.appendChild(a);
+                              a.click();
+                              a.remove();
+                              window.URL.revokeObjectURL(url);
+                            } catch (e) {
+                              console.error('Invoice download error:', e);
+                            }
+                          }}
                           className="flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-sm hover:bg-primary hover:text-white transition-all label-sm"
                         >
                           <Icons.FileText size={16} />
