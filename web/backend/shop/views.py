@@ -36,6 +36,7 @@ from .payments import (
     expire_pending_payments,
     normalize_payment_method,
 )
+from .invoice import generate_invoice_pdf, generate_invoice_filename
 
 
 PUBLIC_API_CACHE_SECONDS = getattr(settings, 'PUBLIC_API_CACHE_SECONDS', 60)
@@ -192,6 +193,20 @@ class OrderHistoryViewSet(viewsets.ReadOnlyModelViewSet):
             .prefetch_related('items__product__category', 'items__product__source_info')
             .order_by('-created_at')
         )
+
+    @action(detail=True, methods=['get'], url_path='invoice')
+    def download_invoice(self, request, pk=None):
+        """Download PDF invoice for this order."""
+        order = self.get_object()
+        pdf_buffer = generate_invoice_pdf(order, request)
+        filename = generate_invoice_filename(order)
+        response = FileResponse(
+            pdf_buffer,
+            content_type='application/pdf',
+            as_attachment=True,
+            filename=filename,
+        )
+        return response
 
 class CartViewSet(viewsets.ViewSet):
     permission_classes = [IsAuthenticated]

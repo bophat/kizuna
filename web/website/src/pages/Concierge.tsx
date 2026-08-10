@@ -5,6 +5,7 @@ import { MessageItem } from '@/components/concierge/MessageItem';
 import { ChatInput } from '@/components/concierge/ChatInput';
 import { apiFetch, API_BASE_URL } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
+import { useAuth } from '@/context/AuthContext';
 
 interface Message {
   id: string;
@@ -14,6 +15,7 @@ interface Message {
 
 export function ConciergePage() {
   const { t } = useTranslation();
+  const { user, loading: authLoading } = useAuth();
   const welcomeMessage = t('concierge.welcome');
   const waitingForAdmin = t('concierge.waiting_for_admin');
   const [messages, setMessages] = useState<Message[]>([
@@ -24,14 +26,26 @@ export function ConciergePage() {
   const [adminTookOver, setAdminTookOver] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const [sessionId] = useState(() => {
-    let sid = localStorage.getItem('concierge_session_id');
+  const [sessionId, setSessionId] = useState('');
+
+  useEffect(() => {
+    if (authLoading) return;
+    const storageKey = user
+      ? `concierge_session_id_user_${user.id}`
+      : 'concierge_session_id_guest';
+    let sid = localStorage.getItem(storageKey);
     if (!sid) {
-      sid = `web_${Date.now()}`;
-      localStorage.setItem('concierge_session_id', sid);
+      const legacySessionId = localStorage.getItem('concierge_session_id');
+      const guestSessionId = user
+        ? localStorage.getItem('concierge_session_id_guest')
+        : null;
+      sid = guestSessionId || legacySessionId || `web_${Date.now()}`;
+      localStorage.setItem(storageKey, sid);
+      if (guestSessionId) localStorage.removeItem('concierge_session_id_guest');
+      if (legacySessionId) localStorage.removeItem('concierge_session_id');
     }
-    return sid;
-  });
+    setSessionId(sid);
+  }, [authLoading, user?.id]);
 
   useEffect(() => {
     setMessages((previous) =>
@@ -42,6 +56,7 @@ export function ConciergePage() {
   }, [welcomeMessage]);
 
   useEffect(() => {
+    if (!sessionId || authLoading) return;
     apiFetch('/shop/concierge/live-status/')
       .then((res) => (res.ok ? res.json() : { aiEnabled: false }))
       .then((data) => setAiEnabled(!!data.aiEnabled))
@@ -63,9 +78,10 @@ export function ConciergePage() {
         ]);
       })
       .catch(() => {});
-  }, [sessionId, welcomeMessage]);
+  }, [authLoading, sessionId, welcomeMessage]);
 
   useEffect(() => {
+    if (!sessionId) return;
     const eventSource = new EventSource(
       `${API_BASE_URL}/shop/concierge/stream/${encodeURIComponent(sessionId)}/`
     );
@@ -100,6 +116,7 @@ export function ConciergePage() {
   }, [messages, isLoading]);
 
   const handleSend = async (content: string) => {
+    if (!sessionId || authLoading) return;
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',

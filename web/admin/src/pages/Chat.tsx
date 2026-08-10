@@ -21,6 +21,7 @@ interface ChatSession {
   updated_at: number;
   customer_id?: number | null;
   customer_name?: string;
+  customer_display_name?: string;
   customer_username?: string;
   customer_email?: string;
 }
@@ -87,7 +88,9 @@ export default function Chat() {
 
   const formatCustomerId = (id: string) => id.split('_')[1] || id;
   const getCustomerName = (id: string, session: ChatSession) =>
-    session.customer_name?.trim() || t('chat.customer_label', { id: formatCustomerId(id) });
+    session.customer_email?.trim() || session.customer_name?.trim() || t('chat.customer_label', { id: formatCustomerId(id) });
+  const getCustomerSecondaryLabel = (session: ChatSession) =>
+    session.customer_display_name?.trim() || session.customer_username?.trim() || '';
 
   return (
     <div className="ma-spacing space-y-8">
@@ -170,9 +173,9 @@ export default function Chat() {
                         <h3 className="font-semibold text-sm text-brand-ink truncate">
                           {getCustomerName(id, session)}
                         </h3>
-                        {session.customer_email && (
+                        {getCustomerSecondaryLabel(session) && (
                           <p className="text-[11px] text-brand-ink/40 truncate mt-0.5">
-                            {session.customer_email}
+                            {getCustomerSecondaryLabel(session)}
                           </p>
                         )}
                         <p className="text-xs text-brand-ink/50 truncate mt-1 font-serif italic">
@@ -203,9 +206,9 @@ export default function Chat() {
                     <h3 className="font-serif font-bold text-lg text-brand-ink truncate">
                       {getCustomerName(activeSessionId, activeSession)}
                     </h3>
-                    {(activeSession.customer_email || activeSession.customer_username) && (
+                    {getCustomerSecondaryLabel(activeSession) && (
                       <p className="text-xs text-brand-ink/50 truncate">
-                        {activeSession.customer_email || `@${activeSession.customer_username}`}
+                        {getCustomerSecondaryLabel(activeSession)}
                       </p>
                     )}
                     <p className="text-xs text-brand-ink/50 font-serif italic">

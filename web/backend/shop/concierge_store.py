@@ -149,7 +149,8 @@ def sessions_for_admin() -> dict[str, Any]:
             'adminTookOver': session.admin_took_over,
             'updated_at': session.updated_at.timestamp(),
             'customer_id': session.user_id,
-            'customer_name': session.customer_name,
+            'customer_name': session.user.email if session.user_id and session.user.email else session.customer_name,
+            'customer_display_name': session.customer_name,
             'customer_username': session.user.username if session.user_id else '',
             'customer_email': session.user.email if session.user_id else '',
         }

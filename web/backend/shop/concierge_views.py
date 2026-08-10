@@ -7,6 +7,7 @@ from rest_framework.views import APIView
 
 from .concierge import generate_concierge_reply
 from .concierge_store import (
+    get_or_create_session,
     handle_user_message,
     is_ai_enabled,
     session_history,
@@ -34,6 +35,8 @@ class ConciergeHistoryView(APIView):
         session_id = (request.query_params.get('session_id') or '').strip()[:128]
         if not session_id:
             return Response({'error': 'session_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+        if request.user.is_authenticated:
+            get_or_create_session(session_id, user=request.user)
         data = session_history(session_id)
         if data is None:
             return Response({'messages': [], 'adminTookOver': False, 'aiEnabled': is_ai_enabled()})

@@ -330,6 +330,7 @@
     "order_number": "Đơn hàng {{id}}",
     "more_items": "+{{count}} sản phẩm",
     "payment_method": "Thanh toán",
+    "download_invoice": "Xuất hóa đơn",
     "coupons": {
       "tab": "Coupon ({{count}})",
       "title": "Ví coupon của bạn",

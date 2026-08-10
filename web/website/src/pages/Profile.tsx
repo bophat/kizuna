@@ -547,6 +547,15 @@ export function ProfilePage() {
                           </div>
                         )}
                       </div>
+                      <div className="mt-6 pt-6 border-t border-surface-variant flex flex-wrap items-center justify-end gap-3">
+                        <button
+                          onClick={() => window.open(`/api/shop/orders/${order.id}/invoice/`, '_blank')}
+                          className="flex items-center gap-2 px-4 py-2 border border-primary text-primary rounded-sm hover:bg-primary hover:text-white transition-all label-sm"
+                        >
+                          <Icons.FileText size={16} />
+                          <span>{t('profile.download_invoice')}</span>
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))

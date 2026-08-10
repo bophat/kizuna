@@ -330,6 +330,7 @@
     "order_number": "注文 {{id}}",
     "more_items": "他 {{count}} 点",
     "payment_method": "お支払い",
+    "download_invoice": "請求書ダウンロード",
     "coupons": {
       "tab": "クーポン ({{count}})",
       "title": "クーポンウォレット",

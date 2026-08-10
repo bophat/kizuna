@@ -330,6 +330,7 @@
     "order_number": "Order {{id}}",
     "more_items": "+{{count}} more",
     "payment_method": "Payment",
+    "download_invoice": "Download Invoice",
     "coupons": {
       "tab": "Coupons ({{count}})",
       "title": "Your coupon wallet",

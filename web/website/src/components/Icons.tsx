@@ -1,19 +1,19 @@
-import { 
-  Star, 
-  ShieldCheck, 
-  Truck, 
-  Download, 
-  Lock, 
-  ChevronRight, 
-  ArrowRight, 
-  ArrowLeft, 
-  ShoppingBag, 
-  Search, 
-  Bell, 
-  User, 
-  Menu, 
-  X, 
-  Send, 
+import {
+  Star,
+  ShieldCheck,
+  Truck,
+  Download,
+  Lock,
+  ChevronRight,
+  ArrowRight,
+  ArrowLeft,
+  ShoppingBag,
+  Search,
+  Bell,
+  User,
+  Menu,
+  X,
+  Send,
   Paperclip,
   Sparkles,
   Check,
@@ -24,7 +24,8 @@ import {
   Loader2,
   Banknote,
   Landmark,
-  AlertCircle
+  AlertCircle,
+  FileText
 } from 'lucide-react';
 
 export const Icons = {
@@ -54,5 +55,6 @@ export const Icons = {
   Copy,
   Loader2,
   AlertCircle,
-  Cart: ShoppingBag
+  Cart: ShoppingBag,
+  FileText
 };

@@ -62,11 +62,13 @@
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
 
-  --spacing-xl: 40px;
-  --spacing-lg: 32px;
-  --spacing-md: 24px;
-  --spacing-sm: 16px;
-  --spacing-xs: 8px;
+  /* Keep project spacing tokens outside Tailwind's --spacing-* namespace.
+     Otherwise classes such as max-w-xl resolve to 40px instead of 36rem. */
+  --kizuna-spacing-xl: 40px;
+  --kizuna-spacing-lg: 32px;
+  --kizuna-spacing-md: 24px;
+  --kizuna-spacing-sm: 16px;
+  --kizuna-spacing-xs: 8px;
 }
 
 @layer base {
