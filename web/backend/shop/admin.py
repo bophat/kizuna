@@ -8,7 +8,43 @@ from .models import (
     Coupon,
     CouponRedemption,
     PaymentWebhookEvent,
+    InvoiceSettings,
 )
+
+
+@admin.register(InvoiceSettings)
+class InvoiceSettingsAdmin(admin.ModelAdmin):
+    list_display = ('company_name', 'is_active', 'updated_at')
+    list_filter = ('is_active',)
+    search_fields = ('company_name', 'company_name_ja', 'company_name_vi', 'tax_id')
+    readonly_fields = ('created_at', 'updated_at')
+
+    fieldsets = (
+        ('Basic Info', {
+            'fields': ('company_name', 'company_name_ja', 'company_name_vi', 'logo', 'is_active')
+        }),
+        ('Address & Contact', {
+            'fields': ('address', 'address_ja', 'address_vi', 'phone', 'email', 'tax_id')
+        }),
+        ('Bank Info', {
+            'fields': ('bank_info', 'bank_info_ja', 'bank_info_vi'),
+            'classes': ('collapse',)
+        }),
+        ('Footer', {
+            'fields': ('footer_text', 'footer_text_ja', 'footer_text_vi'),
+            'classes': ('collapse',)
+        }),
+        ('Timestamps', {
+            'fields': ('created_at', 'updated_at'),
+            'classes': ('collapse',)
+        }),
+    )
+
+    def has_add_permission(self, request):
+        # Only allow one active invoice settings
+        if InvoiceSettings.objects.filter(is_active=True).exists():
+            return False
+        return super().has_add_permission(request)
 
 
 @admin.register(Coupon)

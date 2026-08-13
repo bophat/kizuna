@@ -11,6 +11,7 @@ from shop.models import (
     ContactInfo,
     ContactMessage,
     Coupon,
+    InvoiceSettings,
     Order,
     PaymentMethodConfig,
     PaymentTransaction,
@@ -674,3 +675,32 @@ class AdminContactMessageSerializer(serializers.ModelSerializer):
         model = ContactMessage
         fields = ['id', 'name', 'email', 'message', 'status', 'created_at', 'updated_at']
         read_only_fields = ['id', 'name', 'email', 'message', 'created_at', 'updated_at']
+
+
+class InvoiceSettingsSerializer(serializers.ModelSerializer):
+    logo_url = serializers.SerializerMethodField()
+
+    class Meta:
+        model = InvoiceSettings
+        fields = [
+            'id',
+            'company_name', 'company_name_ja', 'company_name_vi',
+            'address', 'address_ja', 'address_vi',
+            'phone', 'email', 'tax_id',
+            'footer_text', 'footer_text_ja', 'footer_text_vi',
+            'bank_info', 'bank_info_ja', 'bank_info_vi',
+            'logo', 'logo_url',
+            'is_active', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'logo_url', 'created_at', 'updated_at']
+        extra_kwargs = {
+            'logo': {'write_only': True, 'required': False},
+        }
+
+    def get_logo_url(self, obj) -> str | None:
+        if not obj.logo:
+            return None
+        request = self.context.get('request')
+        if request:
+            return request.build_absolute_uri(obj.logo.url)
+        return obj.logo.url

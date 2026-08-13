@@ -8,6 +8,8 @@ from .views import (
     AdminContactInfoView,
     AdminContactMessageViewSet,
     AdminCouponViewSet,
+    AdminInvoiceSettingsView,
+    AdminInvoiceLogoUploadView,
     AdminOrderViewSet,
     AdminPaymentMethodViewSet,
     AdminProductViewSet,
@@ -68,6 +70,8 @@ router.register(r'marketing-campaigns', MarketingCampaignViewSet, basename='mark
 
 urlpatterns = [
     path('contact-info/', AdminContactInfoView.as_view(), name='admin-contact-info'),
+    path('invoice-settings/', AdminInvoiceSettingsView.as_view(), name='admin-invoice-settings'),
+    path('invoice-settings/upload-logo/', AdminInvoiceLogoUploadView.as_view(), name='admin-invoice-logo-upload'),
     path('products/import-csv/', BulkImportProductsView.as_view(), name='admin-import-csv'),
     path('products/import-source/preview/', PreviewImportView.as_view(), name='admin-import-source-preview'),
     path('products/import-source/', ImportSourceProductView.as_view(), name='admin-import-source'),

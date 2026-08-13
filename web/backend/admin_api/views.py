@@ -13,6 +13,7 @@ from shop.models import (
     ContactInfo,
     ContactMessage,
     Coupon,
+    InvoiceSettings,
     Order,
     PaymentMethodConfig,
     PaymentTransaction,
@@ -39,6 +40,7 @@ from .serializers import (
     AdminStorePageSerializer,
     CategorySerializer,
     CouponSerializer,
+    InvoiceSettingsSerializer,
     OrderSerializer,
     ProductSerializer,
     SettingSerializer,
@@ -1204,3 +1206,76 @@ class BulkImportProductsView(APIView):
             'message': message,
             'deleted_count': deleted_count
         })
+
+
+class AdminInvoiceSettingsView(APIView):
+    """GET / PUT / PATCH the single active InvoiceSettings record."""
+    permission_classes = [permissions.IsAdminUser]
+
+    def _get_object(self):
+        return InvoiceSettings.get_active()
+
+    def get(self, request):
+        serializer = InvoiceSettingsSerializer(self._get_object(), context={'request': request})
+        return Response(serializer.data)
+
+    def put(self, request):
+        obj = self._get_object()
+        serializer = InvoiceSettingsSerializer(obj, data=request.data, context={'request': request})
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+    def patch(self, request):
+        obj = self._get_object()
+        serializer = InvoiceSettingsSerializer(
+            obj, data=request.data, partial=True, context={'request': request}
+        )
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data)
+
+
+class AdminInvoiceLogoUploadView(APIView):
+    """Upload a logo image for the invoice PDF."""
+    permission_classes = [permissions.IsAdminUser]
+    parser_classes = [MultiPartParser, FormParser]
+
+    def post(self, request):
+        if 'logo' not in request.FILES:
+            return Response(
+                {'error': 'No logo file provided'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        logo_file = request.FILES['logo']
+        allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif']
+        if logo_file.content_type not in allowed_types:
+            return Response(
+                {'error': 'Invalid file type. Allowed: JPEG, PNG, WEBP, GIF'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        max_size = 5 * 1024 * 1024  # 5 MB
+        if logo_file.size > max_size:
+            return Response(
+                {'error': 'File too large. Max 5 MB'},
+                status=status.HTTP_400_BAD_REQUEST,
+            )
+
+        ext = os.path.splitext(logo_file.name)[1]
+        filename = f'invoice/logo_{uuid.uuid4().hex}{ext}'
+
+        try:
+            path = default_storage.save(filename, logo_file)
+            invoice_settings = InvoiceSettings.get_active()
+            invoice_settings.logo = path
+            invoice_settings.save(update_fields=['logo', 'updated_at'])
+            logo_url = request.build_absolute_uri(invoice_settings.logo.url)
+            return Response({'logo_url': logo_url})
+        except Exception as exc:
+            logger.error('[INVOICE_LOGO_UPLOAD] %s', exc)
+            return Response(
+                {'error': 'Failed to save logo'},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            )

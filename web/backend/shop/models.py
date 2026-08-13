@@ -770,6 +770,48 @@ class StorePage(models.Model):
         return self.title
 
 
+class InvoiceSettings(models.Model):
+    """Settings for customizing invoice PDF generation."""
+    company_name = models.CharField(max_length=100, default='KIZUNA')
+    company_name_ja = models.CharField(max_length=100, blank=True, default='')
+    company_name_vi = models.CharField(max_length=100, blank=True, default='')
+
+    address = models.TextField(blank=True, default='')
+    address_ja = models.TextField(blank=True, default='')
+    address_vi = models.TextField(blank=True, default='')
+
+    phone = models.CharField(max_length=30, blank=True, default='')
+    email = models.EmailField(blank=True, default='')
+    tax_id = models.CharField(max_length=50, blank=True, default='', help_text='Mã số thuế / Tax ID')
+
+    footer_text = models.TextField(blank=True, default='', help_text='Footer note on invoice')
+    footer_text_ja = models.TextField(blank=True, default='')
+    footer_text_vi = models.TextField(blank=True, default='')
+
+    bank_info = models.TextField(blank=True, default='', help_text='Bank transfer info for invoice')
+    bank_info_ja = models.TextField(blank=True, default='')
+    bank_info_vi = models.TextField(blank=True, default='')
+
+    logo = models.ImageField(upload_to='invoice/', null=True, blank=True, help_text='Company logo on invoice')
+
+    is_active = models.BooleanField(default=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = 'Invoice Settings'
+        verbose_name_plural = 'Invoice Settings'
+
+    def __str__(self):
+        return f'Invoice Settings ({self.company_name})'
+
+    @classmethod
+    def get_active(cls):
+        """Get active invoice settings, create default if none exists."""
+        obj, _ = cls.objects.get_or_create(is_active=True, defaults={'company_name': 'KIZUNA'})
+        return obj
+
+
 class ContactInfo(models.Model):
     phone = models.CharField(max_length=30, blank=True, default='')
     email = models.EmailField(blank=True, default='')

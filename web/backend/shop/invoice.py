@@ -15,10 +15,11 @@ from reportlab.pdfbase import pdfmetrics
 from reportlab.pdfbase.ttfonts import TTFont
 import os
 
-# Register system font for Unicode support (Vietnamese)
+# Register system font for Unicode support (Vietnamese + Japanese)
 # Try to find a suitable font on the system
 FONT_CANDIDATES = [
-    # macOS system fonts with good Unicode support
+    # macOS system fonts with good Unicode support (including Homebrew-installed Noto Sans JP)
+    '/Users/phattdt/Library/Fonts/NotoSansJP[wght].ttf',  # Homebrew installed variable font
     '/System/Library/Fonts/PingFang.ttc',
     '/System/Library/Fonts/Helvetica.ttc',
     '/System/Library/Fonts/ArialHB.ttc',
@@ -35,28 +36,51 @@ FONT_CANDIDATES = [
 FONT_NAME = 'Helvetica'
 FONT_NAME_BOLD = 'Helvetica-Bold'
 
-for font_path in FONT_CANDIDATES:
-    if os.path.exists(font_path):
-        try:
-            if font_path.endswith('.ttc'):
-                # For TTC font collections, use subfont index 0
-                pdfmetrics.registerFont(TTFont('CustomFont', font_path, subfontIndex=0))
-                pdfmetrics.registerFont(TTFont('CustomFont-Bold', font_path, subfontIndex=0))
-            else:
-                pdfmetrics.registerFont(TTFont('CustomFont', font_path))
-                # Try to find bold variant
-                bold_path = font_path.replace('.ttf', '-Bold.ttf').replace('Regular', 'Bold')
-                if os.path.exists(bold_path):
-                    pdfmetrics.registerFont(TTFont('CustomFont-Bold', bold_path))
-                else:
-                    pdfmetrics.registerFont(TTFont('CustomFont-Bold', font_path))
-            FONT_NAME = 'CustomFont'
-            FONT_NAME_BOLD = 'CustomFont-Bold'
-            break
-        except Exception:
-            continue
+# First: Try to register Noto Sans JP variable font (supports Japanese + Vietnamese)
+noto_regular = None
+noto_bold = None
 
-# Also check local fonts directory
+# Try variable font from Homebrew/macOS user fonts
+for font_path in FONT_CANDIDATES:
+    if not os.path.exists(font_path):
+        continue
+    try:
+        if 'NotoSansJP' in font_path:
+            # Variable font - register with subfontIndex
+            pdfmetrics.registerFont(TTFont('NotoSansJP', font_path, subfontIndex=0))
+            pdfmetrics.registerFont(TTFont('NotoSansJP-Bold', font_path, subfontIndex=6))  # Bold weight
+            noto_regular = 'NotoSansJP'
+            noto_bold = 'NotoSansJP-Bold'
+            break
+        elif font_path.endswith('.ttc'):
+            pdfmetrics.registerFont(TTFont('CustomFont', font_path, subfontIndex=0))
+            pdfmetrics.registerFont(TTFont('CustomFont-Bold', font_path, subfontIndex=0))
+            if FONT_NAME == 'Helvetica':
+                FONT_NAME = 'CustomFont'
+                FONT_NAME_BOLD = 'CustomFont-Bold'
+                break
+        else:
+            font_name = os.path.basename(font_path).replace('.ttf', '')
+            pdfmetrics.registerFont(TTFont(font_name, font_path))
+            # Try to find bold variant
+            bold_path = font_path.replace('.ttf', '-Bold.ttf').replace('Regular', 'Bold')
+            if os.path.exists(bold_path):
+                pdfmetrics.registerFont(TTFont(f'{font_name}-Bold', bold_path))
+                FONT_NAME = font_name
+                FONT_NAME_BOLD = f'{font_name}-Bold'
+            else:
+                FONT_NAME = font_name
+                FONT_NAME_BOLD = font_name
+            break
+    except Exception:
+        continue
+
+# If Noto Sans JP found, use it as primary
+if noto_regular and noto_bold:
+    FONT_NAME = noto_regular
+    FONT_NAME_BOLD = noto_bold
+
+# Fallback: Also check local fonts directory
 FONT_DIR = os.path.join(os.path.dirname(__file__), 'fonts')
 DEJAVU_REGULAR = os.path.join(FONT_DIR, 'DejaVuSans.ttf')
 DEJAVU_BOLD = os.path.join(FONT_DIR, 'DejaVuSans-Bold.ttf')
@@ -223,6 +247,11 @@ def generate_invoice_pdf(order, request=None):
     Generate PDF invoice for an order.
     Returns BytesIO buffer with PDF content.
     """
+    from .models import InvoiceSettings
+
+    # Get invoice settings
+    invoice_settings = InvoiceSettings.get_active()
+
     buffer = io.BytesIO()
     doc = SimpleDocTemplate(
         buffer,
@@ -238,8 +267,21 @@ def generate_invoice_pdf(order, request=None):
     width = A4[0] - 40*mm  # usable width
 
     # ===== HEADER =====
-    story.append(Paragraph("KIZUNA", styles['InvoiceTitle']))
+    # Use customizable company name
+    company_name = invoice_settings.company_name
+    story.append(Paragraph(company_name, styles['InvoiceTitle']))
     story.append(Paragraph("HÓA ĐƠN BÁN HÀNG / SALES INVOICE", styles['InvoiceSubtitle']))
+
+    # Company info if available
+    if invoice_settings.address:
+        story.append(Paragraph(invoice_settings.address.replace('\n', '<br/>'), styles['InfoValue']))
+    if invoice_settings.phone:
+        story.append(Paragraph(f"Điện thoại: {invoice_settings.phone}", styles['InfoValue']))
+    if invoice_settings.email:
+        story.append(Paragraph(f"Email: {invoice_settings.email}", styles['InfoValue']))
+    if invoice_settings.tax_id:
+        story.append(Paragraph(f"Mã số thuế: {invoice_settings.tax_id}", styles['InfoValue']))
+    story.append(Spacer(1, 8))
 
     # ===== ORDER INFO TABLE =====
     order_code = order.order_code or f"KZ{order.pk:010d}"
@@ -369,6 +411,12 @@ def generate_invoice_pdf(order, request=None):
     story.append(totals_table)
     story.append(Spacer(1, 15))
 
+    # ===== BANK INFO (if available) =====
+    if invoice_settings.bank_info:
+        story.append(Paragraph('THÔNG TIN CHUYỂN KHOẢN:', styles['SectionHeader']))
+        story.append(Paragraph(invoice_settings.bank_info.replace('\n', '<br/>'), styles['InfoValue']))
+        story.append(Spacer(1, 10))
+
     # ===== NOTES =====
     if order.admin_notes:
         story.append(Paragraph('GHI CHÚ:', styles['SectionHeader']))
@@ -377,10 +425,8 @@ def generate_invoice_pdf(order, request=None):
 
     # ===== FOOTER =====
     story.append(Spacer(1, 20))
-    story.append(Paragraph(
-        'Cảm ơn quý khách đã mua sắm tại KIZUNA! / Thank you for shopping at KIZUNA!',
-        styles['FooterText']
-    ))
+    footer_text = invoice_settings.footer_text or 'Cảm ơn quý khách đã mua sắm tại KIZUNA! / Thank you for shopping at KIZUNA!'
+    story.append(Paragraph(footer_text, styles['FooterText']))
     story.append(Paragraph(
         f'Hóa đơn được tạo tự động lúc {timezone.localtime(timezone.now()).strftime("%d/%m/%Y %H:%M")}',
         styles['FooterText']
