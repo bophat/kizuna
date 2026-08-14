@@ -158,8 +158,14 @@ Desktop.ini
 # Cursor local index (không push)
 .cursor/
 
+# Fonts (binary lớn, tải runtime hoặc qua Docker)
+*.ttf
+*.otf
+*.woff
+*.woff2
+
 # =============================================================================
-# DOCS & SPEC — Không commit lên Git (tuỳ chỉnh local)
+# DOCS & SPEC CÁ NHÂN — Chỉ loại trừ file cụ thể, giữ README, DEPLOY docs
 # =============================================================================
 # Claude Code spec (có thể thay đổi theo từng máy)
 claude.md
