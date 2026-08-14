@@ -157,3 +157,19 @@ Desktop.ini
 
 # Cursor local index (không push)
 .cursor/
+
+# =============================================================================
+# DOCS & SPEC — Không commit lên Git (tuỳ chỉnh local)
+# =============================================================================
+# Claude Code spec (có thể thay đổi theo từng máy)
+claude.md
+
+# Data extraction tool spec (chỉ tài liệu, không code)
+getdatatool/
+
+# Temp / test files
+test.csv
+
+# Progress tracking (cá nhân)
+progress.md
+task_plan.md
