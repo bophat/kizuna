@@ -5,6 +5,7 @@ import { Icons } from '@/components/Icons';
 import { Logo } from '@izuna/shared/components/Logo';
 import { ArrowRight } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
+import { SEO } from '@/components/SEO';
 
 export function RegisterPage() {
   const { t } = useTranslation();
@@ -64,8 +65,9 @@ export function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-surface">
+      <SEO title={t('auth.register', 'Register')} noindex />
       <div className="hidden md:block w-full md:w-1/2 relative min-h-screen">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: "url('https://lh3.googleusercontent.com/aida-public/AB6AXuAYx4N_KGp9PaB1iF6i4DricApqoGzv8pp66cyyyczyePv66qo2crpj6RqBD7NFRAsd9ZT5I0Y4YFd-7IRfSnYPDuteNnLOCbSY7nwSgxmatbDqGuMRis_3AoE_6j9Vt-ekse4rbttScetenX78DcQeMHEq4SnxUyZX_yhrfcknlDjeG1-Ud1hCgagjtc2C3bfeQ1IGneeMTyiRmJs2wfAy4kvxOnlUSMxc9xjjjNwTMWlE1UvrW7xnGcSroSCYKS7iFk0J8o7eVJk')" }}
         />

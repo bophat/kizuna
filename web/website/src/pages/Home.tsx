@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { Loader2 } from 'lucide-react';
 import { Product } from '../types';
 import { ProductGrid } from '../components/products/ProductGrid';
+import { SEO } from '@/components/SEO';
 import { apiFetch, getMediaUrl } from '@/lib/api';
 import { optimizeImageUrl, IMAGE_WIDTH } from '@izuna/shared/lib/image';
 import {
@@ -86,6 +87,7 @@ export function HomePage() {
 
   return (
     <div className="flex flex-col gap-xl pb-20">
+      <SEO title={t('seo.home_title')} description={t('seo.home_description')} path="/" />
       {/* Hero Section */}
       <section className="relative h-[70vh] min-h-[500px] w-full overflow-hidden bg-surface-container-highest">
         <img

@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Heart, ShoppingBag, ArrowLeft, Loader2, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Product } from '@/types';
+import { SEO } from '@/components/SEO';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { ProductGrid } from '@/components/products/ProductGrid';
@@ -98,6 +99,7 @@ export function ProductDetail() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
+        <SEO title={t('seo.not_found_title')} noindex />
         <p className="text-error mb-4">{error || t('product.not_found')}</p>
         <button 
           onClick={() => navigate('/collections')}
@@ -166,8 +168,34 @@ export function ProductDetail() {
     setSelectedImage(galleryImages[newIndex]);
   };
 
+  const seoDescription = product.description
+    ? product.description.replace(/\s+/g, ' ').trim().slice(0, 160)
+    : t('seo.product_fallback_description');
+
   return (
     <div className="min-h-screen bg-surface pb-20">
+      <SEO
+        title={product.brand ? `${product.name} - ${product.brand}` : product.name}
+        description={seoDescription}
+        path={`/product/${product.id}`}
+        image={product.image}
+        type="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.name,
+          image: galleryImages,
+          description: seoDescription,
+          sku: product.id,
+          brand: product.brand ? { '@type': 'Brand', name: product.brand } : undefined,
+          offers: {
+            '@type': 'Offer',
+            price: product.price,
+            priceCurrency: product.currency || 'JPY',
+            availability: 'https://schema.org/InStock',
+          },
+        }}
+      />
       <div className="max-w-[85%] mx-auto px-4 md:px-6 pt-8">
         
         {/* Breadcrumb / Back */}

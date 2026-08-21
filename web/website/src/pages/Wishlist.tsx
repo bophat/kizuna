@@ -7,6 +7,7 @@ import { ProductCard } from '@/components/products/ProductCard';
 import { EmptyState } from '@/components/EmptyState';
 import { Heart } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { SEO } from '@/components/SEO';
 
 export function WishlistPage() {
   const { t } = useTranslation();
@@ -15,6 +16,7 @@ export function WishlistPage() {
   if (isLoading) {
     return (
       <div className="min-h-[70vh] flex items-center justify-center">
+        <SEO title={t('wishlist.title')} noindex />
         <div className="w-12 h-12 border-4 border-surface-variant border-t-primary rounded-full animate-spin"></div>
       </div>
     );
@@ -22,6 +24,7 @@ export function WishlistPage() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
+      <SEO title={t('wishlist.title')} noindex />
       <motion.div
         {...fadeUp}
         transition={tweenBase}

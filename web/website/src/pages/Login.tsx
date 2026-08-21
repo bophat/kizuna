@@ -6,6 +6,7 @@ import { Logo } from '@izuna/shared/components/Logo';
 import { ArrowRight, Check } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { SEO } from '@/components/SEO';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -79,8 +80,9 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-surface">
+      <SEO title={t('auth.login', 'Login')} noindex />
       <div className="hidden md:block w-full md:w-1/2 relative min-h-screen">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: bgImage }}
         />

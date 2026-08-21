@@ -20,4 +20,11 @@ export const CHAT_API_BASE_URL = trimSlash(
 export const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY?.trim() || '';
 
 /** URL website sau deploy (tuỳ chọn — OAuth, link tuyệt đối) */
-export const APP_URL = import.meta.env.VITE_APP_URL?.trim() || '';
+export const APP_URL = trimSlash(import.meta.env.VITE_APP_URL?.trim() || '');
+
+/**
+ * Google Analytics 4 Measurement ID (dạng "G-XXXXXXXXXX").
+ * Để trống thì analytics.ts sẽ không nạp gtag.js — không gửi request nào tới Google
+ * cho tới khi bạn điền ID thật vào VITE_GA_MEASUREMENT_ID (.env / Vercel env vars).
+ */
+export const GA_MEASUREMENT_ID = import.meta.env.VITE_GA_MEASUREMENT_ID?.trim() || '';

@@ -5,6 +5,7 @@ import { ArrowRight, CircleAlert, KeyRound, Loader2 } from 'lucide-react';
 import { Logo } from '@izuna/shared/components/Logo';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { SEO } from '@/components/SEO';
 
 
 type ResetState = 'form' | 'success' | 'invalid';
@@ -65,6 +66,7 @@ export function ResetPasswordPage() {
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+      <SEO title={t('auth.reset_password_title', 'Reset Password')} noindex />
       <div className="w-full max-w-[520px] bg-white border border-surface-variant rounded-sm p-8 md:p-12 text-center">
         <div className="flex justify-center mb-10">
           <Logo size="lg" forceBlack />

@@ -3,6 +3,7 @@ import { Clock3, Facebook, Instagram, Loader2, Mail, MapPin, MessageCircle, Musi
 import { useTranslation } from 'react-i18next';
 import { ContentRenderer } from '@izuna/shared/components/ContentRenderer';
 import { apiFetch } from '@/lib/api';
+import { SEO } from '@/components/SEO';
 import { useStorePage } from './StaticPage';
 
 interface ContactInfo {
@@ -76,6 +77,7 @@ export function ContactPage() {
 
   return (
     <main className="min-h-[65vh] bg-stone-50/50 px-5 py-14 dark:bg-zinc-950/30 md:py-20">
+      <SEO title={t('seo.contact_title')} description={t('seo.contact_description')} path="/lien-he" />
       <div className="mx-auto max-w-6xl">
         <header className="mb-12 max-w-3xl">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">KIZUNA</p>

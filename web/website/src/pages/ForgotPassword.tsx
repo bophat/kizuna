@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, Loader2, MailCheck } from 'lucide-react';
 import { Logo } from '@izuna/shared/components/Logo';
 import { apiFetch } from '@/lib/api';
+import { SEO } from '@/components/SEO';
 
 
 export function ForgotPasswordPage() {
@@ -39,6 +40,7 @@ export function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-6">
+      <SEO title={t('auth.forgot_title')} noindex />
       <div className="w-full max-w-[520px] bg-white border border-surface-variant rounded-sm p-8 md:p-12 text-center">
         <div className="flex justify-center mb-10">
           <Logo size="lg" forceBlack />

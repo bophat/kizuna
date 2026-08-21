@@ -8,6 +8,7 @@ import { apiFetch, API_BASE_URL } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
 import { ProductImage } from '@/components/products/ProductImage';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
+import { SEO } from '@/components/SEO';
 
 interface OrderItem {
   id: number;
@@ -280,6 +281,7 @@ export function ProfilePage() {
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center items-center min-h-[60vh] gap-3">
+        <SEO title={t('profile.title')} noindex />
         <Loader2 className="w-10 h-10 animate-spin text-primary" />
         <p className="body-sm text-secondary">{t('common.loading')}</p>
       </div>
@@ -288,6 +290,7 @@ export function ProfilePage() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
+      <SEO title={t('profile.title')} noindex />
       <header className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
         <div>
           <div className="flex items-center gap-4 mb-2">

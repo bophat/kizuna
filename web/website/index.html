@@ -3,6 +3,13 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Title chỉ để có giá trị hợp lệ trước khi JS chạy — mọi thứ khác (description,
+         robots, og:*, twitter:*, canonical) do react-helmet-async quản lý qua <SEO>
+         (src/components/SEO.tsx), gồm 1 lớp mặc định ở App.tsx + override theo từng
+         trang. KHÔNG thêm meta description/og/twitter tĩnh ở đây nữa: react-helmet-async
+         không biết các tag được render sẵn trong HTML này, nên nó sẽ CHÈN THÊM một bản
+         thứ hai thay vì ghi đè → 2 thẻ og:title trùng tên khiến crawler có thể đọc nhầm
+         giá trị tĩnh (cũ) thay vì giá trị đúng theo từng trang. -->
     <title>KIZUNA - Japanese Artisan Excellence</title>
   </head>
   <body>

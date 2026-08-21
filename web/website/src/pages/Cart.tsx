@@ -6,6 +6,7 @@ import { fade, tweenFast } from '@/lib/motion';
 import { Icons } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
+import { SEO } from '@/components/SEO';
 import { Plus, Minus, ShoppingBag } from 'lucide-react';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
@@ -105,6 +106,7 @@ export function CartPage() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
+      <SEO title={t('cart.title')} noindex />
       <div className="mb-12">
         <h1 className="headline-xl">{t('cart.title')}</h1>
         <p className="body-md text-secondary mt-2">

@@ -8,6 +8,7 @@ import { Product } from '@/types';
 import { cn } from '@/lib/utils';
 import { Icons } from '@/components/Icons';
 import { apiFetch } from '@/lib/api';
+import { SEO } from '@/components/SEO';
 import { fade, scaleIn, tweenBase } from '@/lib/motion';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 
@@ -214,6 +215,7 @@ export function CollectionPage() {
 
   return (
     <div className="min-h-screen bg-surface">
+      <SEO title={t('seo.collections_title')} description={t('seo.collections_description')} path="/collections" />
       {/* Sticky Header & Filter Bar */}
       <div className="z-30 border-b border-surface-variant/50 bg-white/95 shadow-sm backdrop-blur-md lg:sticky lg:top-20">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:py-8">

@@ -2,12 +2,14 @@ import { motion } from 'motion/react';
 import { Link } from 'react-router-dom';
 import { ArrowRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
+import { SEO } from '@/components/SEO';
 
 export function NotFoundPage() {
   const { t } = useTranslation();
 
   return (
     <div className="min-h-[80vh] flex flex-col items-center justify-center px-4">
+      <SEO title={t('seo.not_found_title')} noindex />
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}

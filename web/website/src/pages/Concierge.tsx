@@ -6,6 +6,7 @@ import { ChatInput } from '@/components/concierge/ChatInput';
 import { apiFetch, API_BASE_URL } from '@/lib/api';
 import { useTranslation } from 'react-i18next';
 import { useAuth } from '@/context/AuthContext';
+import { SEO } from '@/components/SEO';
 
 interface Message {
   id: string;
@@ -182,6 +183,7 @@ export function ConciergePage() {
 
   return (
     <div className="flex flex-col h-[calc(100vh-80px)] overflow-hidden bg-surface">
+      <SEO title={t('seo.concierge_title')} description={t('seo.concierge_description')} path="/concierge" />
       <div className="text-center py-6 shrink-0">
         <span className="label-sm text-secondary/60 tracking-[0.2em] uppercase">{t('concierge.today')}</span>
         {!aiEnabled && !adminTookOver && (

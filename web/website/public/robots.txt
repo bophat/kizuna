@@ -1,0 +1,12 @@
+# KIZUNA — robots.txt
+# Cho phép index toàn bộ trang công khai. Các trang riêng tư (giỏ hàng, tài khoản,
+# đăng nhập...) được chặn index bằng thẻ <meta name="robots" content="noindex">
+# thay vì Disallow ở đây — vì Disallow chặn crawl luôn, khiến Google không đọc được
+# thẻ noindex và đôi khi vẫn index trang mà không có mô tả (xem khuyến nghị của Google).
+
+User-agent: *
+Allow: /
+
+# TODO: khi có domain chính thức, cập nhật dòng dưới thành domain thật, ví dụ:
+# Sitemap: https://kizuna.vn/sitemap.xml
+Sitemap: https://REPLACE-WITH-YOUR-DOMAIN/sitemap.xml

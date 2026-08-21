@@ -11,6 +11,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { fadeUp, slideX, tweenBase, tweenFast } from '@/lib/motion';
 import { ProductImage } from '@/components/products/ProductImage';
 import { getAffiliateCode } from '@/lib/affiliate';
+import { SEO } from '@/components/SEO';
 
 const STEPS = ['information', 'shipping', 'payment', 'success'] as const;
 
@@ -402,6 +403,7 @@ export function CheckoutPage() {
   if (step === 0 && isLoadingUser) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
+        <SEO title={t('checkout.title', 'Checkout')} noindex />
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -420,6 +422,7 @@ export function CheckoutPage() {
     }).format(Number(payment?.settlement_amount || 0));
     return (
       <div className=" md:py-10 px-4 flex items-center justify-center">
+        <SEO title={t('checkout.title', 'Checkout')} noindex />
         <motion.div
           {...fadeUp}
           transition={tweenBase}
@@ -581,6 +584,7 @@ export function CheckoutPage() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-8 py-12">
+      <SEO title={t('checkout.title', 'Checkout')} noindex />
       <nav className="flex items-center gap-2 label-sm text-secondary mb-12 overflow-x-auto whitespace-nowrap pb-2">
         <Link to="/cart" className="hover:text-primary transition-colors">{t('nav.cart')}</Link>
         <Icons.ChevronRight size={14} />
