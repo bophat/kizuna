@@ -18,12 +18,13 @@ from django.db.models import Avg, Case, Count, IntegerField, Max, Min, Q, Value,
 from .models import (
     AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
     OrderItem, PaymentMethodConfig, UserProfile, Product, ProductStatus,
-    Category, Favorite, ProductReview,
+    Category, Favorite, ProductReview, CustomerNotification,
 )
 from .serializers import (
     CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer,
     CategorySerializer, FavoriteSerializer, PaymentTransactionPublicSerializer,
     UserProfileSerializer, ProductReviewSerializer, ProductReviewWriteSerializer,
+    CustomerNotificationSerializer,
 )
 from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
 from .shipping import calculate_shipping_amount
@@ -421,6 +422,36 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     def likes_counts(self, request):
         products = Product.objects.filter(status=ProductStatus.PUBLISHED).values('id', 'likes')
         return Response(list(products))
+
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    """The customer's own notification feed."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = CustomerNotificationSerializer
+    pagination_class = ProductPagination
+
+    def get_queryset(self):
+        return CustomerNotification.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        return Response({
+            'unread': self.get_queryset().filter(is_read=False).count(),
+        })
+
+    @action(detail=True, methods=['post'], url_path='read')
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save(update_fields=['is_read'])
+        return Response(self.get_serializer(notification).data)
+
+    @action(detail=False, methods=['post'], url_path='read-all')
+    def mark_all_read(self, request):
+        updated = self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({'updated': updated})
+
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()

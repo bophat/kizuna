@@ -9,6 +9,7 @@ from .models import (
     Category,
     ContactInfo,
     ContactMessage,
+    CustomerNotification,
     Favorite,
     LoyaltyPointTransaction,
     Order,
@@ -360,3 +361,13 @@ class ContactMessageSubmitSerializer(serializers.ModelSerializer):
         if len(value) > 5000:
             raise serializers.ValidationError('Message must not exceed 5000 characters.')
         return value
+
+
+class CustomerNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = CustomerNotification
+        fields = [
+            'id', 'kind', 'title', 'message', 'link', 'action_label',
+            'is_read', 'created_at',
+        ]
+        read_only_fields = fields

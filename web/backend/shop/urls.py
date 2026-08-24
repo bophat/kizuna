@@ -11,6 +11,8 @@ from .views import (
     ExchangeRatesView,
     PublicSettingsView,
     PublicMediaView,
+
+    NotificationViewSet,
 )
 from .concierge_views import (
     ConciergeHistoryView,
@@ -32,6 +34,7 @@ router.register(r'orders', OrderHistoryViewSet, basename='order-history')
 router.register(r'cart', CartViewSet, basename='cart')
 router.register(r'checkout', CheckoutViewSet, basename='checkout')
 router.register(r'favorites', FavoriteViewSet, basename='favorite')
+router.register(r'notifications', NotificationViewSet, basename='notification')
 
 urlpatterns = [
     path(

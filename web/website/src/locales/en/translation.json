@@ -430,7 +430,13 @@
         "time": "Yesterday",
         "action": "View Order"
       }
-    }
+    },
+    "empty": "You have no notifications yet.",
+    "load_error": "Could not load your notifications.",
+    "sign_in_prompt": "Sign in to see updates about your orders.",
+    "mark_read": "Mark as read",
+    "mark_all_read": "Mark all as read",
+    "view": "View"
   },
   "concierge": {
     "welcome": "Hello! I’m Kizuna AI, the shop’s online concierge. What item are you interested in or looking for today? Leave a message and I’ll help as quickly as possible.",

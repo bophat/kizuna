@@ -913,3 +913,59 @@ class ProductReview(models.Model):
 
     def __str__(self):
         return f'{self.rating}★ {self.product_id} by {self.user_id}'
+
+
+class CustomerNotification(models.Model):
+    """An in-app message for one customer.
+
+    Text is stored rendered rather than as a translation key plus params: a
+    notification describes something that already happened, so it should keep
+    reading the way it did when it was sent even if the customer later switches
+    language or the wording changes.
+    """
+
+    class Kind(models.TextChoices):
+        ORDER = 'order', 'Order update'
+        PAYMENT = 'payment', 'Payment'
+        PROMO = 'promo', 'Promotion'
+        CART = 'cart', 'Cart reminder'
+        SYSTEM = 'system', 'System'
+
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='notifications'
+    )
+    kind = models.CharField(
+        max_length=20, choices=Kind.choices, default=Kind.SYSTEM, db_index=True
+    )
+    title = models.CharField(max_length=150)
+    message = models.TextField(blank=True, default='')
+    link = models.CharField(
+        max_length=200,
+        blank=True,
+        default='',
+        help_text='Storefront path this notification points at, e.g. /order-history.',
+    )
+    action_label = models.CharField(max_length=60, blank=True, default='')
+    is_read = models.BooleanField(default=False, db_index=True)
+    # Set for notifications that must only ever be sent once for a given thing
+    # (an order reaching a status, a cart reminder). Lets senders be re-run
+    # safely without spamming the customer.
+    dedupe_key = models.CharField(max_length=120, blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        indexes = [
+            models.Index(fields=['user', '-created_at']),
+            models.Index(fields=['user', 'is_read']),
+        ]
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'dedupe_key'],
+                condition=models.Q(dedupe_key__gt=''),
+                name='unique_notification_dedupe_key',
+            ),
+        ]
+
+    def __str__(self):
+        return f'{self.kind}: {self.title} -> {self.user_id}'

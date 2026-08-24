@@ -430,7 +430,13 @@
         "time": "Hôm qua",
         "action": "Xem đơn hàng"
       }
-    }
+    },
+    "empty": "Bạn chưa có thông báo nào.",
+    "load_error": "Không thể tải thông báo.",
+    "sign_in_prompt": "Đăng nhập để xem cập nhật về đơn hàng của bạn.",
+    "mark_read": "Đánh dấu đã đọc",
+    "mark_all_read": "Đánh dấu tất cả đã đọc",
+    "view": "Xem"
   },
   "concierge": {
     "welcome": "Chào bạn! Mình là Kizuna AI, chuyên viên tư vấn trực tuyến của shop. Hôm nay bạn đang quan tâm hoặc muốn tìm mặt hàng nào? Hãy để lại tin nhắn để mình hỗ trợ nhanh nhất nhé.",

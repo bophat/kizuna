@@ -32,12 +32,4 @@ export interface Order {
   total: number;
 }
 
-export interface Notification {
-  id: string;
-  type: 'quote' | 'order' | 'progress' | 'promo';
-  title: string;
-  message: string;
-  time: string;
-  actionLabel?: string;
-  accent?: boolean;
-}
+
