@@ -8,6 +8,7 @@ import { CartProvider } from './context/CartContext';
 import { WishlistProvider } from './context/WishlistContext';
 import { AuthProvider } from './context/AuthContext';
 import { ExchangeRatesProvider } from './context/ExchangeRatesContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { MotionProvider } from './components/MotionProvider';
 import { initGA } from './lib/analytics';
 
@@ -15,18 +16,20 @@ initGA();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
-    <HelmetProvider>
-      <MotionProvider>
-        <ExchangeRatesProvider>
-          <AuthProvider>
-            <WishlistProvider>
-              <CartProvider>
-                <App />
-              </CartProvider>
-            </WishlistProvider>
-          </AuthProvider>
-        </ExchangeRatesProvider>
-      </MotionProvider>
-    </HelmetProvider>
+    <ThemeProvider>
+      <HelmetProvider>
+        <MotionProvider>
+          <ExchangeRatesProvider>
+            <AuthProvider>
+              <WishlistProvider>
+                <CartProvider>
+                  <App />
+                </CartProvider>
+              </WishlistProvider>
+            </AuthProvider>
+          </ExchangeRatesProvider>
+        </MotionProvider>
+      </HelmetProvider>
+    </ThemeProvider>
   </StrictMode>,
 );

@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Icons } from '@/components/Icons';
 import { Link } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '@/lib/api';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -115,11 +114,11 @@ export function OrderHistoryPage() {
 
       {isLoading ? (
         <div className="flex justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-primary" />
+          <Icons.Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
       ) : error ? (
         <div className="text-center py-20">
-          <p className="body-lg text-red-500 mb-4">{error}</p>
+          <p className="body-lg text-error mb-4">{error}</p>
         </div>
       ) : orders.length === 0 ? (
         <div className="text-center py-20">
@@ -142,7 +141,7 @@ export function OrderHistoryPage() {
             });
 
             return (
-              <article key={order.id} className="bg-white border border-surface-variant rounded-sm p-8 group hover:shadow-lg transition-shadow">
+              <article key={order.id} className="bg-surface-container-lowest border border-surface-variant rounded-sm p-8 group hover:shadow-lg transition-shadow">
                 <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-6 mb-8 border-b border-surface-variant pb-8">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -189,8 +188,8 @@ export function OrderHistoryPage() {
                         style={{ width: progressPercent }}
                       />
                       {STATUS_STEPS.map((step, i) => (
-                        <div key={step} className="flex flex-col items-center gap-2 bg-white px-4">
-                          <div className={`w-4 h-4 rounded-full border-2 transition-all ${i <= stepIndex ? 'bg-primary border-primary' : 'bg-white border-surface-variant'}`} />
+                        <div key={step} className="flex flex-col items-center gap-2 bg-surface-container-lowest px-4">
+                          <div className={`w-4 h-4 rounded-full border-2 transition-all ${i <= stepIndex ? 'bg-primary border-primary' : 'bg-surface-container-lowest border-surface-variant'}`} />
                           <span className={`label-sm lowercase tracking-normal ${i === stepIndex ? 'text-primary font-bold' : 'text-secondary'}`}>
                             {t(STATUS_LABELS[step])}
                           </span>
@@ -228,7 +227,7 @@ export function OrderHistoryPage() {
                         </label>
                       )}
                     </div>
-                    {uploadError[order.id] && <p className="mt-3 text-sm text-red-600">{uploadError[order.id]}</p>}
+                    {uploadError[order.id] && <p className="mt-3 text-sm text-error">{uploadError[order.id]}</p>}
                   </div>
                 )}
 

@@ -68,10 +68,10 @@ function PageUnavailable({ error }: { error: boolean }) {
     <div className="min-h-[65vh] flex flex-col items-center justify-center px-6 text-center">
       <SEO title={t('seo.not_found_title')} noindex />
       <FileQuestion className="mb-5 h-12 w-12 text-primary/40" />
-      <h1 className="mb-3 font-serif text-3xl text-zinc-900 dark:text-white">
+      <h1 className="mb-3 font-serif text-3xl text-on-surface">
         {error ? t('static_pages.load_error') : t('static_pages.not_found')}
       </h1>
-      <p className="mb-8 max-w-lg text-zinc-500">{t('static_pages.not_found_description')}</p>
+      <p className="mb-8 max-w-lg text-secondary">{t('static_pages.not_found_description')}</p>
       <Link to="/" className="rounded-md bg-primary px-6 py-3 text-sm font-semibold text-white transition-opacity hover:opacity-90">
         {t('static_pages.back_home')}
       </Link>
@@ -95,17 +95,17 @@ export function StaticPage({ slug }: { slug: string }) {
 
   const updatedAt = new Intl.DateTimeFormat(i18n.language, { dateStyle: 'long' }).format(new Date(page.updated_at));
   return (
-    <main className="min-h-[65vh] bg-stone-50/50 px-5 py-14 dark:bg-zinc-950/30 md:py-20">
+    <main className="min-h-[65vh] bg-surface-container-low/50 px-5 py-14 md:py-20">
       <SEO
         title={page.title}
         description={stripToExcerpt(page.content)}
         path={STATIC_PAGE_PATHS[slug]}
       />
-      <article className="mx-auto max-w-4xl rounded-2xl border border-zinc-200 bg-white px-6 py-10 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:px-14 md:py-14">
-        <div className="mb-10 border-b border-zinc-200 pb-8 dark:border-zinc-800">
+      <article className="mx-auto max-w-4xl rounded-2xl border border-outline-variant bg-surface-container-lowest px-6 py-10 shadow-sm md:px-14 md:py-14">
+        <div className="mb-10 border-b border-outline-variant pb-8">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">KIZUNA</p>
-          <h1 className="font-serif text-4xl font-semibold text-zinc-950 dark:text-white md:text-5xl">{page.title}</h1>
-          <p className="mt-4 text-sm text-zinc-400">{t('static_pages.updated_at', { date: updatedAt })}</p>
+          <h1 className="font-serif text-4xl font-semibold text-on-surface md:text-5xl">{page.title}</h1>
+          <p className="mt-4 text-sm text-secondary">{t('static_pages.updated_at', { date: updatedAt })}</p>
         </div>
         <ContentRenderer content={page.content} contentType={page.content_type} />
       </article>

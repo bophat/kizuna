@@ -76,12 +76,12 @@ export function ContactPage() {
   }
 
   return (
-    <main className="min-h-[65vh] bg-stone-50/50 px-5 py-14 dark:bg-zinc-950/30 md:py-20">
+    <main className="min-h-[65vh] bg-surface-container-low/50 px-5 py-14 md:py-20">
       <SEO title={t('seo.contact_title')} description={t('seo.contact_description')} path="/lien-he" />
       <div className="mx-auto max-w-6xl">
         <header className="mb-12 max-w-3xl">
           <p className="mb-3 text-xs font-semibold uppercase tracking-[0.24em] text-primary">KIZUNA</p>
-          <h1 className="font-serif text-4xl font-semibold text-zinc-950 dark:text-white md:text-5xl">{page?.title || t('contact.title')}</h1>
+          <h1 className="font-serif text-4xl font-semibold text-on-surface md:text-5xl">{page?.title || t('contact.title')}</h1>
           {page && <ContentRenderer content={page.content} contentType={page.content_type} className="mt-6" />}
         </header>
 
@@ -107,16 +107,16 @@ export function ContactPage() {
             )}
           </section>
 
-          <form onSubmit={submit} className="rounded-2xl border border-zinc-200 bg-white p-7 shadow-sm dark:border-zinc-800 dark:bg-zinc-950 md:p-10">
-            <h2 className="mb-2 font-serif text-3xl text-zinc-950 dark:text-white">{t('contact.form_title')}</h2>
-            <p className="mb-7 text-sm text-zinc-500">{t('contact.form_description')}</p>
+          <form onSubmit={submit} className="rounded-2xl border border-outline-variant bg-surface-container-lowest p-7 shadow-sm md:p-10">
+            <h2 className="mb-2 font-serif text-3xl text-on-surface">{t('contact.form_title')}</h2>
+            <p className="mb-7 text-sm text-secondary">{t('contact.form_description')}</p>
             <div className="grid gap-5 md:grid-cols-2">
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{t('contact.name')}<input required maxLength={100} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-2 w-full rounded-lg border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-primary dark:border-zinc-700" /></label>
-              <label className="text-sm font-medium text-zinc-700 dark:text-zinc-200">{t('contact.email')}<input required type="email" maxLength={254} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-2 w-full rounded-lg border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-primary dark:border-zinc-700" /></label>
+              <label className="text-sm font-medium text-on-surface-variant">{t('contact.name')}<input required maxLength={100} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="mt-2 w-full rounded-lg border border-outline-variant bg-transparent px-4 py-3 outline-none focus:border-primary" /></label>
+              <label className="text-sm font-medium text-on-surface-variant">{t('contact.email')}<input required type="email" maxLength={254} value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="mt-2 w-full rounded-lg border border-outline-variant bg-transparent px-4 py-3 outline-none focus:border-primary" /></label>
             </div>
-            <label className="mt-5 block text-sm font-medium text-zinc-700 dark:text-zinc-200">{t('contact.message')}<textarea required maxLength={5000} rows={7} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="mt-2 w-full resize-y rounded-lg border border-zinc-200 bg-transparent px-4 py-3 outline-none focus:border-primary dark:border-zinc-700" /></label>
+            <label className="mt-5 block text-sm font-medium text-on-surface-variant">{t('contact.message')}<textarea required maxLength={5000} rows={7} value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} className="mt-2 w-full resize-y rounded-lg border border-outline-variant bg-transparent px-4 py-3 outline-none focus:border-primary" /></label>
             {success && <p className="mt-5 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-700" role="status">{t('contact.form_success')}</p>}
-            {error && <p className="mt-5 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700" role="alert">{error}</p>}
+            {error && <p className="mt-5 rounded-lg bg-error-container px-4 py-3 text-sm text-on-error-container" role="alert">{error}</p>}
             <button disabled={sending} className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-6 py-3 font-semibold text-white transition-opacity hover:opacity-90 disabled:opacity-60">
               {sending ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}{sending ? t('contact.sending') : t('contact.send')}
             </button>

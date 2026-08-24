@@ -6,10 +6,10 @@ import { scaleIn, tweenFast } from '@/lib/motion';
 import { Icons } from '../Icons';
 import { Logo } from '@izuna/shared/components/Logo';
 import { cn } from '@/lib/utils';
-import { ChevronDown, Globe, Package, Headset } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
+import { useTheme } from '@/context/ThemeContext';
 
 export function Header() {
   const { t, i18n } = useTranslation();
@@ -24,6 +24,7 @@ export function Header() {
   const { cart } = useCart();
   const { wishlistItems } = useWishlist();
   const { isAuthenticated } = useAuth();
+  const { theme, toggleTheme } = useTheme();
 
   const languages = [
     { code: 'en', label: 'English', short: 'EN' },
@@ -64,7 +65,7 @@ export function Header() {
   const showClose = isAuthPage;
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800 z-50 transition-all">
+    <nav className="fixed top-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-md border-b border-outline-variant z-50 transition-all">
       <div className="max-w-[1280px] mx-auto flex items-center px-8 h-20 w-full">
         {/* Logo - Left */}
         <div className="flex-shrink-0 flex items-center h-full">
@@ -81,11 +82,11 @@ export function Header() {
           {showIcons && (
             <div className="hidden md:flex items-center gap-5 flex-shrink-0">
               <Link to="/collections" className="text-secondary hover:text-primary transition-colors" title={t('nav.products')}>
-                <Package size={22} />
+                <Icons.Package size={22} />
               </Link>
 
               <Link to="/concierge" className="text-secondary hover:text-primary transition-colors" title={t('nav.concierge')}>
-                <Headset size={22} />
+                <Icons.Headset size={22} />
               </Link>
 
               <Link to="/wishlist" className="text-secondary hover:text-primary transition-colors relative" title={t('nav.wishlist')}>
@@ -113,28 +114,40 @@ export function Header() {
           )}
 
           {showStatus && (
-            <div className="flex items-center gap-2 text-secondary px-4 py-2 bg-zinc-50 dark:bg-zinc-900 rounded-full border border-zinc-200 dark:border-zinc-800">
+            <div className="flex items-center gap-2 text-secondary px-4 py-2 bg-surface-container-low rounded-full border border-outline-variant">
               <Icons.Lock size={16} className="text-primary" />
               <span className="label-xs font-bold tracking-widest uppercase">{t('checkout.secure_checkout')}</span>
             </div>
           )}
 
           {showClose && (
-            <Link to="/" className="text-secondary hover:text-primary transition-all p-2 bg-zinc-50 dark:bg-zinc-900 rounded-full border border-zinc-200 dark:border-zinc-800">
+            <Link to="/" className="text-secondary hover:text-primary transition-all p-2 bg-surface-container-low rounded-full border border-outline-variant">
               <Icons.X size={20} />
             </Link>
           )}
 
+          {/* Theme Toggle */}
+          {(!isCheckout && !isAuthPage) && (
+            <button
+              onClick={toggleTheme}
+              className="p-2 text-secondary hover:text-primary transition-colors flex-shrink-0"
+              title={theme === 'dark' ? t('common.switch_to_light', 'Switch to light mode') : t('common.switch_to_dark', 'Switch to dark mode')}
+              aria-label={theme === 'dark' ? t('common.switch_to_light', 'Switch to light mode') : t('common.switch_to_dark', 'Switch to dark mode')}
+            >
+              {theme === 'dark' ? <Icons.Sun size={20} /> : <Icons.Moon size={20} />}
+            </button>
+          )}
+
           {/* Language Switcher - Visually Middle */}
           {(!isCheckout && !isAuthPage) && (
-            <div className="relative pl-2 md:pl-4 border-l border-zinc-200 dark:border-zinc-800 flex-shrink-0" ref={langRef}>
+            <div className="relative pl-2 md:pl-4 border-l border-outline-variant flex-shrink-0" ref={langRef}>
               <button
                 onClick={() => setIsLangOpen(!isLangOpen)}
                 className="flex items-center gap-2 text-secondary hover:text-primary transition-colors py-2"
               >
-                <Globe size={18} />
+                <Icons.Globe size={18} />
                 <span className="label-xs uppercase font-medium">{currentLang.short}</span>
-                <ChevronDown size={14} className={cn("transition-transform duration-300", isLangOpen && "rotate-180")} />
+                <Icons.ChevronDown size={14} className={cn("transition-transform duration-300", isLangOpen && "rotate-180")} />
               </button>
 
               <AnimatePresence>
@@ -142,7 +155,7 @@ export function Header() {
                   <motion.div
                     {...scaleIn}
                     transition={tweenFast}
-                    className="absolute right-0 mt-2 w-40 bg-white dark:bg-zinc-900 shadow-2xl border border-zinc-200 dark:border-zinc-800 rounded-sm py-2 overflow-hidden gpu-transform"
+                    className="absolute right-0 mt-2 w-40 bg-surface-container-lowest shadow-2xl border border-outline-variant rounded-sm py-2 overflow-hidden gpu-transform"
                   >
                     {languages.map((lang) => (
                       <button
@@ -154,8 +167,8 @@ export function Header() {
                         className={cn(
                           "w-full text-left px-4 py-2.5 label-sm transition-colors",
                           i18n.language.startsWith(lang.code)
-                            ? "bg-zinc-50 dark:bg-zinc-800 text-primary font-bold"
-                            : "text-secondary hover:bg-zinc-50 dark:hover:bg-zinc-800 hover:text-primary"
+                            ? "bg-surface-container-low text-primary font-bold"
+                            : "text-secondary hover:bg-surface-container-low hover:text-primary"
                         )}
                       >
                         {lang.label}
@@ -177,7 +190,7 @@ export function Header() {
                     name="q"
                     autoComplete="off"
                     placeholder={t('common.search') + "..."}
-                    className="w-full bg-zinc-900 border border-zinc-800 text-white placeholder:text-white/50 focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-full py-2 pl-10 pr-4 body-sm outline-none transition-all duration-300 shadow-lg hover:border-primary/50"
+                    className="w-full bg-inverse-surface border border-inverse-surface text-inverse-on-surface placeholder:text-inverse-on-surface/50 focus:border-primary focus:ring-1 focus:ring-primary/20 rounded-full py-2 pl-10 pr-4 body-sm outline-none transition-all duration-300 shadow-lg hover:border-primary/50"
                   />
                   <button
                     type="submit"
@@ -222,7 +235,7 @@ export function Header() {
                         name="q"
                         autoComplete="off"
                         placeholder={t('common.search') + "..."}
-                        className="w-full bg-zinc-900 border border-zinc-800 text-white placeholder:text-white/50 rounded-full py-2 pl-10 pr-4 body-sm outline-none shadow-2xl focus:border-primary/50"
+                        className="w-full bg-inverse-surface border border-inverse-surface text-inverse-on-surface placeholder:text-inverse-on-surface/50 rounded-full py-2 pl-10 pr-4 body-sm outline-none shadow-2xl focus:border-primary/50"
                       />
                       <button
                         type="submit"

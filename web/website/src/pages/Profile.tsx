@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { Icons } from '@/components/Icons';
-import { CircleAlert, Copy, Loader2, Package, Star, LogOut, CheckCircle2, KeyRound, Link2, MousePointerClick, TicketPercent, WalletCards } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { EmptyState } from '@/components/EmptyState';
@@ -282,7 +281,7 @@ export function ProfilePage() {
     return (
       <div className="flex flex-col justify-center items-center min-h-[60vh] gap-3">
         <SEO title={t('profile.title')} noindex />
-        <Loader2 className="w-10 h-10 animate-spin text-primary" />
+        <Icons.Loader2 className="w-10 h-10 animate-spin text-primary" />
         <p className="body-sm text-secondary">{t('common.loading')}</p>
       </div>
     );
@@ -296,7 +295,7 @@ export function ProfilePage() {
           <div className="flex items-center gap-4 mb-2">
             <h1 className="headline-xl">{t('profile.title')}</h1>
             <div className="flex items-center gap-1.5 px-3 py-1 bg-primary/5 border border-primary/10 rounded-full">
-              <Star size={14} className="text-primary fill-primary" />
+              <Icons.Star size={14} className="text-primary fill-primary" />
               <span className="label-sm text-primary font-bold">{t('profile.points', { count: loyalty?.points ?? user?.profile?.points ?? 0 })}</span>
             </div>
           </div>
@@ -441,9 +440,9 @@ export function ProfilePage() {
                   <button
                     type="button"
                     onClick={handleLogout}
-                    className="flex w-full items-center justify-center gap-2 rounded-sm border border-red-200 px-6 py-3 text-red-600 transition-all hover:border-red-600 hover:bg-red-600 hover:text-white sm:w-auto label-md tracking-normal normal-case"
+                    className="flex w-full items-center justify-center gap-2 rounded-sm border border-error px-6 py-3 text-error transition-all hover:border-error hover:bg-error hover:text-on-error sm:w-auto label-md tracking-normal normal-case"
                   >
-                    <LogOut size={18} />
+                    <Icons.LogOut size={18} />
                     {t('profile.sign_out')}
                   </button>
                   <button
@@ -451,7 +450,7 @@ export function ProfilePage() {
                     disabled={isUpdating}
                     className="flex w-full items-center justify-center gap-3 rounded-sm bg-primary px-6 py-3 text-white transition-all hover:opacity-90 disabled:opacity-50 sm:w-auto label-md tracking-normal normal-case"
                   >
-                    {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 size={18} />}
+                    {isUpdating ? <Icons.Loader2 className="w-4 h-4 animate-spin" /> : <Icons.CheckCircle2 size={18} />}
                     {t('profile.update_profile')}
                   </button>
                   <button
@@ -460,14 +459,14 @@ export function ProfilePage() {
                     disabled={isSendingPasswordEmail}
                     className="flex w-full items-center justify-center gap-3 whitespace-nowrap rounded-sm border border-primary px-6 py-3 text-primary transition-all hover:bg-primary hover:text-white disabled:opacity-50 sm:w-auto label-md tracking-normal normal-case"
                   >
-                    {isSendingPasswordEmail ? <Loader2 className="w-4 h-4 animate-spin" /> : <KeyRound size={18} />}
+                    {isSendingPasswordEmail ? <Icons.Loader2 className="w-4 h-4 animate-spin" /> : <Icons.KeyRound size={18} />}
                     {isSendingPasswordEmail ? t('profile.change_password_sending') : t('profile.change_password')}
                   </button>
                 </div>
 
                 {message && (
                   <p
-                    className={`md:col-span-2 body-sm ${message.type === 'success' ? 'text-green-600' : 'text-red-500'}`}
+                    className={`md:col-span-2 body-sm ${message.type === 'success' ? 'text-green-600' : 'text-error'}`}
                   >
                     {message.text}
                   </p>
@@ -477,13 +476,13 @@ export function ProfilePage() {
                     className={`flex items-start gap-3 rounded-sm border px-4 py-3 md:col-span-2 body-sm ${
                       passwordMessage.type === 'success'
                         ? 'border-green-200 bg-green-50 text-green-700'
-                        : 'border-red-200 bg-red-50 text-red-600'
+                        : 'border-error bg-error-container text-on-error-container'
                     }`}
                     role={passwordMessage.type === 'success' ? 'status' : 'alert'}
                   >
                     {passwordMessage.type === 'success'
-                      ? <CheckCircle2 className="mt-0.5 shrink-0" size={18} />
-                      : <CircleAlert className="mt-0.5 shrink-0" size={18} />}
+                      ? <Icons.CheckCircle2 className="mt-0.5 shrink-0" size={18} />
+                      : <Icons.CircleAlert className="mt-0.5 shrink-0" size={18} />}
                     <span className="min-w-0 leading-relaxed normal-case">{passwordMessage.text}</span>
                   </div>
                 )}
@@ -495,7 +494,7 @@ export function ProfilePage() {
             <div className="space-y-6">
               {orders.length === 0 ? (
                 <EmptyState
-                  icon={<Package size={48} strokeWidth={1} />}
+                  icon={<Icons.Package size={48} strokeWidth={1} />}
                   title={t('order.no_orders')}
                   description={t('profile.collection_empty_desc')}
                   actionText={t('order.browse_collection')}
@@ -539,7 +538,7 @@ export function ProfilePage() {
                               />
                             ) : (
                               <div className="w-full h-full flex items-center justify-center text-secondary">
-                                <Package size={16} />
+                                <Icons.Package size={16} />
                               </div>
                             )}
                           </div>
@@ -588,7 +587,7 @@ export function ProfilePage() {
             <div>
               {purchasedItems.length === 0 ? (
                 <EmptyState
-                  icon={<Package size={48} strokeWidth={1} />}
+                  icon={<Icons.Package size={48} strokeWidth={1} />}
                   title={t('profile.no_items_purchased')}
                   description={t('profile.collection_empty_desc')}
                   actionText={t('hero.cta')}
@@ -608,7 +607,7 @@ export function ProfilePage() {
                           />
                         ) : (
                           <div className="w-full h-full flex items-center justify-center text-secondary">
-                            <Package size={24} />
+                            <Icons.Package size={24} />
                           </div>
                         )}
                       </div>
@@ -676,16 +675,16 @@ function CouponWalletPanel({
   });
   const statusClasses: Record<CustomerCoupon['ownership_status'], string> = {
     available: 'border-emerald-200 bg-emerald-50 text-emerald-700',
-    used: 'border-zinc-200 bg-zinc-100 text-zinc-600',
-    inactive: 'border-zinc-200 bg-zinc-100 text-zinc-600',
-    expired: 'border-red-200 bg-red-50 text-red-600',
+    used: 'border-outline-variant bg-surface-container-high text-on-surface-variant',
+    inactive: 'border-outline-variant bg-surface-container-high text-on-surface-variant',
+    expired: 'border-error bg-error-container text-on-error-container',
     scheduled: 'border-blue-200 bg-blue-50 text-blue-700',
   };
 
   return (
     <div className="space-y-7">
       <div className="flex items-start gap-4 rounded-sm border border-primary/15 bg-primary/5 p-6 md:p-8">
-        <div className="rounded-full bg-primary p-3 text-white"><TicketPercent size={24} /></div>
+        <div className="rounded-full bg-primary p-3 text-white"><Icons.TicketPercent size={24} /></div>
         <div>
           <h2 className="headline-sm normal-case tracking-normal">{t('profile.coupons.title')}</h2>
           <p className="mt-2 body-sm leading-relaxed text-secondary">{t('profile.coupons.description')}</p>
@@ -694,16 +693,16 @@ function CouponWalletPanel({
 
       {loading ? (
         <div className="flex min-h-48 items-center justify-center gap-3 text-secondary">
-          <Loader2 className="animate-spin text-primary" size={24} />
+          <Icons.Loader2 className="animate-spin text-primary" size={24} />
           <span>{t('common.loading')}</span>
         </div>
       ) : error ? (
-        <div className="flex items-center gap-3 rounded-sm border border-red-200 bg-red-50 p-5 text-red-600">
-          <CircleAlert size={20} className="shrink-0" /><span>{error}</span>
+        <div className="flex items-center gap-3 rounded-sm border border-error bg-error-container p-5 text-on-error-container">
+          <Icons.CircleAlert size={20} className="shrink-0" /><span>{error}</span>
         </div>
       ) : sortedCoupons.length === 0 ? (
         <div className="rounded-sm border border-dashed border-surface-variant p-12 text-center">
-          <TicketPercent size={42} strokeWidth={1.25} className="mx-auto text-secondary" />
+          <Icons.TicketPercent size={42} strokeWidth={1.25} className="mx-auto text-secondary" />
           <h3 className="mt-4 font-semibold">{t('profile.coupons.empty')}</h3>
           <p className="mt-2 body-sm text-secondary">{t('profile.coupons.empty_hint')}</p>
         </div>
@@ -717,7 +716,7 @@ function CouponWalletPanel({
             return (
               <article
                 key={coupon.code}
-                className={`overflow-hidden rounded-sm border bg-white ${available ? 'border-primary/30 shadow-sm' : 'border-surface-variant opacity-75'}`}
+                className={`overflow-hidden rounded-sm border bg-surface-container-lowest ${available ? 'border-primary/30 shadow-sm' : 'border-surface-variant opacity-75'}`}
               >
                 <div className="border-b border-surface-variant bg-surface-container/30 p-5">
                   <div className="flex items-start justify-between gap-4">
@@ -765,7 +764,7 @@ function CouponWalletPanel({
                       }}
                       className="inline-flex flex-1 items-center justify-center gap-2 rounded-sm border border-primary px-4 py-2.5 text-sm font-semibold text-primary hover:bg-primary hover:text-white"
                     >
-                      <Copy size={16} /> {t('profile.coupons.copy')}
+                      <Icons.Copy size={16} /> {t('profile.coupons.copy')}
                     </button>
                     <button
                       type="button"
@@ -794,7 +793,7 @@ function LoyaltyDashboardPanel({ loyalty }: { loyalty: LoyaltyDashboard | null }
       <div className="grid gap-5 md:grid-cols-[minmax(0,280px)_1fr]">
         <div className="rounded-sm border border-primary/20 bg-primary/5 p-7">
           <div className="flex items-center gap-2 text-primary">
-            <Star size={19} className="fill-primary" />
+            <Icons.Star size={19} className="fill-primary" />
             <p className="label-sm">{t('profile.loyalty.balance')}</p>
           </div>
           <p className="mt-4 text-4xl font-bold text-primary">{loyalty?.points ?? 0}</p>
@@ -807,7 +806,7 @@ function LoyaltyDashboardPanel({ loyalty }: { loyalty: LoyaltyDashboard | null }
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-sm border border-surface-variant bg-white">
+      <div className="overflow-hidden rounded-sm border border-surface-variant bg-surface-container-lowest">
         <div className="border-b border-surface-variant px-6 py-5">
           <h2 className="font-semibold">{t('profile.loyalty.history')}</h2>
         </div>
@@ -824,7 +823,7 @@ function LoyaltyDashboardPanel({ loyalty }: { loyalty: LoyaltyDashboard | null }
                   </p>
                 </div>
                 <div className="sm:text-right">
-                  <p className={`text-lg font-bold ${item.points_delta > 0 ? 'text-emerald-600' : 'text-red-600'}`}>
+                  <p className={`text-lg font-bold ${item.points_delta > 0 ? 'text-emerald-600' : 'text-error'}`}>
                     {item.points_delta > 0 ? '+' : ''}{item.points_delta}
                   </p>
                   <p className="text-xs text-secondary">{t('profile.loyalty.balance_after', { count: item.balance_after })}</p>
@@ -843,11 +842,11 @@ function AffiliateDashboardPanel({ affiliate, formatPrice }: { affiliate: Affili
   const referralLink = `${window.location.origin}/?ref=${affiliate.code}`;
   const totals = affiliate.totals || { pending: '0', available: '0', paid: '0', reversed: '0' };
   const cards = [
-    { key: 'visits', value: affiliate.visits_count || 0, icon: MousePointerClick },
-    { key: 'orders', value: affiliate.orders_count || 0, icon: Package },
-    { key: 'pending', value: formatPrice(totals.pending), icon: WalletCards },
-    { key: 'available', value: formatPrice(totals.available), icon: WalletCards },
-    { key: 'paid', value: formatPrice(totals.paid), icon: CheckCircle2 },
+    { key: 'visits', value: affiliate.visits_count || 0, icon: Icons.MousePointerClick },
+    { key: 'orders', value: affiliate.orders_count || 0, icon: Icons.Package },
+    { key: 'pending', value: formatPrice(totals.pending), icon: Icons.WalletCards },
+    { key: 'available', value: formatPrice(totals.available), icon: Icons.WalletCards },
+    { key: 'paid', value: formatPrice(totals.paid), icon: Icons.CheckCircle2 },
   ];
 
   return (
@@ -864,17 +863,17 @@ function AffiliateDashboardPanel({ affiliate, formatPrice }: { affiliate: Affili
             onClick={() => navigator.clipboard.writeText(referralLink)}
             className="inline-flex items-center justify-center gap-2 rounded-sm bg-primary px-6 py-3 text-sm font-semibold text-white"
           >
-            <Copy size={17} /> {t('affiliate_dashboard.copy_link')}
+            <Icons.Copy size={17} /> {t('affiliate_dashboard.copy_link')}
           </button>
         </div>
-        <div className="mt-5 flex items-center gap-2 overflow-hidden rounded-sm border border-surface-variant bg-white px-4 py-3 text-sm text-secondary">
-          <Link2 size={16} className="shrink-0 text-primary" /><code className="truncate">{referralLink}</code>
+        <div className="mt-5 flex items-center gap-2 overflow-hidden rounded-sm border border-surface-variant bg-surface-container-lowest px-4 py-3 text-sm text-secondary">
+          <Icons.Link2 size={16} className="shrink-0 text-primary" /><code className="truncate">{referralLink}</code>
         </div>
       </div>
 
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-5">
         {cards.map(({ key, value, icon: Icon }) => (
-          <div key={key} className="rounded-sm border border-surface-variant bg-white p-5">
+          <div key={key} className="rounded-sm border border-surface-variant bg-surface-container-lowest p-5">
             <Icon size={20} className="mb-4 text-primary" />
             <p className="text-xl font-bold">{value}</p>
             <p className="mt-1 text-xs text-secondary">{t(`affiliate_dashboard.metrics.${key}`)}</p>
@@ -882,7 +881,7 @@ function AffiliateDashboardPanel({ affiliate, formatPrice }: { affiliate: Affili
         ))}
       </div>
 
-      <div className="overflow-hidden rounded-sm border border-surface-variant bg-white">
+      <div className="overflow-hidden rounded-sm border border-surface-variant bg-surface-container-lowest">
         <div className="border-b border-surface-variant px-5 py-4 font-semibold">{t('affiliate_dashboard.recent')}</div>
         {!affiliate.recent_commissions?.length ? (
           <p className="p-8 text-center text-sm text-secondary">{t('affiliate_dashboard.empty')}</p>

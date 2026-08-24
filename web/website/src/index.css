@@ -8,6 +8,10 @@
 @source "../../shared/components/Logo.tsx";
 @source "../shared/components/Logo.tsx";
 
+/* Class-based dark mode (manual toggle via ThemeContext, not OS-only) —
+   switches Tailwind's `dark:` variant to target `.dark` on <html> instead of
+   `prefers-color-scheme`. Must come after the tailwindcss import. */
+@custom-variant dark (&:where(.dark, .dark *));
 
 @theme {
   --color-surface: #fcf9f8;
@@ -59,6 +63,11 @@
   --color-on-background: #1c1b1b;
   --color-surface-variant: #e5e2e1;
 
+  /* No semantic home existed for "best price" / positive-state green — new token,
+     not a remap of an existing family. Verified 4.5:1+ contrast (see .dark below). */
+  --color-success: #2e7d32;
+  --color-on-success: #ffffff;
+
   --font-sans: "Manrope", ui-sans-serif, system-ui, sans-serif;
   --font-serif: "Cormorant Garamond", ui-serif, Georgia, serif;
 
@@ -69,6 +78,71 @@
   --kizuna-spacing-md: 24px;
   --kizuna-spacing-sm: 16px;
   --kizuna-spacing-xs: 8px;
+}
+
+/*
+ * Dark-mode token values. Each pair below has been checked against WCAG's
+ * 4.5:1 minimum contrast (relative-luminance formula), not just eyeballed.
+ * Where possible these reuse the *-fixed / *-fixed-dim roles already defined
+ * above (Material-3's "fixed" roles are precomputed to work as accent colors
+ * against either a light or a dark surface, which is exactly what's needed
+ * here) instead of inventing new hex values from scratch. Primary/secondary/
+ * tertiary/error each follow the same pattern:
+ *   dark-X            = light X-fixed-dim
+ *   dark-on-X         = light on-X-fixed
+ *   dark-X-container  = light on-X-fixed-variant
+ *   dark-on-X-container = light X-fixed
+ * (Primary/error don't have a plain "-fixed-variant" container role in this
+ * token set, so their containers use a purpose-picked dark value instead —
+ * still contrast-checked against its paired on-color.)
+ */
+.dark {
+  --color-surface: #141110;
+  --color-surface-dim: #0e0b0b;
+  --color-surface-bright: #3a3332;
+  --color-surface-container-lowest: #0a0808;
+  --color-surface-container-low: #1c1817;
+  --color-surface-container: #201c1b;
+  --color-surface-container-high: #2b2625;
+  --color-surface-container-highest: #363030;
+  --color-on-surface: #ece7e6;
+  --color-on-surface-variant: #d6bab8;
+  --color-inverse-surface: #e5e2e1;
+  --color-inverse-on-surface: #313030;
+  --color-outline: #a08683;
+  --color-outline-variant: #5a403f;
+  --color-surface-tint: #ffb3b0;
+
+  --color-primary: #ffb3b0;
+  --primary-rgb: 255, 179, 176;
+  --color-on-primary: #410006;
+  --color-primary-container: #7a1120;
+  --color-on-primary-container: #ffd6d4;
+
+  --color-secondary: #c6c6c7;
+  --color-on-secondary: #1a1c1c;
+  --color-secondary-container: #454747;
+  --color-on-secondary-container: #e2e2e2;
+
+  --color-tertiary: #c7c6c6;
+  --color-on-tertiary: #1b1c1c;
+  --color-tertiary-container: #464747;
+  --color-on-tertiary-container: #e3e2e2;
+
+  --color-error: #ffb4ab;
+  --color-on-error: #690005;
+  --color-error-container: #93000a;
+  --color-on-error-container: #ffdad6;
+
+  --color-background: #141110;
+  --color-on-background: #ece7e6;
+  --color-surface-variant: #363030;
+
+  --color-success: #8bc98f;
+  --color-on-success: #0f3d13;
+
+  /* primary/secondary/tertiary *-fixed / *-fixed-dim roles are intentionally
+     NOT redefined here — M3 "fixed" colors stay constant across themes. */
 }
 
 @layer base {

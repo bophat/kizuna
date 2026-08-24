@@ -9,7 +9,7 @@ export function ConciergeFAB() {
     <div className="fixed bottom-20 md:bottom-8 right-6 md:right-8 z-[60]">
       <Link
         to="/concierge"
-        className="bg-zinc-900 dark:bg-zinc-100 text-white dark:text-zinc-900 flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 transition-all group border border-zinc-800 dark:border-zinc-200"
+        className="bg-inverse-surface text-inverse-on-surface flex items-center gap-3 px-6 py-3 md:px-8 md:py-4 rounded-full shadow-2xl hover:shadow-primary/20 hover:-translate-y-1 transition-all group border border-inverse-surface"
       >
         <Icons.Sparkles size={20} className="text-primary animate-pulse" />
         <span className="label-sm md:label-md tracking-normal normal-case font-bold">

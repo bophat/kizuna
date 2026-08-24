@@ -2,7 +2,6 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { motion, AnimatePresence } from 'motion/react';
-import { Filter, X, ChevronDown, ChevronLeft, ChevronRight, LayoutGrid, List, SlidersHorizontal, Loader2 } from 'lucide-react';
 import { ProductGrid } from '@/components/products/ProductGrid';
 import { Product } from '@/types';
 import { cn } from '@/lib/utils';
@@ -196,7 +195,7 @@ export function CollectionPage() {
         isRadio ? "rounded-full" : "rounded-sm",
         checked 
           ? "bg-primary border-primary shadow-[0_0_12px_rgba(153,5,29,0.3)] scale-105" 
-          : "bg-transparent border-zinc-200 dark:border-zinc-800 group-hover:border-primary/40 group-hover:scale-105"
+          : "bg-transparent border-outline-variant group-hover:border-primary/40 group-hover:scale-105"
       )}>
         {checked && (
           isRadio 
@@ -206,7 +205,7 @@ export function CollectionPage() {
       </div>
       <span className={cn(
         "text-sm font-medium transition-all duration-300",
-        checked ? "text-primary font-bold translate-x-1" : "text-zinc-600 dark:text-zinc-400 group-hover:text-primary group-hover:translate-x-1"
+        checked ? "text-primary font-bold translate-x-1" : "text-secondary group-hover:text-primary group-hover:translate-x-1"
       )}>
         {label}
       </span>
@@ -217,7 +216,7 @@ export function CollectionPage() {
     <div className="min-h-screen bg-surface">
       <SEO title={t('seo.collections_title')} description={t('seo.collections_description')} path="/collections" />
       {/* Sticky Header & Filter Bar */}
-      <div className="z-30 border-b border-surface-variant/50 bg-white/95 shadow-sm backdrop-blur-md lg:sticky lg:top-20">
+      <div className="z-30 border-b border-surface-variant/50 bg-surface-container-lowest/95 shadow-sm backdrop-blur-md lg:sticky lg:top-20">
         <div className="mx-auto flex max-w-[1440px] items-center justify-between gap-3 px-4 py-3 sm:px-6 sm:py-4 lg:py-8">
           
           {/* Title & Stats */}
@@ -237,11 +236,11 @@ export function CollectionPage() {
             <button 
               onClick={() => setIsFilterDrawerOpen(true)}
               className={cn(
-                "flex items-center gap-1.5 rounded-full bg-zinc-900 px-3 py-2 text-xs font-bold text-white transition-all duration-300 hover:bg-primary sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm dark:bg-zinc-100 dark:text-zinc-900 lg:px-6",
+                "flex items-center gap-1.5 rounded-full bg-inverse-surface px-3 py-2 text-xs font-bold text-inverse-on-surface transition-all duration-300 hover:bg-primary sm:gap-2 sm:px-4 sm:py-2.5 sm:text-sm lg:px-6",
                 (brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0 || categoryFilters.length > 0) && "bg-primary"
               )}
             >
-              <SlidersHorizontal size={15} />
+              <Icons.SlidersHorizontal size={15} />
               <span>{t('filter.title')}</span>
               {(brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0 || categoryFilters.length > 0) && (
                 <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
@@ -255,21 +254,21 @@ export function CollectionPage() {
         {/* Active Filters Bar */}
         {(categoryFilters.length > 0 || brandFilters.length > 0 || priceRangeFilter || statusFilters.length > 0) && (
           <div className="flex flex-wrap gap-2 mb-8 items-center">
-            <span className="text-[10px] font-bold uppercase tracking-widest text-zinc-400 mr-2">{t('collection.active')}:</span>
+            <span className="text-[10px] font-bold uppercase tracking-widest text-secondary mr-2">{t('collection.active')}:</span>
 
             {brandFilters.map(b => (
               <button key={b} onClick={() => updateFilter('brand', b, true)} className="flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-xs hover:bg-surface-variant transition-colors">
-                {b} <X size={12} />
+                {b} <Icons.X size={12} />
               </button>
             ))}
             {statusFilters.map(s => (
               <button key={s} onClick={() => updateFilter('filter', s, true)} className="flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-xs hover:bg-surface-variant transition-colors">
-                {t(`home.${s}` as any) || s} <X size={12} />
+                {t(`home.${s}` as any) || s} <Icons.X size={12} />
               </button>
             ))}
             {priceRangeFilter && (
               <button onClick={() => updateFilter('priceRange', '')} className="flex items-center gap-1 px-3 py-1 bg-surface-container rounded-full text-xs hover:bg-surface-variant transition-colors">
-                {getRangeLabel(priceRangeFilter)} <X size={12} />
+                {getRangeLabel(priceRangeFilter)} <Icons.X size={12} />
               </button>
             )}
             <button onClick={clearFilters} className="text-xs text-primary font-bold hover:underline ml-2">
@@ -281,12 +280,12 @@ export function CollectionPage() {
         <main className="w-full">
           {isLoading ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
+              <Icons.Loader2 className="w-8 h-8 animate-spin text-primary mb-4" />
               <p className="body-lg text-secondary">{t('common.loading')}</p>
             </div>
           ) : error ? (
             <div className="flex flex-col items-center justify-center py-20 text-center">
-              <p className="body-lg text-red-500 mb-4">{error}</p>
+              <p className="body-lg text-error mb-4">{error}</p>
               <button 
                 onClick={() => window.location.reload()}
                 className="text-primary border-b border-primary hover:text-primary-container transition-all"
@@ -314,7 +313,7 @@ export function CollectionPage() {
                           "h-8 w-8 rounded-full border text-[10px] font-bold transition-all duration-300 sm:h-9 sm:w-9 sm:text-xs lg:h-10 lg:w-10",
                           itemsPerPage === size 
                             ? "bg-primary border-primary text-white shadow-lg shadow-primary/20" 
-                            : "bg-white border-zinc-200 text-secondary hover:border-primary hover:text-primary"
+                            : "bg-surface-container-lowest border-outline-variant text-secondary hover:border-primary hover:text-primary"
                         )}
                       >
                         {size}
@@ -328,9 +327,9 @@ export function CollectionPage() {
                   <button
                     disabled={currentPage === 1}
                     onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-secondary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant text-secondary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
                   >
-                    <ChevronLeft size={16} />
+                    <Icons.ChevronLeft size={16} />
                   </button>
                   
                   <div className="flex items-center gap-1">
@@ -343,14 +342,14 @@ export function CollectionPage() {
                       .map((p, i, arr) => (
                         <React.Fragment key={p}>
                           {i > 0 && arr[i-1] !== p - 1 && (
-                            <span className="px-2 text-zinc-400">...</span>
+                            <span className="px-2 text-secondary">...</span>
                           )}
                           <button
                             onClick={() => setCurrentPage(p)}
                             className={cn(
                               "h-8 w-8 rounded-full text-[10px] font-bold transition-all duration-300 sm:h-9 sm:w-9 sm:text-xs lg:h-10 lg:w-10",
                               currentPage === p 
-                                ? "bg-zinc-900 text-white dark:bg-white dark:text-zinc-900 shadow-xl" 
+                                ? "bg-inverse-surface text-inverse-on-surface shadow-xl"
                                 : "text-secondary hover:bg-surface-variant"
                             )}
                           >
@@ -364,9 +363,9 @@ export function CollectionPage() {
                   <button
                     disabled={currentPage === totalPages}
                     onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                    className="flex h-8 w-8 items-center justify-center rounded-full border border-zinc-200 text-secondary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
+                    className="flex h-8 w-8 items-center justify-center rounded-full border border-outline-variant text-secondary transition-colors hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30 sm:h-9 sm:w-9 lg:h-10 lg:w-10"
                   >
-                    <ChevronRight size={16} />
+                    <Icons.ChevronRight size={16} />
                   </button>
                 </div>}
 
@@ -413,13 +412,13 @@ export function CollectionPage() {
               <motion.div
                 {...scaleIn}
                 transition={tweenBase}
-                className="w-full max-w-3xl max-h-[90vh] bg-white rounded-2xl shadow-2xl flex flex-col pointer-events-auto overflow-hidden gpu-transform"
+                className="w-full max-w-3xl max-h-[90vh] bg-surface-container-lowest rounded-2xl shadow-2xl flex flex-col pointer-events-auto overflow-hidden gpu-transform"
               >
                 {/* Header */}
                 <div className="p-6 border-b border-surface-variant flex items-center justify-between shrink-0">
                   <h2 className="headline-sm">{t('filter.title')}</h2>
                   <button onClick={() => setIsFilterDrawerOpen(false)} className="p-2 hover:bg-surface-container rounded-full transition-colors">
-                    <X size={24} />
+                    <Icons.X size={24} />
                   </button>
                 </div>
 
@@ -514,7 +513,7 @@ export function CollectionPage() {
                 <div className="p-6 border-t border-surface-variant flex gap-4 shrink-0 bg-surface">
                   <button 
                     onClick={clearFilters}
-                    className="flex-1 py-4 border border-zinc-200 dark:border-zinc-800 label-sm rounded-full font-bold hover:bg-zinc-50 dark:hover:bg-zinc-900 transition-colors"
+                    className="flex-1 py-4 border border-outline-variant label-sm rounded-full font-bold hover:bg-surface-container-low transition-colors"
                   >
                     {t('filter.clear_all')}
                   </button>

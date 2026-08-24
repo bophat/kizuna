@@ -76,7 +76,7 @@ export function RegisterPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 min-h-screen">
         <div className="w-full max-w-[400px]">
           <div className="mb-8 text-center md:text-left flex flex-col items-center md:items-start gap-8">
-            <Logo size="lg" forceBlack />
+            <Logo size="lg" />
             <div>
               <h2 className="headline-lg mb-2">{t('auth.community_join')}</h2>
               <p className="body-md text-secondary">{t('auth.begin_journey')}</p>
@@ -84,7 +84,7 @@ export function RegisterPage() {
           </div>
           <form className="space-y-4" onSubmit={handleRegister}>
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-600 body-sm rounded-sm">
+              <div className="p-3 bg-error-container border border-error text-on-error-container body-sm rounded-sm">
                 {error}
               </div>
             )}
@@ -95,12 +95,12 @@ export function RegisterPage() {
                 type="text" 
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
                 placeholder={t('auth.choose_username')}
                 required
               />
               {fieldErrors.username && (
-                <span className="text-red-500 text-xs mt-1">{fieldErrors.username[0]}</span>
+                <span className="text-error text-xs mt-1">{fieldErrors.username[0]}</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -110,12 +110,12 @@ export function RegisterPage() {
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
                 placeholder={t('auth.enter_email')}
                 required
               />
               {fieldErrors.email && (
-                <span className="text-red-500 text-xs mt-1">{fieldErrors.email[0]}</span>
+                <span className="text-error text-xs mt-1">{fieldErrors.email[0]}</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -125,12 +125,12 @@ export function RegisterPage() {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
                 placeholder={t('auth.create_password')}
                 required
               />
               {fieldErrors.password && (
-                <span className="text-red-500 text-xs mt-1">{fieldErrors.password[0]}</span>
+                <span className="text-error text-xs mt-1">{fieldErrors.password[0]}</span>
               )}
             </div>
             <div className="flex flex-col gap-1">
@@ -140,7 +140,7 @@ export function RegisterPage() {
                 type="password" 
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
                 placeholder={t('auth.confirm_password_placeholder')}
                 required
               />
