@@ -17,6 +17,14 @@ from .views import (
     PasswordResetConfirmView,
 )
 
+from .two_factor import (
+    TwoFactorConfirmView,
+    TwoFactorDisableView,
+    TwoFactorLoginView,
+    TwoFactorSetupView,
+    TwoFactorStatusView,
+)
+
 urlpatterns = [
     path('register/', RegisterView.as_view(), name='register'),
     path('verify-email/', VerifyEmailView.as_view(), name='verify_email'),
@@ -25,6 +33,11 @@ urlpatterns = [
     path('password-change/request/', PasswordChangeRequestView.as_view(), name='password_change_request'),
     path('password-reset/confirm/', PasswordResetConfirmView.as_view(), name='password_reset_confirm'),
     path('login/', EmailTokenObtainPairView.as_view(), name='token_obtain_pair'),
+    path('login/2fa/', TwoFactorLoginView.as_view(), name='two-factor-login'),
+    path('2fa/status/', TwoFactorStatusView.as_view(), name='two-factor-status'),
+    path('2fa/setup/', TwoFactorSetupView.as_view(), name='two-factor-setup'),
+    path('2fa/confirm/', TwoFactorConfirmView.as_view(), name='two-factor-confirm'),
+    path('2fa/disable/', TwoFactorDisableView.as_view(), name='two-factor-disable'),
     path('logout/', LogoutView.as_view(), name='logout'),
     path('token/refresh/', CookieTokenRefreshView.as_view(), name='token_refresh'),
     path('me/', UserDetailView.as_view(), name='user_me'),
