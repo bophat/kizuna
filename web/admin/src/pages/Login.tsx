@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { Lock, Mail, Eye, EyeOff, ArrowRight, AlertCircle } from 'lucide-react';
+import { Lock, Mail, Eye, EyeOff, ArrowRight, AlertCircle, ShieldCheck } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useTranslation, Trans } from 'react-i18next';
 import { Logo } from '@izuna/shared/components/Logo';
@@ -21,6 +21,9 @@ export default function Login() {
   const [email, setEmail] = React.useState('');
   const [password, setPassword] = React.useState('');
   const [error, setError] = React.useState<string | null>(null);
+  // Set once the password is accepted but the account needs a second factor.
+  const [needsCode, setNeedsCode] = React.useState(false);
+  const [code, setCode] = React.useState('');
   const [bgImage, setBgImage] = React.useState<string>(DEFAULT_BG);
   const [publicSettings, setPublicSettings] = React.useState<Record<string, string>>({});
   const navigate = useNavigate();
@@ -38,40 +41,64 @@ export default function Login() {
       .catch(() => {});
   }, []);
 
+  /** Signed in successfully - check this account is allowed in the admin. */
+  const completeSignIn = async () => {
+    localStorage.removeItem('access_token');
+    localStorage.removeItem('refresh_token');
+
+    const meResponse = await apiFetch('/me/');
+    if (!meResponse.ok) {
+      setError(t('login.errors.verify_failed'));
+      return;
+    }
+    const userData = await meResponse.json();
+    if (userData.is_staff || userData.is_superuser) {
+      window.location.href = '/';
+      return;
+    }
+    setError(t('login.errors.access_denied'));
+    await apiFetch('/logout/', { method: 'POST' });
+  };
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
     try {
-      const response = await apiFetch('/login/', {
+      // Once the password step has passed, every submit goes to the 2FA
+      // endpoint, which re-checks the credentials alongside the code.
+      const endpoint = needsCode ? '/login/2fa/' : '/login/';
+      const payload = needsCode
+        ? { email, password, code }
+        : { email, password };
+
+      const response = await apiFetch(endpoint, {
         method: 'POST',
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify(payload),
       });
 
       if (response.ok) {
-        localStorage.removeItem('access_token');
-        localStorage.removeItem('refresh_token');
+        await completeSignIn();
+        return;
+      }
 
-        const meResponse = await apiFetch('/me/');
-        if (meResponse.ok) {
-          const userData = await meResponse.json();
-          if (userData.is_staff || userData.is_superuser) {
-            window.location.href = '/';
-          } else {
-            setError(t('login.errors.access_denied'));
-            await apiFetch('/logout/', { method: 'POST' });
-          }
-        } else {
-          setError(t('login.errors.verify_failed'));
-        }
+      const errorData = await response.json().catch(() => ({}));
+
+      if (errorData.code === 'two_factor_required') {
+        setNeedsCode(true);
+        setError(null);
+        return;
+      }
+      if (errorData.code === 'invalid_code') {
+        setError(t('login.errors.invalid_code'));
+        setCode('');
+        return;
+      }
+      if (response.status === 401) {
+        setError(t('login.errors.invalid_credentials'));
       } else {
-        const errorData = await response.json();
-        if (response.status === 401) {
-          setError(t('login.errors.invalid_credentials'));
-        } else {
-          setError(errorData.message || errorData.detail || t('login.errors.invalid_credentials'));
-        }
+        setError(errorData.message || errorData.detail || t('login.errors.invalid_credentials'));
       }
     } catch (err) {
       setError(t('login.errors.connection_error'));
@@ -142,7 +169,39 @@ export default function Login() {
           )}
 
           <form onSubmit={handleLogin} className="space-y-6">
-            <div className="space-y-2">
+            {needsCode && (
+              <div className="space-y-2">
+                <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 ml-1">
+                  {t('login.code_label')}
+                </label>
+                <div className="relative group">
+                  <ShieldCheck className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20 group-focus-within:text-brand-red transition-colors" size={18} />
+                  <input
+                    type="text"
+                    autoFocus
+                    required
+                    inputMode="numeric"
+                    autoComplete="one-time-code"
+                    value={code}
+                    onChange={(e) => setCode(e.target.value)}
+                    placeholder={t('login.code_placeholder')}
+                    className="w-full bg-white border border-brand-clay rounded-md px-12 py-4 text-sm tracking-[0.3em] focus:outline-none focus:border-brand-red focus:ring-1 focus:ring-brand-red/10 transition-all shadow-sm"
+                  />
+                </div>
+                <p className="text-[11px] text-brand-ink/40 leading-relaxed px-1">
+                  {t('login.code_hint')}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => { setNeedsCode(false); setCode(''); setError(null); }}
+                  className="text-[10px] uppercase tracking-widest font-bold text-brand-red hover:underline px-1"
+                >
+                  {t('login.code_back')}
+                </button>
+              </div>
+            )}
+
+            <div className={needsCode ? 'hidden' : 'space-y-2'}>
               <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40 ml-1">{t('login.email_label')}</label>
               <div className="relative group">
                 <Mail className="absolute left-4 top-1/2 -translate-y-1/2 text-brand-ink/20 group-focus-within:text-brand-red transition-colors" size={18} />
@@ -157,7 +216,7 @@ export default function Login() {
               </div>
             </div>
 
-            <div className="space-y-2">
+            <div className={needsCode ? 'hidden' : 'space-y-2'}>
               <div className="flex justify-between items-center px-1">
                 <label className="text-[10px] uppercase tracking-widest font-bold text-brand-ink/40">{t('login.password_label')}</label>
                 <a href="#" className="text-[10px] uppercase tracking-widest font-bold text-brand-red hover:underline transition-all">{t('login.forgot_password')}</a>
@@ -191,7 +250,7 @@ export default function Login() {
                 <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
               ) : (
                 <>
-                  <span>{t('login.authenticate_button')}</span>
+                  <span>{needsCode ? t('login.verify_button') : t('login.authenticate_button')}</span>
                   <ArrowRight size={18} className="group-hover:translate-x-1 transition-transform" />
                 </>
               )}

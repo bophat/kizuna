@@ -51,11 +51,41 @@
     "select_product": "Select a published product",
     "auto_product_link": "Uses the product page when left blank",
     "optional": "Optional",
-    "types": { "event": "Event", "product": "New product" },
-    "status": { "draft": "Draft", "sending": "Sending", "sent": "Sent", "partial": "Partially sent" },
-    "table": { "campaign": "Campaign", "type": "Type", "progress": "Delivery", "status": "Status", "created": "Created", "actions": "Actions" },
-    "fields": { "name": "Internal campaign name", "type": "Campaign type", "product": "Product", "subject": "Email subject", "body": "Message", "cta_text": "Button text", "cta_url": "Destination URL", "image_url": "Banner image URL" },
-    "errors": { "load": "Unable to load email campaigns.", "save": "Unable to save the campaign.", "test": "Unable to send the test email.", "send": "Campaign delivery stopped. You can continue it from the campaign list.", "delete": "Unable to delete the campaign." }
+    "types": {
+      "event": "Event",
+      "product": "New product"
+    },
+    "status": {
+      "draft": "Draft",
+      "sending": "Sending",
+      "sent": "Sent",
+      "partial": "Partially sent"
+    },
+    "table": {
+      "campaign": "Campaign",
+      "type": "Type",
+      "progress": "Delivery",
+      "status": "Status",
+      "created": "Created",
+      "actions": "Actions"
+    },
+    "fields": {
+      "name": "Internal campaign name",
+      "type": "Campaign type",
+      "product": "Product",
+      "subject": "Email subject",
+      "body": "Message",
+      "cta_text": "Button text",
+      "cta_url": "Destination URL",
+      "image_url": "Banner image URL"
+    },
+    "errors": {
+      "load": "Unable to load email campaigns.",
+      "save": "Unable to save the campaign.",
+      "test": "Unable to send the test email.",
+      "send": "Campaign delivery stopped. You can continue it from the campaign list.",
+      "delete": "Unable to delete the campaign."
+    }
   },
   "coupons": {
     "title": "Coupons",
@@ -84,12 +114,45 @@
     "assigned_to": "For {{email}} only",
     "managed_automatically": "Managed automatically",
     "no_affiliate": "General coupon (no affiliate)",
-    "table": { "code": "Code", "discount": "Discount", "period": "Valid period", "usage": "Usage", "status": "Status", "actions": "Actions" },
-    "fields": { "code": "Coupon code", "type": "Discount type", "value": "Discount value", "minimum": "Minimum order (USD)", "maximum": "Maximum discount (USD)", "usage_limit": "Total usage limit", "per_user": "Limit per customer", "affiliate": "Affiliate owner", "starts_at": "Starts at", "expires_at": "Expires at", "description": "Internal description", "active": "Coupon is active" },
-    "types": { "percentage": "Percentage", "fixed": "Fixed amount (USD)" },
-    "status": { "active": "Active", "inactive": "Inactive", "scheduled": "Scheduled", "expired": "Expired", "exhausted": "Fully used" },
+    "table": {
+      "code": "Code",
+      "discount": "Discount",
+      "period": "Valid period",
+      "usage": "Usage",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "fields": {
+      "code": "Coupon code",
+      "type": "Discount type",
+      "value": "Discount value",
+      "minimum": "Minimum order (USD)",
+      "maximum": "Maximum discount (USD)",
+      "usage_limit": "Total usage limit",
+      "per_user": "Limit per customer",
+      "affiliate": "Affiliate owner",
+      "starts_at": "Starts at",
+      "expires_at": "Expires at",
+      "description": "Internal description",
+      "active": "Coupon is active"
+    },
+    "types": {
+      "percentage": "Percentage",
+      "fixed": "Fixed amount (USD)"
+    },
+    "status": {
+      "active": "Active",
+      "inactive": "Inactive",
+      "scheduled": "Scheduled",
+      "expired": "Expired",
+      "exhausted": "Fully used"
+    },
     "active_hint": "Inactive coupons cannot be applied at checkout.",
-    "errors": { "load": "Unable to load coupons.", "save": "Unable to save coupon.", "delete": "Unable to delete coupon." }
+    "errors": {
+      "load": "Unable to load coupons.",
+      "save": "Unable to save coupon.",
+      "delete": "Unable to delete coupon."
+    }
   },
   "affiliates": {
     "title": "Affiliates & collaborators",
@@ -116,22 +179,88 @@
     "bank_title": "Payout bank details",
     "bank_hint": "Stored encrypted; only the last four digits are displayed later.",
     "bank_replace_hint": "Current account {{account}}. Enter a new account only to replace it.",
-    "tabs": { "affiliates": "Affiliates", "commissions": "Commissions", "payouts": "Payouts" },
-    "metrics": { "visits": "Referral visits", "orders": "Attributed orders", "pending": "Pending", "available": "Available to pay", "paid": "Paid" },
-    "table": { "affiliate": "Affiliate", "performance": "Performance", "commission": "Commission", "payout": "Available payout", "status": "Status", "actions": "Actions" },
-    "status": { "pending": "Pending approval", "active": "Active", "suspended": "Suspended" },
-    "commission_status": { "pending": "Pending", "available": "Available", "paid": "Paid", "reversed": "Reversed" },
-    "payout_status": { "draft": "Awaiting transfer", "paid": "Paid", "cancelled": "Cancelled" },
-    "commissions": { "order": "Order", "affiliate": "Affiliate", "customer": "Customer", "base": "Eligible sale", "amount": "Commission", "status": "Status", "date": "Created", "empty": "No commissions yet." },
-    "payouts": { "id": "Payout", "affiliate": "Affiliate", "amount": "Amount", "items": "Commissions", "status": "Status", "reference": "Transaction reference", "empty": "No payouts yet." },
-    "fields": { "user": "Customer account", "code": "Referral code", "status": "Status", "rate": "Commission rate (%)", "cookie_days": "Cookie duration (days)", "bank_name": "Bank name", "account_name": "Account holder", "account_number": "Account number", "notes": "Internal notes" },
-    "errors": { "load": "Unable to load affiliate data.", "save": "Unable to save affiliate.", "payout": "Unable to create payout." }
+    "tabs": {
+      "affiliates": "Affiliates",
+      "commissions": "Commissions",
+      "payouts": "Payouts"
+    },
+    "metrics": {
+      "visits": "Referral visits",
+      "orders": "Attributed orders",
+      "pending": "Pending",
+      "available": "Available to pay",
+      "paid": "Paid"
+    },
+    "table": {
+      "affiliate": "Affiliate",
+      "performance": "Performance",
+      "commission": "Commission",
+      "payout": "Available payout",
+      "status": "Status",
+      "actions": "Actions"
+    },
+    "status": {
+      "pending": "Pending approval",
+      "active": "Active",
+      "suspended": "Suspended"
+    },
+    "commission_status": {
+      "pending": "Pending",
+      "available": "Available",
+      "paid": "Paid",
+      "reversed": "Reversed"
+    },
+    "payout_status": {
+      "draft": "Awaiting transfer",
+      "paid": "Paid",
+      "cancelled": "Cancelled"
+    },
+    "commissions": {
+      "order": "Order",
+      "affiliate": "Affiliate",
+      "customer": "Customer",
+      "base": "Eligible sale",
+      "amount": "Commission",
+      "status": "Status",
+      "date": "Created",
+      "empty": "No commissions yet."
+    },
+    "payouts": {
+      "id": "Payout",
+      "affiliate": "Affiliate",
+      "amount": "Amount",
+      "items": "Commissions",
+      "status": "Status",
+      "reference": "Transaction reference",
+      "empty": "No payouts yet."
+    },
+    "fields": {
+      "user": "Customer account",
+      "code": "Referral code",
+      "status": "Status",
+      "rate": "Commission rate (%)",
+      "cookie_days": "Cookie duration (days)",
+      "bank_name": "Bank name",
+      "account_name": "Account holder",
+      "account_number": "Account number",
+      "notes": "Internal notes"
+    },
+    "errors": {
+      "load": "Unable to load affiliate data.",
+      "save": "Unable to save affiliate.",
+      "payout": "Unable to create payout."
+    }
   },
   "content_pages": {
     "title": "Content pages",
     "description": "Edit the policy pages and contact information shown on the storefront without deploying code.",
     "page_list": "Store pages",
-    "page_names": { "privacy_policy": "Privacy Policy", "terms_of_service": "Terms of Service", "shipping_returns": "Shipping & Returns", "contact": "Contact" },
+    "page_names": {
+      "privacy_policy": "Privacy Policy",
+      "terms_of_service": "Terms of Service",
+      "shipping_returns": "Shipping & Returns",
+      "contact": "Contact"
+    },
     "last_updated": "Updated {{date}}",
     "load_failed": "Unable to load content pages.",
     "saved": "Page saved successfully.",
@@ -140,15 +269,34 @@
     "preview": "Preview",
     "show_preview": "Show preview",
     "hide_preview": "Hide preview",
-    "fields": { "title": "Page title", "content_type": "Content format", "published": "Published", "content": "Content", "language": "Content language" },
+    "fields": {
+      "title": "Page title",
+      "content_type": "Content format",
+      "published": "Published",
+      "content": "Content",
+      "language": "Content language"
+    },
     "contact_title": "Structured contact information",
     "contact_description": "These details are displayed with icons on the contact page.",
-    "contact_fields": { "phone": "Phone", "email": "Email", "address": "Address", "working_hours": "Working hours", "facebook_url": "Facebook URL", "zalo_url": "Zalo URL", "instagram_url": "Instagram URL", "tiktok_url": "TikTok URL" },
+    "contact_fields": {
+      "phone": "Phone",
+      "email": "Email",
+      "address": "Address",
+      "working_hours": "Working hours",
+      "facebook_url": "Facebook URL",
+      "zalo_url": "Zalo URL",
+      "instagram_url": "Instagram URL",
+      "tiktok_url": "TikTok URL"
+    },
     "messages_title": "Contact inbox",
     "messages_count": "{{count}} messages",
     "no_messages": "No contact messages yet.",
     "unread": "New",
-    "status": { "unread": "Unread", "read": "Read", "replied": "Replied" }
+    "status": {
+      "unread": "Unread",
+      "read": "Read",
+      "replied": "Replied"
+    }
   },
   "chat": {
     "title": "Live Chat",
@@ -291,7 +439,12 @@
       "status_label": "Storefront status",
       "status_help": "Only published products are visible and purchasable on the storefront.",
       "name_label": "Artifact Nomenclature",
-      "languages": { "default": "Original", "en": "English", "ja": "Japanese", "vi": "Vietnamese" },
+      "languages": {
+        "default": "Original",
+        "en": "English",
+        "ja": "Japanese",
+        "vi": "Vietnamese"
+      },
       "attributes_label": "Collection Attributes",
       "attributes": {
         "featured": "Curated",
@@ -856,7 +1009,11 @@
       "upload_button": "Choose image",
       "uploading": "Uploading...",
       "preview": "Preview",
-      "languages": { "en": "English", "ja": "Japanese", "vi": "Vietnamese" }
+      "languages": {
+        "en": "English",
+        "ja": "Japanese",
+        "vi": "Vietnamese"
+      }
     },
     "media": {
       "login_background": "Login Background Image",
@@ -995,7 +1152,11 @@
     "reject_failed": "Failed to reject",
     "sent": "Message sent to customer",
     "rejected": "Rejected",
-    "channels": { "messenger": "Messenger", "comment": "Comment → Inbox", "website": "Website" }
+    "channels": {
+      "messenger": "Messenger",
+      "comment": "Comment → Inbox",
+      "website": "Website"
+    }
   },
   "login": {
     "hero_text": "Curating the finest traditions of Japanese craftsmanship for a modern world.",
@@ -1015,8 +1176,14 @@
       "access_denied": "Access denied. Admin privileges required.",
       "verify_failed": "Failed to verify account permissions.",
       "connection_error": "A connection error occurred. Please check your network.",
-      "invalid_credentials": "Invalid credentials. Please try again."
-    }
+      "invalid_credentials": "Invalid credentials. Please try again.",
+      "invalid_code": "That code is not valid or has already been used."
+    },
+    "code_label": "Authenticator code",
+    "code_placeholder": "000000",
+    "code_hint": "Enter the six-digit code from your authenticator app, or one of your recovery codes.",
+    "code_back": "Use a different account",
+    "verify_button": "Verify"
   },
   "notifications": {
     "title": "Notifications",
@@ -1025,9 +1192,18 @@
     "polling_mode": "Website messages and orders refresh about every 20 seconds. Enable the AI service in Settings for automatic replies.",
     "live_sync": "Live sync is enabled",
     "events": {
-      "order_cod_ready": { "title": "COD order ready", "message": "Order #{{id}} is ready for packing. Total: {{amount}} USD." },
-      "payment_proof_submitted": { "title": "Payment receipt received", "message": "Order #{{id}} needs payment verification ({{amount}} {{currency}})." },
-      "payment_succeeded": { "title": "Payment confirmed", "message": "Order #{{id}} is paid and ready for packing." }
+      "order_cod_ready": {
+        "title": "COD order ready",
+        "message": "Order #{{id}} is ready for packing. Total: {{amount}} USD."
+      },
+      "payment_proof_submitted": {
+        "title": "Payment receipt received",
+        "message": "Order #{{id}} needs payment verification ({{amount}} {{currency}})."
+      },
+      "payment_succeeded": {
+        "title": "Payment confirmed",
+        "message": "Order #{{id}} is paid and ready for packing."
+      }
     },
     "new_order": "New Order",
     "new_order_message": "You have a new order from customer #{{id}}",
@@ -1072,5 +1248,32 @@
     "invalid_image": "Please upload a valid image",
     "invalid_file": "Invalid file",
     "invalid_choice": "Invalid choice"
+  },
+  "two_factor": {
+    "title": "Two-factor authentication",
+    "description": "Require a code from an authenticator app in addition to the password. Strongly recommended for accounts with admin access.",
+    "status_on": "On",
+    "status_off": "Off",
+    "enable": "Set up two-factor",
+    "confirm": "Confirm and enable",
+    "cancel": "Cancel",
+    "scan_instructions": "Scan this with Google Authenticator, Authy, 1Password or any TOTP app, then enter the six-digit code it shows.",
+    "manual_key": "Or enter this key manually",
+    "code_label": "Six-digit code",
+    "qr_alt": "QR code for setting up two-factor authentication",
+    "recovery_title": "Save your recovery codes",
+    "recovery_body": "Each code works once and lets you sign in if you lose your device. This is the only time they are shown.",
+    "copy_codes": "Copy codes",
+    "copied": "Copied",
+    "recovery_remaining_one": "{{count}} recovery code left.",
+    "recovery_remaining_other": "{{count}} recovery codes left.",
+    "disable": "Turn off two-factor",
+    "disable_confirm": "Turn it off",
+    "confirm_password": "Confirm your password",
+    "errors": {
+      "setup_failed": "Could not start setup. Please try again.",
+      "invalid_code": "That code is not valid. Check your authenticator app.",
+      "disable_failed": "Could not turn off two-factor authentication."
+    }
   }
 }

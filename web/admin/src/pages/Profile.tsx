@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAdminProfile } from '../hooks/useAdminProfile';
 import { ProfileAvatarSection } from '../components/profile/ProfileAvatarSection';
 import { ProfileFormFields } from '../components/profile/ProfileFormFields';
+import { TwoFactorSection } from '../components/profile/TwoFactorSection';
 
 export default function Profile() {
   const { t } = useTranslation();
@@ -80,6 +81,14 @@ export default function Profile() {
           </div>
         </div>
       </motion.form>
+
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.4, delay: 0.2 }}
+      >
+        <TwoFactorSection />
+      </motion.div>
     </div>
   );
 }
