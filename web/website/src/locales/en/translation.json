@@ -516,5 +516,11 @@
     "purchase_required": "Only customers with a delivered order can review this product.",
     "load_error": "Could not load reviews.",
     "stars": "{{count}} stars"
+  },
+  "cookies": {
+    "title": "Cookies on KIZUNA",
+    "body": "We use analytics cookies to understand how the shop is used. Only the cookies needed to sign in and keep your cart are set without your consent.",
+    "accept": "Accept analytics",
+    "decline": "Essential only"
   }
 }

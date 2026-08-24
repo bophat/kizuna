@@ -516,5 +516,11 @@
     "purchase_required": "Chỉ khách đã nhận hàng mới đánh giá được sản phẩm này.",
     "load_error": "Không thể tải đánh giá.",
     "stars": "{{count}} sao"
+  },
+  "cookies": {
+    "title": "Cookie trên KIZUNA",
+    "body": "Chúng tôi dùng cookie phân tích để hiểu cách khách sử dụng cửa hàng. Chỉ những cookie cần thiết để đăng nhập và giữ giỏ hàng mới được đặt khi chưa có sự đồng ý của bạn.",
+    "accept": "Đồng ý phân tích",
+    "decline": "Chỉ cookie cần thiết"
   }
 }

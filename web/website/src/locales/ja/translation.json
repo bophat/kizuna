@@ -516,5 +516,11 @@
     "purchase_required": "配送済みのご注文がある方のみレビューを投稿できます。",
     "load_error": "レビューを読み込めませんでした。",
     "stars": "星{{count}}"
+  },
+  "cookies": {
+    "title": "KIZUNAのCookieについて",
+    "body": "ショップの利用状況を把握するために分析Cookieを使用します。同意なしに設定されるのは、ログインとカートの保持に必要なCookieのみです。",
+    "accept": "分析を許可",
+    "decline": "必須のみ"
   }
 }

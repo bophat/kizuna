@@ -8,6 +8,7 @@ import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
 import { useEffect } from 'react';
 import { captureAffiliateFromUrl } from '@/lib/affiliate';
 import { trackPageView } from '@/lib/analytics';
+import { CookieConsent } from '@/components/CookieConsent';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -45,6 +46,7 @@ export default function App() {
         </main>
         <ConditionalConciergeFAB />
         <ConditionalFooter />
+        <CookieConsent />
       </div>
     </Router>
   );
