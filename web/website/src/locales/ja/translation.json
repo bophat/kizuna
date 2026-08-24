@@ -243,8 +243,14 @@
       "product_unavailable": "カート内の商品が現在購入できません。カートをご確認ください。",
       "insufficient_stock": "商品「{{product}}」の在庫が不足しています。残り {{count}} 点です。",
       "invalid_payment_method": "有効な支払い方法を選択してください。",
-      "payment_method_unavailable": "この支払い方法は利用できなくなりました。別の方法を選択してください。"
-    }
+      "payment_method_unavailable": "この支払い方法は利用できなくなりました。別の方法を選択してください。",
+      "account_exists": "このメールアドレスのアカウントは既に存在します。ログインしてご注文を完了してください。"
+    },
+    "guest_notice": "ゲストとしてご購入手続き中です。",
+    "guest_sign_in": "ログインする",
+    "guest_saved_title": "ご注文を追跡できます",
+    "guest_saved_body": "{{email}} のアカウントを作成しました。パスワードを設定すると注文履歴と配送状況を確認できます。",
+    "guest_set_password": "パスワードを設定"
   },
   "wishlist": {
     "title": "お気に入り",

@@ -243,8 +243,14 @@
       "product_unavailable": "A product in your cart is no longer available. Please review your cart.",
       "insufficient_stock": "There is not enough stock for “{{product}}”. Only {{count}} item(s) remain.",
       "invalid_payment_method": "Please select a valid payment method.",
-      "payment_method_unavailable": "This payment method is no longer available. Please choose another option."
-    }
+      "payment_method_unavailable": "This payment method is no longer available. Please choose another option.",
+      "account_exists": "An account already exists for this email. Please sign in to complete your order."
+    },
+    "guest_notice": "You're checking out as a guest.",
+    "guest_sign_in": "Sign in instead",
+    "guest_saved_title": "Keep track of this order",
+    "guest_saved_body": "We created an account for {{email}}. Set a password to see your order history and track delivery.",
+    "guest_set_password": "Set a password"
   },
   "wishlist": {
     "title": "Your Wishlist",

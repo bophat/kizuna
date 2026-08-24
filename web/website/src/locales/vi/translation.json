@@ -243,8 +243,14 @@
       "product_unavailable": "Một sản phẩm trong giỏ hàng hiện không còn được bán. Vui lòng kiểm tra lại giỏ hàng.",
       "insufficient_stock": "Sản phẩm “{{product}}” không đủ tồn kho. Hiện chỉ còn {{count}} sản phẩm.",
       "invalid_payment_method": "Vui lòng chọn phương thức thanh toán hợp lệ.",
-      "payment_method_unavailable": "Phương thức thanh toán này không còn khả dụng. Vui lòng chọn phương thức khác."
-    }
+      "payment_method_unavailable": "Phương thức thanh toán này không còn khả dụng. Vui lòng chọn phương thức khác.",
+      "account_exists": "Email này đã có tài khoản. Vui lòng đăng nhập để hoàn tất đơn hàng."
+    },
+    "guest_notice": "Bạn đang đặt hàng với tư cách khách.",
+    "guest_sign_in": "Đăng nhập thay vì vậy",
+    "guest_saved_title": "Theo dõi đơn hàng này",
+    "guest_saved_body": "Chúng tôi đã tạo tài khoản cho {{email}}. Hãy đặt mật khẩu để xem lịch sử đơn hàng và theo dõi giao hàng.",
+    "guest_set_password": "Đặt mật khẩu"
   },
   "wishlist": {
     "title": "Danh sách yêu thích",

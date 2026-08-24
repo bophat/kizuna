@@ -55,6 +55,7 @@ type InformationFormProps = {
   address: string;
   setAddress: (value: string) => void;
   onNext: () => void;
+  isAuthenticated: boolean;
 };
 
 export function CheckoutPage() {
@@ -94,8 +95,9 @@ export function CheckoutPage() {
     .join('|');
 
   useEffect(() => {
+    // Guests can check out. Only signed-in customers have details to prefill.
     if (!authLoading && !isAuthenticated) {
-      navigate('/login');
+      setIsLoadingUser(false);
       return;
     }
 
@@ -232,6 +234,9 @@ export function CheckoutPage() {
 
   const checkoutErrorText = (data: Record<string, any>) => {
     const errorCode = data.checkout_error_code || data.payment_error_code;
+    if (errorCode === 'account_exists') {
+      return t('checkout.errors.account_exists');
+    }
     if (!errorCode) return data.error || t('checkout.errors.failed');
     return t(`checkout.errors.${errorCode}`, {
       product: data.product_name || '',
@@ -459,6 +464,21 @@ export function CheckoutPage() {
               )} <br className="hidden md:block" />
               {t('checkout.invoice_sent', { email: email })}
             </p>
+
+            {orderData?.guest_checkout && (
+              <div className="mt-6 w-full max-w-xl rounded-xl border border-white/15 bg-white/5 px-5 py-4 text-left">
+                <p className="font-bold text-white mb-1">{t('checkout.guest_saved_title')}</p>
+                <p className="text-sm text-zinc-400 mb-3">
+                  {t('checkout.guest_saved_body', { email })}
+                </p>
+                <Link
+                  to={`/forgot-password?email=${encodeURIComponent(email)}`}
+                  className="inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline"
+                >
+                  {t('checkout.guest_set_password')}
+                </Link>
+              </div>
+            )}
           </div>
 
           {/* Action Area or Bank Details */}
@@ -619,6 +639,7 @@ export function CheckoutPage() {
                   phone={phone} setPhone={setPhone}
                   address={address} setAddress={setAddress}
                   onNext={nextStep}
+                  isAuthenticated={isAuthenticated}
                 />
               )}
               {step === 1 && <ShippingMethodForm email={email} onNext={nextStep} onPrev={prevStep} shipping={shipping} />}
@@ -821,7 +842,8 @@ function InformationForm({
   lastName, setLastName,
   phone, setPhone,
   address, setAddress,
-  onNext
+  onNext,
+  isAuthenticated,
 }: InformationFormProps) {
   const { t } = useTranslation();
   const handleSubmit = (e: React.FormEvent) => {
@@ -839,6 +861,14 @@ function InformationForm({
         <div className="flex justify-between items-end mb-6">
           <h2 className="headline-md">{t('checkout.contact_info')}</h2>
         </div>
+        {!isAuthenticated && (
+          <div className="mb-6 flex flex-wrap items-center gap-x-3 gap-y-1 rounded-sm border border-outline-variant bg-surface-container-low px-4 py-3 body-sm">
+            <span className="text-secondary">{t('checkout.guest_notice')}</span>
+            <Link to="/login" className="font-semibold text-primary hover:underline">
+              {t('checkout.guest_sign_in')}
+            </Link>
+          </div>
+        )}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex flex-col gap-2">
             <label className="label-sm text-secondary">{t('auth.email')} *</label>

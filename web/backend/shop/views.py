@@ -39,6 +39,8 @@ from .payments import (
     normalize_payment_method,
 )
 from .invoice import generate_invoice_pdf, generate_invoice_filename
+from .guest_carts import get_cart as resolve_request_cart
+from .guest_accounts import ExistingAccountError, resolve_guest_user
 
 
 PUBLIC_API_CACHE_SECONDS = getattr(settings, 'PUBLIC_API_CACHE_SECONDS', 60)
@@ -463,11 +465,12 @@ class OrderHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
 class CartViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # Guests can fill a cart before deciding whether to create an account;
+    # their cart is keyed on the session and merged in when they sign in.
+    permission_classes = [AllowAny]
 
     def _get_cart(self, request):
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        return cart
+        return resolve_request_cart(request, create=True)
 
     @action(detail=False, methods=['get'])
     def get_cart(self, request):
@@ -585,10 +588,10 @@ class CartViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 class CheckoutViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def _get_cart(self, request):
-        return Cart.objects.filter(user=request.user).first()
+        return resolve_request_cart(request)
 
     @action(detail=False, methods=['post'])
     def process_checkout(self, request):
@@ -630,6 +633,22 @@ class CheckoutViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        is_guest_checkout = not user.is_authenticated
+        if is_guest_checkout:
+            try:
+                user = resolve_guest_user(email, first_name or '', last_name or '')
+            except ExistingAccountError:
+                # Attaching to a registered account would drop a stranger's
+                # order into that person's history, so ask them to sign in.
+                return Response(
+                    {
+                        "error": "An account already exists for this email. "
+                                 "Please sign in to complete your order.",
+                        "checkout_error_code": "account_exists",
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+
         if payment_method not in PaymentMethodConfig.Code.values:
             return Response(
                 {
@@ -650,7 +669,9 @@ class CheckoutViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
-                cart = Cart.objects.select_for_update().get(pk=cart.pk, user=user)
+                # Re-read under lock by primary key: a guest cart has no user
+                # yet, so it cannot be matched on the user column.
+                cart = Cart.objects.select_for_update().get(pk=cart.pk)
             except Cart.DoesNotExist:
                 return Response(
                     {"error": "Cart is empty", "checkout_error_code": "empty_cart"},
@@ -822,6 +843,9 @@ class CheckoutViewSet(viewsets.ViewSet):
         response_data = {
             "message": "Order placed successfully",
             "order": OrderSerializer(order, context={'request': request}).data,
+            # Lets the confirmation screen invite guests to set a password and
+            # keep their order history.
+            "guest_checkout": is_guest_checkout,
         }
         payment_data = PaymentTransactionPublicSerializer(
             payment, context={'request': request}
