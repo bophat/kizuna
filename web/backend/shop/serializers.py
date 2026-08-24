@@ -1,5 +1,6 @@
 from datetime import date
 
+from django.db.models import Avg
 from rest_framework import serializers
 from django.contrib.auth.models import User
 from .models import (
@@ -16,6 +17,7 @@ from .models import (
     PaymentTransaction,
     Product,
     ProductImage,
+    ProductReview,
     StorePage,
     UserProfile,
 )
@@ -65,13 +67,18 @@ class PublicProductSerializer(serializers.ModelSerializer):
     description = serializers.SerializerMethodField()
     category = serializers.SerializerMethodField()
     gallery = ProductImageSerializer(many=True, read_only=True)
+    # Supplied by the annotated queryset; falls back to a live count so the
+    # serializer still works on a plain Product instance.
+    rating_average = serializers.SerializerMethodField()
+    review_count = serializers.SerializerMethodField()
     class Meta:
         model = Product
         fields = [
             'id', 'name', 'price', 'currency', 'category',
             'brand', 'location', 'description', 'image', 'gallery',
             'is_limited', 'is_new', 'is_featured', 'is_cheap',
-            'likes', 'sales', 'stock', 'weight'
+            'likes', 'sales', 'stock', 'weight',
+            'rating_average', 'review_count',
         ]
 
     def to_representation(self, instance):
@@ -92,6 +99,52 @@ class PublicProductSerializer(serializers.ModelSerializer):
         if not obj.category:
             return None
         return localized_value(obj.category, 'name', self.context)
+
+    def get_rating_average(self, obj):
+        average = getattr(obj, 'rating_average', None)
+        if average is None:
+            aggregate = obj.reviews.filter(is_published=True).aggregate(
+                value=Avg('rating')
+            )
+            average = aggregate['value']
+        return round(float(average), 2) if average is not None else None
+
+    def get_review_count(self, obj):
+        count = getattr(obj, 'review_count', None)
+        if count is None:
+            count = obj.reviews.filter(is_published=True).count()
+        return count
+
+
+class ProductReviewSerializer(serializers.ModelSerializer):
+    author = serializers.SerializerMethodField()
+
+    class Meta:
+        model = ProductReview
+        fields = [
+            'id', 'rating', 'title', 'comment', 'author',
+            'is_verified_purchase', 'created_at', 'updated_at',
+        ]
+        read_only_fields = ['id', 'is_verified_purchase', 'created_at', 'updated_at']
+
+    def get_author(self, obj):
+        """Display name only - never expose the reviewer's email address."""
+        full_name = f'{obj.user.first_name} {obj.user.last_name}'.strip()
+        return full_name or obj.user.username
+
+
+class ProductReviewWriteSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProductReview
+        fields = ['rating', 'title', 'comment']
+
+    def validate_rating(self, value):
+        if not ProductReview.MIN_RATING <= value <= ProductReview.MAX_RATING:
+            raise serializers.ValidationError(
+                f'Rating must be between {ProductReview.MIN_RATING} '
+                f'and {ProductReview.MAX_RATING}.'
+            )
+        return value
 
 class UserProfileSerializer(serializers.ModelSerializer):
     class Meta:

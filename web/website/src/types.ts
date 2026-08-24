@@ -16,6 +16,8 @@ export interface Product {
   likes?: number;
   sales?: number;
   isCheap?: boolean;
+  rating_average?: number | null;
+  review_count?: number;
 }
 
 export interface CartItem extends Product {

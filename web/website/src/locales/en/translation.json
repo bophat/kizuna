@@ -385,8 +385,19 @@
     "date": "Date",
     "status": "Status",
     "commission": "Commission",
-    "metrics": { "visits": "Referral visits", "orders": "Referred orders", "pending": "Pending", "available": "Available for payout", "paid": "Paid" },
-    "statuses": { "pending": "Pending", "available": "Available", "paid": "Paid", "reversed": "Reversed" }
+    "metrics": {
+      "visits": "Referral visits",
+      "orders": "Referred orders",
+      "pending": "Pending",
+      "available": "Available for payout",
+      "paid": "Paid"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "available": "Available",
+      "paid": "Paid",
+      "reversed": "Reversed"
+    }
   },
   "users": {
     "phone": "Phone Number"
@@ -470,5 +481,28 @@
     "product_fallback_title": "Product Details",
     "product_fallback_description": "View details of authentic Japanese artisan crafts at KIZUNA.",
     "not_found_title": "Page Not Found"
+  },
+  "reviews": {
+    "title": "Customer reviews",
+    "count_one": "{{count}} review",
+    "count_other": "{{count}} reviews",
+    "empty": "No reviews yet for this product.",
+    "empty_cta": "Be the first to share your experience after buying.",
+    "verified": "Verified purchase",
+    "write": "Write a review",
+    "edit": "Edit your review",
+    "your_rating": "Your rating",
+    "title_label": "Title (optional)",
+    "title_placeholder": "Sum it up in one line",
+    "comment_label": "Your review",
+    "comment_placeholder": "Quality, packaging, delivery...",
+    "submit": "Submit review",
+    "submitting": "Submitting...",
+    "submitted": "Thanks for your review!",
+    "error": "Could not submit your review. Please try again.",
+    "rating_required": "Please choose a star rating.",
+    "purchase_required": "Only customers with a delivered order can review this product.",
+    "load_error": "Could not load reviews.",
+    "stars": "{{count}} stars"
   }
 }

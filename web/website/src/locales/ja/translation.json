@@ -385,8 +385,19 @@
     "date": "日付",
     "status": "ステータス",
     "commission": "報酬",
-    "metrics": { "visits": "紹介アクセス", "orders": "紹介注文", "pending": "保留中", "available": "支払い可能", "paid": "支払い済み" },
-    "statuses": { "pending": "保留中", "available": "支払い可能", "paid": "支払い済み", "reversed": "取消済み" }
+    "metrics": {
+      "visits": "紹介アクセス",
+      "orders": "紹介注文",
+      "pending": "保留中",
+      "available": "支払い可能",
+      "paid": "支払い済み"
+    },
+    "statuses": {
+      "pending": "保留中",
+      "available": "支払い可能",
+      "paid": "支払い済み",
+      "reversed": "取消済み"
+    }
   },
   "users": {
     "phone": "電話番号"
@@ -470,5 +481,28 @@
     "product_fallback_title": "商品詳細",
     "product_fallback_description": "KIZUNAで日本の職人による本格的な手工芸品の詳細をご覧ください。",
     "not_found_title": "ページが見つかりません"
+  },
+  "reviews": {
+    "title": "カスタマーレビュー",
+    "count_one": "{{count}}件のレビュー",
+    "count_other": "{{count}}件のレビュー",
+    "empty": "この商品のレビューはまだありません。",
+    "empty_cta": "ご購入後、最初のレビューを投稿してみませんか。",
+    "verified": "購入済み",
+    "write": "レビューを書く",
+    "edit": "レビューを編集",
+    "your_rating": "評価",
+    "title_label": "タイトル（任意）",
+    "title_placeholder": "一言でまとめると",
+    "comment_label": "レビュー本文",
+    "comment_placeholder": "品質、梱包、配送など",
+    "submit": "レビューを投稿",
+    "submitting": "送信中...",
+    "submitted": "レビューをありがとうございました。",
+    "error": "レビューを送信できませんでした。もう一度お試しください。",
+    "rating_required": "星の数を選んでください。",
+    "purchase_required": "配送済みのご注文がある方のみレビューを投稿できます。",
+    "load_error": "レビューを読み込めませんでした。",
+    "stars": "星{{count}}"
   }
 }

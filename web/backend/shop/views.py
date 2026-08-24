@@ -14,16 +14,16 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Case, IntegerField, Max, Min, Q, Value, When
+from django.db.models import Avg, Case, Count, IntegerField, Max, Min, Q, Value, When
 from .models import (
     AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
     OrderItem, PaymentMethodConfig, UserProfile, Product, ProductStatus,
-    Category, Favorite,
+    Category, Favorite, ProductReview,
 )
 from .serializers import (
     CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer,
     CategorySerializer, FavoriteSerializer, PaymentTransactionPublicSerializer,
-    UserProfileSerializer,
+    UserProfileSerializer, ProductReviewSerializer, ProductReviewWriteSerializer,
 )
 from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
 from .shipping import calculate_shipping_amount
@@ -59,6 +59,15 @@ def _cache_set(key, value):
         cache.set(key, value, PUBLIC_API_CACHE_SECONDS)
 
 
+def _bump_product_cache_version(product):
+    """Invalidate cached product payloads after a review changes its rating.
+
+    The cache version is derived from the newest Product.updated_at, and writing
+    a review does not otherwise touch the product row.
+    """
+    product.save(update_fields=['updated_at'])
+
+
 def _product_cache_version():
     """Return a database-backed version shared by every Cloud Run worker."""
     latest_update = Product.objects.aggregate(latest=Max('updated_at'))['latest']
@@ -76,7 +85,8 @@ class ExchangeRatesView(APIView):
 # Storefront highlight-chip thresholds. Kept here (not in the React app) so the
 # same rule drives the query and the UI copy.
 BEST_SELLER_MIN_SALES = 50
-TOP_RATED_MIN_LIKES = 50
+# 'Top rated' means real stars now that reviews exist, not wishlist hearts.
+TOP_RATED_MIN_STARS = 4
 
 # Sort keys accepted by ?sort=. Every option gets -created_at as a tiebreaker so
 # paging stays stable when many rows share a price/sales/likes value.
@@ -86,6 +96,7 @@ PRODUCT_SORT_OPTIONS = {
     'price-high': ('-price', '-created_at'),
     'sales': ('-sales', '-created_at'),
     'likes': ('-likes', '-created_at'),
+    'rating': ('-rating_average', '-review_count', '-created_at'),
 }
 
 # Product/Category carry a base field plus per-language variants; the public
@@ -131,6 +142,11 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         Product.objects.filter(status=ProductStatus.PUBLISHED)
         .select_related('category', 'source_info')
         .prefetch_related('gallery')
+        # Aggregated here so listing pages don't run a count per product.
+        .annotate(
+            rating_average=Avg('reviews__rating', filter=Q(reviews__is_published=True)),
+            review_count=Count('reviews', filter=Q(reviews__is_published=True)),
+        )
         .order_by('-created_at')
     )
     serializer_class = PublicProductSerializer
@@ -179,7 +195,7 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             if 'best_sellers' in highlights:
                 highlight_query |= Q(sales__gt=BEST_SELLER_MIN_SALES)
             if 'top_rated' in highlights:
-                highlight_query |= Q(likes__gt=TOP_RATED_MIN_LIKES)
+                highlight_query |= Q(rating_average__gte=TOP_RATED_MIN_STARS)
             if highlight_query:
                 queryset = queryset.filter(highlight_query)
 
@@ -273,6 +289,103 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             payload = self.get_serializer(list(queryset[:4]), many=True).data
             _cache_set(cache_key, payload)
         return Response(payload)
+
+    @action(
+        detail=True,
+        methods=['get', 'post'],
+        permission_classes=[AllowAny],
+        url_path='reviews',
+    )
+    def reviews(self, request, pk=None):
+        product = self.get_object()
+
+        if request.method == 'GET':
+            queryset = (
+                ProductReview.objects.filter(product=product, is_published=True)
+                .select_related('user')
+            )
+            page = self.paginate_queryset(queryset)
+            serializer = ProductReviewSerializer(
+                page if page is not None else queryset,
+                many=True,
+                context=self.get_serializer_context(),
+            )
+            if page is not None:
+                return self.get_paginated_response(serializer.data)
+            return Response(serializer.data)
+
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Sign in to review this product.'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Only customers who actually received the product may review it.
+        delivered_order = (
+            Order.objects.filter(
+                user=request.user,
+                status='delivered',
+                items__product=product,
+            )
+            .order_by('-created_at')
+            .first()
+        )
+        if delivered_order is None:
+            return Response(
+                {
+                    'detail': 'Only customers with a delivered order for this '
+                              'product can review it.',
+                    'code': 'purchase_required',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = ProductReviewWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Re-submitting replaces the existing review rather than erroring on the
+        # one-review-per-product constraint.
+        review, _created = ProductReview.objects.update_or_create(
+            product=product,
+            user=request.user,
+            defaults={
+                **serializer.validated_data,
+                'order': delivered_order,
+                'is_verified_purchase': True,
+            },
+        )
+        _bump_product_cache_version(product)
+        return Response(
+            ProductReviewSerializer(
+                review, context=self.get_serializer_context()
+            ).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True,
+        methods=['get'],
+        permission_classes=[IsAuthenticated],
+        url_path='review-eligibility',
+    )
+    def review_eligibility(self, request, pk=None):
+        """Tell the storefront whether to offer the review form, and prefill it."""
+        product = self.get_object()
+        has_delivered_order = Order.objects.filter(
+            user=request.user, status='delivered', items__product=product
+        ).exists()
+        existing = ProductReview.objects.filter(
+            product=product, user=request.user
+        ).first()
+        return Response({
+            'can_review': has_delivered_order,
+            'existing_review': (
+                ProductReviewSerializer(
+                    existing, context=self.get_serializer_context()
+                ).data
+                if existing else None
+            ),
+        })
 
     @action(detail=False, methods=['get'])
     def facets(self, request):

@@ -2,6 +2,7 @@ from decimal import Decimal
 import re
 
 from django.core.exceptions import ValidationError
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 from django.contrib.auth.models import User
 
@@ -857,3 +858,58 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f'{self.name} <{self.email}>'
+
+
+class ProductReview(models.Model):
+    """A customer's star rating and written review of a product.
+
+    `is_verified_purchase` is a snapshot taken at submission time rather than a
+    live lookup, so a review stays marked verified even if the order is later
+    edited or the product is removed from it.
+    """
+
+    MIN_RATING = 1
+    MAX_RATING = 5
+
+    product = models.ForeignKey(
+        Product, on_delete=models.CASCADE, related_name='reviews'
+    )
+    user = models.ForeignKey(
+        User, on_delete=models.CASCADE, related_name='product_reviews'
+    )
+    order = models.ForeignKey(
+        Order,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='reviews',
+        help_text='Delivered order this review was written against, when known.',
+    )
+    rating = models.PositiveSmallIntegerField(
+        validators=[MinValueValidator(MIN_RATING), MaxValueValidator(MAX_RATING)]
+    )
+    title = models.CharField(max_length=120, blank=True, default='')
+    comment = models.TextField(blank=True, default='')
+    is_verified_purchase = models.BooleanField(default=False, db_index=True)
+    is_published = models.BooleanField(
+        default=True,
+        db_index=True,
+        help_text='Uncheck to hide a review from the storefront without deleting it.',
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+        # One review per customer per product; editing replaces the old one.
+        constraints = [
+            models.UniqueConstraint(
+                fields=['product', 'user'], name='unique_review_per_user_product'
+            ),
+        ]
+        indexes = [
+            models.Index(fields=['product', '-created_at']),
+        ]
+
+    def __str__(self):
+        return f'{self.rating}★ {self.product_id} by {self.user_id}'
