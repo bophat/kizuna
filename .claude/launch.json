@@ -4,8 +4,26 @@
     {
       "name": "kizuna-website",
       "runtimeExecutable": "npm",
-      "runtimeArgs": ["run", "dev", "--prefix", "web/website"],
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "web/website"
+      ],
       "port": 3000
+    },
+    {
+      "name": "kizuna-website-alt",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev",
+        "--prefix",
+        "web/website",
+        "--",
+        "--port=3100"
+      ],
+      "port": 3100
     }
   ]
 }

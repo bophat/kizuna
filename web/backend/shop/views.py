@@ -1,10 +1,12 @@
 import mimetypes
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404
 from rest_framework import viewsets, status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,7 +14,7 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Case, IntegerField, Max, Value, When
+from django.db.models import Case, IntegerField, Max, Min, Q, Value, When
 from .models import (
     AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
     OrderItem, PaymentMethodConfig, UserProfile, Product, ProductStatus,
@@ -71,6 +73,59 @@ class ExchangeRatesView(APIView):
         return Response(get_exchange_rates(force_refresh=force))
 
 
+# Storefront highlight-chip thresholds. Kept here (not in the React app) so the
+# same rule drives the query and the UI copy.
+BEST_SELLER_MIN_SALES = 50
+TOP_RATED_MIN_LIKES = 50
+
+# Sort keys accepted by ?sort=. Every option gets -created_at as a tiebreaker so
+# paging stays stable when many rows share a price/sales/likes value.
+PRODUCT_SORT_OPTIONS = {
+    'newest': ('-created_at',),
+    'price-low': ('price', '-created_at'),
+    'price-high': ('-price', '-created_at'),
+    'sales': ('-sales', '-created_at'),
+    'likes': ('-likes', '-created_at'),
+}
+
+# Product/Category carry a base field plus per-language variants; the public
+# serializer emits whichever matches the request language, so filters have to
+# match against all of them to accept whatever string the client saw.
+LOCALIZED_SUFFIXES = ('', '_en', '_ja', '_vi')
+
+
+def _csv_param(params, key):
+    """Read a query param that may repeat and/or hold a comma-separated list."""
+    values = []
+    for raw in params.getlist(key):
+        values.extend(part.strip() for part in raw.split(','))
+    return [value for value in values if value]
+
+
+def _decimal_param(params, key):
+    raw = (params.get(key) or '').strip()
+    if not raw:
+        return None
+    try:
+        return Decimal(raw)
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _localized_q(field, lookup, value):
+    """Q matching `value` against `field` and its _en/_ja/_vi variants."""
+    query = Q()
+    for suffix in LOCALIZED_SUFFIXES:
+        query |= Q(**{f'{field}{suffix}__{lookup}': value})
+    return query
+
+
+class ProductPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
         Product.objects.filter(status=ProductStatus.PUBLISHED)
@@ -79,6 +134,59 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         .order_by('-created_at')
     )
     serializer_class = PublicProductSerializer
+    pagination_class = ProductPagination
+
+    def _apply_filters(self, queryset, params):
+        """Search/filter/sort the catalog in the database.
+
+        These used to run in the browser, which meant every visit to the
+        collection page downloaded the entire catalog before showing anything.
+        """
+        search = (params.get('search') or '').strip()
+        if search:
+            queryset = queryset.filter(
+                _localized_q('name', 'icontains', search)
+                | _localized_q('description', 'icontains', search)
+                | _localized_q('category__name', 'icontains', search)
+                | Q(brand__icontains=search)
+            )
+
+        categories = _csv_param(params, 'category')
+        if categories:
+            queryset = queryset.filter(_localized_q('category__name', 'in', categories))
+
+        brands = _csv_param(params, 'brand')
+        if brands:
+            queryset = queryset.filter(brand__in=brands)
+
+        price_min = _decimal_param(params, 'price_min')
+        if price_min is not None:
+            queryset = queryset.filter(price__gte=price_min)
+
+        price_max = _decimal_param(params, 'price_max')
+        if price_max is not None:
+            queryset = queryset.filter(price__lte=price_max)
+
+        # Highlight chips are OR'd with each other: picking "New" and "Featured"
+        # widens the result set rather than requiring both.
+        highlights = _csv_param(params, 'filter')
+        if highlights:
+            highlight_query = Q()
+            if 'new' in highlights:
+                highlight_query |= Q(is_new=True)
+            if 'featured' in highlights:
+                highlight_query |= Q(is_featured=True)
+            if 'best_sellers' in highlights:
+                highlight_query |= Q(sales__gt=BEST_SELLER_MIN_SALES)
+            if 'top_rated' in highlights:
+                highlight_query |= Q(likes__gt=TOP_RATED_MIN_LIKES)
+            if highlight_query:
+                queryset = queryset.filter(highlight_query)
+
+        ordering = PRODUCT_SORT_OPTIONS.get((params.get('sort') or '').strip())
+        if ordering:
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         cache_key = (
@@ -87,8 +195,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         )
         payload = _cache_get(cache_key)
         if payload is None:
-            queryset = self.filter_queryset(self.get_queryset())
-            payload = self.get_serializer(queryset, many=True).data
+            queryset = self._apply_filters(self.get_queryset(), request.query_params)
+            page = self.paginate_queryset(queryset)
+            if page is None:
+                payload = self.get_serializer(queryset, many=True).data
+            else:
+                serializer = self.get_serializer(page, many=True)
+                payload = self.get_paginated_response(serializer.data).data
             _cache_set(cache_key, payload)
         return Response(payload)
 
@@ -158,6 +271,34 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             else:
                 queryset = queryset.order_by('-created_at')
             payload = self.get_serializer(list(queryset[:4]), many=True).data
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
+    @action(detail=False, methods=['get'])
+    def facets(self, request):
+        """Filter options for the collection page.
+
+        The storefront used to derive the brand list by scanning every product
+        it had downloaded. Now that listing is paginated, the options have to
+        come from the whole catalog rather than the current page.
+        """
+        cache_key = f'shop:products:facets:{_product_cache_version()}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            published = Product.objects.filter(status=ProductStatus.PUBLISHED)
+            brands = sorted(
+                {
+                    brand.strip()
+                    for brand in published.values_list('brand', flat=True)
+                    if brand and brand.strip()
+                }
+            )
+            bounds = published.aggregate(min_price=Min('price'), max_price=Max('price'))
+            payload = {
+                'brands': brands,
+                'price_min': str(bounds['min_price']) if bounds['min_price'] is not None else None,
+                'price_max': str(bounds['max_price']) if bounds['max_price'] is not None else None,
+            }
             _cache_set(cache_key, payload)
         return Response(payload)
 
