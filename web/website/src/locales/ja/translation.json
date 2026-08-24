@@ -243,8 +243,14 @@
       "product_unavailable": "カート内の商品が現在購入できません。カートをご確認ください。",
       "insufficient_stock": "商品「{{product}}」の在庫が不足しています。残り {{count}} 点です。",
       "invalid_payment_method": "有効な支払い方法を選択してください。",
-      "payment_method_unavailable": "この支払い方法は利用できなくなりました。別の方法を選択してください。"
-    }
+      "payment_method_unavailable": "この支払い方法は利用できなくなりました。別の方法を選択してください。",
+      "account_exists": "このメールアドレスのアカウントは既に存在します。ログインしてご注文を完了してください。"
+    },
+    "guest_notice": "ゲストとしてご購入手続き中です。",
+    "guest_sign_in": "ログインする",
+    "guest_saved_title": "ご注文を追跡できます",
+    "guest_saved_body": "{{email}} のアカウントを作成しました。パスワードを設定すると注文履歴と配送状況を確認できます。",
+    "guest_set_password": "パスワードを設定"
   },
   "wishlist": {
     "title": "お気に入り",
@@ -385,8 +391,19 @@
     "date": "日付",
     "status": "ステータス",
     "commission": "報酬",
-    "metrics": { "visits": "紹介アクセス", "orders": "紹介注文", "pending": "保留中", "available": "支払い可能", "paid": "支払い済み" },
-    "statuses": { "pending": "保留中", "available": "支払い可能", "paid": "支払い済み", "reversed": "取消済み" }
+    "metrics": {
+      "visits": "紹介アクセス",
+      "orders": "紹介注文",
+      "pending": "保留中",
+      "available": "支払い可能",
+      "paid": "支払い済み"
+    },
+    "statuses": {
+      "pending": "保留中",
+      "available": "支払い可能",
+      "paid": "支払い済み",
+      "reversed": "取消済み"
+    }
   },
   "users": {
     "phone": "電話番号"
@@ -413,7 +430,13 @@
         "time": "昨日",
         "action": "注文を見る"
       }
-    }
+    },
+    "empty": "通知はまだありません。",
+    "load_error": "通知を読み込めませんでした。",
+    "sign_in_prompt": "ログインするとご注文の更新を確認できます。",
+    "mark_read": "既読にする",
+    "mark_all_read": "すべて既読にする",
+    "view": "表示"
   },
   "concierge": {
     "welcome": "こんにちは！ショップのオンラインコンシェルジュ、Kizuna AIです。本日はどのような商品をお探しですか？メッセージをいただければ、できるだけ早くご案内します。",
@@ -470,5 +493,34 @@
     "product_fallback_title": "商品詳細",
     "product_fallback_description": "KIZUNAで日本の職人による本格的な手工芸品の詳細をご覧ください。",
     "not_found_title": "ページが見つかりません"
+  },
+  "reviews": {
+    "title": "カスタマーレビュー",
+    "count_one": "{{count}}件のレビュー",
+    "count_other": "{{count}}件のレビュー",
+    "empty": "この商品のレビューはまだありません。",
+    "empty_cta": "ご購入後、最初のレビューを投稿してみませんか。",
+    "verified": "購入済み",
+    "write": "レビューを書く",
+    "edit": "レビューを編集",
+    "your_rating": "評価",
+    "title_label": "タイトル（任意）",
+    "title_placeholder": "一言でまとめると",
+    "comment_label": "レビュー本文",
+    "comment_placeholder": "品質、梱包、配送など",
+    "submit": "レビューを投稿",
+    "submitting": "送信中...",
+    "submitted": "レビューをありがとうございました。",
+    "error": "レビューを送信できませんでした。もう一度お試しください。",
+    "rating_required": "星の数を選んでください。",
+    "purchase_required": "配送済みのご注文がある方のみレビューを投稿できます。",
+    "load_error": "レビューを読み込めませんでした。",
+    "stars": "星{{count}}"
+  },
+  "cookies": {
+    "title": "KIZUNAのCookieについて",
+    "body": "ショップの利用状況を把握するために分析Cookieを使用します。同意なしに設定されるのは、ログインとカートの保持に必要なCookieのみです。",
+    "accept": "分析を許可",
+    "decline": "必須のみ"
   }
 }

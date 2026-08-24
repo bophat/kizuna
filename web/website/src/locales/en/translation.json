@@ -243,8 +243,14 @@
       "product_unavailable": "A product in your cart is no longer available. Please review your cart.",
       "insufficient_stock": "There is not enough stock for “{{product}}”. Only {{count}} item(s) remain.",
       "invalid_payment_method": "Please select a valid payment method.",
-      "payment_method_unavailable": "This payment method is no longer available. Please choose another option."
-    }
+      "payment_method_unavailable": "This payment method is no longer available. Please choose another option.",
+      "account_exists": "An account already exists for this email. Please sign in to complete your order."
+    },
+    "guest_notice": "You're checking out as a guest.",
+    "guest_sign_in": "Sign in instead",
+    "guest_saved_title": "Keep track of this order",
+    "guest_saved_body": "We created an account for {{email}}. Set a password to see your order history and track delivery.",
+    "guest_set_password": "Set a password"
   },
   "wishlist": {
     "title": "Your Wishlist",
@@ -385,8 +391,19 @@
     "date": "Date",
     "status": "Status",
     "commission": "Commission",
-    "metrics": { "visits": "Referral visits", "orders": "Referred orders", "pending": "Pending", "available": "Available for payout", "paid": "Paid" },
-    "statuses": { "pending": "Pending", "available": "Available", "paid": "Paid", "reversed": "Reversed" }
+    "metrics": {
+      "visits": "Referral visits",
+      "orders": "Referred orders",
+      "pending": "Pending",
+      "available": "Available for payout",
+      "paid": "Paid"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "available": "Available",
+      "paid": "Paid",
+      "reversed": "Reversed"
+    }
   },
   "users": {
     "phone": "Phone Number"
@@ -413,7 +430,13 @@
         "time": "Yesterday",
         "action": "View Order"
       }
-    }
+    },
+    "empty": "You have no notifications yet.",
+    "load_error": "Could not load your notifications.",
+    "sign_in_prompt": "Sign in to see updates about your orders.",
+    "mark_read": "Mark as read",
+    "mark_all_read": "Mark all as read",
+    "view": "View"
   },
   "concierge": {
     "welcome": "Hello! I’m Kizuna AI, the shop’s online concierge. What item are you interested in or looking for today? Leave a message and I’ll help as quickly as possible.",
@@ -470,5 +493,34 @@
     "product_fallback_title": "Product Details",
     "product_fallback_description": "View details of authentic Japanese artisan crafts at KIZUNA.",
     "not_found_title": "Page Not Found"
+  },
+  "reviews": {
+    "title": "Customer reviews",
+    "count_one": "{{count}} review",
+    "count_other": "{{count}} reviews",
+    "empty": "No reviews yet for this product.",
+    "empty_cta": "Be the first to share your experience after buying.",
+    "verified": "Verified purchase",
+    "write": "Write a review",
+    "edit": "Edit your review",
+    "your_rating": "Your rating",
+    "title_label": "Title (optional)",
+    "title_placeholder": "Sum it up in one line",
+    "comment_label": "Your review",
+    "comment_placeholder": "Quality, packaging, delivery...",
+    "submit": "Submit review",
+    "submitting": "Submitting...",
+    "submitted": "Thanks for your review!",
+    "error": "Could not submit your review. Please try again.",
+    "rating_required": "Please choose a star rating.",
+    "purchase_required": "Only customers with a delivered order can review this product.",
+    "load_error": "Could not load reviews.",
+    "stars": "{{count}} stars"
+  },
+  "cookies": {
+    "title": "Cookies on KIZUNA",
+    "body": "We use analytics cookies to understand how the shop is used. Only the cookies needed to sign in and keep your cart are set without your consent.",
+    "accept": "Accept analytics",
+    "decline": "Essential only"
   }
 }

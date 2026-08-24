@@ -170,6 +170,12 @@ if GCS_BUCKET_NAME:
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# The storefront runs on a different origin from the API in production, so the
+# guest-cart session cookie needs the same SameSite/Secure treatment as the JWT
+# auth cookies in users/cookie_auth.py, or guest carts silently break there.
+SESSION_COOKIE_SAMESITE = 'Lax' if DEBUG else 'None'
+SESSION_COOKIE_SECURE = not DEBUG
+
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'users.authentication.CookieJWTAuthentication',
@@ -191,6 +197,7 @@ REST_FRAMEWORK = {
         'password_change_request': '5/hour',
         'concierge': '30/hour',
         'contact_submit': '5/hour',
+        'two_factor': '20/hour',
     },
     'EXCEPTION_HANDLER': 'core.exceptions.custom_exception_handler',
 }

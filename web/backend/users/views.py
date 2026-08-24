@@ -25,6 +25,8 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.utils import get_md5_hash_password
 
 from .cookie_auth import REFRESH_COOKIE, clear_auth_cookies, set_auth_cookies
+from .models import TwoFactorSetting
+from shop.guest_carts import merge_guest_cart
 from shop.models import UserProfile
 from .email_verification import read_verification_token, send_verification_email
 from .password_reset import get_password_reset_user, send_password_reset_email
@@ -58,9 +60,29 @@ class EmailTokenObtainPairView(TokenObtainPairView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        # Stop before issuing tokens when the account has a second factor: the
+        # client must finish at /login/2fa/ with a code.
+        candidate = User.objects.filter(email__iexact=email, is_active=True).first()
+        if (
+            candidate
+            and candidate.check_password(password)
+            and TwoFactorSetting.objects.filter(user=candidate, is_enabled=True).exists()
+        ):
+            return Response(
+                {
+                    'detail': 'Enter the code from your authenticator app.',
+                    'code': 'two_factor_required',
+                },
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
         response = super().post(request, *args, **kwargs)
         if response.status_code == 200:
             set_auth_cookies(response, response.data['access'], response.data['refresh'])
+            # Carry anything added while browsing as a guest into the account.
+            signed_in = User.objects.filter(email__iexact=email).first()
+            if signed_in:
+                merge_guest_cart(request, signed_in)
             response.data = {'detail': 'ok'}
         return response
 

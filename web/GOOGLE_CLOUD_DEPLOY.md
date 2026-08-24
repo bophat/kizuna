@@ -277,3 +277,55 @@ gcloud run jobs execute kizuna-birthday-email \
 Có thể đổi lịch khi deploy bằng `BIRTHDAY_EMAIL_SCHEDULE` và
 `BIRTHDAY_EMAIL_TIME_ZONE`, hoặc tạm không tạo lịch với
 `BIRTHDAY_EMAIL_SCHEDULER_ENABLED=false`.
+
+## Nhắc giỏ hàng bỏ dở
+
+`deploy-cloud-run.sh` cũng tạo hoặc cập nhật:
+
+- Cloud Run Job `kizuna-cart-reminder`;
+- Cloud Scheduler `kizuna-cart-reminder-hourly`;
+- lịch mặc định `30 * * * *` (mỗi giờ, phút thứ 30) theo `Asia/Ho_Chi_Minh`.
+
+Job gửi thông báo trong ứng dụng kèm email cho khách có giỏ hàng không đụng tới
+quá 24 giờ. Job tự bỏ qua giỏ trống, giỏ quá cũ (mặc định trên 30 ngày) và
+khách đã đặt hàng sau lần chạm giỏ gần nhất. Mỗi giỏ chỉ nhắc một lần cho mỗi
+lượt bỏ dở — chạy lại job không gửi trùng.
+
+Xem ai sẽ được nhắc mà không gửi thật (job chạy thật cần cờ `--execute`, mặc
+định của lệnh là dry-run):
+
+```bash
+gcloud run jobs execute kizuna-cart-reminder \
+  --project kizuna-shop-503909 \
+  --region asia-southeast1 \
+  --args=manage.py,send_abandoned_cart_reminders,--hours,24 \
+  --wait
+```
+
+Chạy job thật thủ công:
+
+```bash
+gcloud run jobs execute kizuna-cart-reminder \
+  --project kizuna-shop-503909 \
+  --region asia-southeast1 \
+  --wait
+```
+
+Đổi lịch hoặc ngưỡng bằng `CART_REMINDER_SCHEDULE`, `CART_REMINDER_TIME_ZONE`,
+`CART_REMINDER_IDLE_HOURS`, hoặc tạm không tạo lịch với
+`CART_REMINDER_SCHEDULER_ENABLED=false`.
+
+### Chạy trên máy chủ thường (không dùng Cloud Run)
+
+Nếu backend chạy trên Render, VPS hay Docker thay vì Cloud Run, gắn bằng
+crontab của hệ điều hành. Chạy `crontab -e` rồi thêm:
+
+```
+30 * * * * cd /duong/dan/web/backend && /duong/dan/venv/bin/python manage.py send_abandoned_cart_reminders --hours 24 --email --execute >> /var/log/kizuna-cart-reminder.log 2>&1
+0 1 * * * cd /duong/dan/web/backend && /duong/dan/venv/bin/python manage.py send_birthday_emails >> /var/log/kizuna-birthday.log 2>&1
+```
+
+Cron không nạp biến môi trường như shell đăng nhập, nên `DATABASE_URL` và các
+biến khác phải được nạp sẵn (ví dụ qua một file wrapper `source .env` trước khi
+gọi `manage.py`), nếu không job sẽ chạy nhầm vào SQLite cục bộ thay vì database
+thật.

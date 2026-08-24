@@ -51,11 +51,41 @@
     "select_product": "Chọn sản phẩm đã xuất bản",
     "auto_product_link": "Để trống sẽ tự dùng trang sản phẩm",
     "optional": "Không bắt buộc",
-    "types": { "event": "Sự kiện", "product": "Sản phẩm mới" },
-    "status": { "draft": "Bản nháp", "sending": "Đang gửi", "sent": "Đã gửi", "partial": "Gửi một phần" },
-    "table": { "campaign": "Chiến dịch", "type": "Loại", "progress": "Tiến độ gửi", "status": "Trạng thái", "created": "Ngày tạo", "actions": "Thao tác" },
-    "fields": { "name": "Tên nội bộ chiến dịch", "type": "Loại chiến dịch", "product": "Sản phẩm", "subject": "Tiêu đề email", "body": "Nội dung", "cta_text": "Chữ trên nút", "cta_url": "URL đích", "image_url": "URL ảnh banner" },
-    "errors": { "load": "Không thể tải danh sách chiến dịch email.", "save": "Không thể lưu chiến dịch.", "test": "Không thể gửi email thử.", "send": "Quá trình gửi đã dừng. Bạn có thể tiếp tục từ danh sách chiến dịch.", "delete": "Không thể xóa chiến dịch." }
+    "types": {
+      "event": "Sự kiện",
+      "product": "Sản phẩm mới"
+    },
+    "status": {
+      "draft": "Bản nháp",
+      "sending": "Đang gửi",
+      "sent": "Đã gửi",
+      "partial": "Gửi một phần"
+    },
+    "table": {
+      "campaign": "Chiến dịch",
+      "type": "Loại",
+      "progress": "Tiến độ gửi",
+      "status": "Trạng thái",
+      "created": "Ngày tạo",
+      "actions": "Thao tác"
+    },
+    "fields": {
+      "name": "Tên nội bộ chiến dịch",
+      "type": "Loại chiến dịch",
+      "product": "Sản phẩm",
+      "subject": "Tiêu đề email",
+      "body": "Nội dung",
+      "cta_text": "Chữ trên nút",
+      "cta_url": "URL đích",
+      "image_url": "URL ảnh banner"
+    },
+    "errors": {
+      "load": "Không thể tải danh sách chiến dịch email.",
+      "save": "Không thể lưu chiến dịch.",
+      "test": "Không thể gửi email thử.",
+      "send": "Quá trình gửi đã dừng. Bạn có thể tiếp tục từ danh sách chiến dịch.",
+      "delete": "Không thể xóa chiến dịch."
+    }
   },
   "coupons": {
     "title": "Mã giảm giá",
@@ -84,12 +114,45 @@
     "assigned_to": "Chỉ dành cho {{email}}",
     "managed_automatically": "Hệ thống tự quản lý",
     "no_affiliate": "Mã chung (không thuộc CTV)",
-    "table": { "code": "Mã", "discount": "Mức giảm", "period": "Thời gian áp dụng", "usage": "Lượt dùng", "status": "Trạng thái", "actions": "Thao tác" },
-    "fields": { "code": "Mã giảm giá", "type": "Loại giảm giá", "value": "Giá trị giảm", "minimum": "Đơn tối thiểu (USD)", "maximum": "Mức giảm tối đa (USD)", "usage_limit": "Tổng lượt sử dụng", "per_user": "Giới hạn mỗi khách", "affiliate": "CTV sở hữu mã", "starts_at": "Bắt đầu", "expires_at": "Kết thúc", "description": "Mô tả nội bộ", "active": "Đang kích hoạt" },
-    "types": { "percentage": "Theo phần trăm", "fixed": "Số tiền cố định (USD)" },
-    "status": { "active": "Đang chạy", "inactive": "Đã tắt", "scheduled": "Sắp diễn ra", "expired": "Đã hết hạn", "exhausted": "Đã hết lượt" },
+    "table": {
+      "code": "Mã",
+      "discount": "Mức giảm",
+      "period": "Thời gian áp dụng",
+      "usage": "Lượt dùng",
+      "status": "Trạng thái",
+      "actions": "Thao tác"
+    },
+    "fields": {
+      "code": "Mã giảm giá",
+      "type": "Loại giảm giá",
+      "value": "Giá trị giảm",
+      "minimum": "Đơn tối thiểu (USD)",
+      "maximum": "Mức giảm tối đa (USD)",
+      "usage_limit": "Tổng lượt sử dụng",
+      "per_user": "Giới hạn mỗi khách",
+      "affiliate": "CTV sở hữu mã",
+      "starts_at": "Bắt đầu",
+      "expires_at": "Kết thúc",
+      "description": "Mô tả nội bộ",
+      "active": "Đang kích hoạt"
+    },
+    "types": {
+      "percentage": "Theo phần trăm",
+      "fixed": "Số tiền cố định (USD)"
+    },
+    "status": {
+      "active": "Đang chạy",
+      "inactive": "Đã tắt",
+      "scheduled": "Sắp diễn ra",
+      "expired": "Đã hết hạn",
+      "exhausted": "Đã hết lượt"
+    },
     "active_hint": "Mã đã tắt sẽ không thể dùng khi thanh toán.",
-    "errors": { "load": "Không thể tải danh sách mã giảm giá.", "save": "Không thể lưu mã giảm giá.", "delete": "Không thể xóa mã giảm giá." }
+    "errors": {
+      "load": "Không thể tải danh sách mã giảm giá.",
+      "save": "Không thể lưu mã giảm giá.",
+      "delete": "Không thể xóa mã giảm giá."
+    }
   },
   "affiliates": {
     "title": "Cộng tác viên & affiliate",
@@ -116,22 +179,88 @@
     "bank_title": "Tài khoản nhận hoa hồng",
     "bank_hint": "Được mã hóa khi lưu; lần sau chỉ hiển thị bốn số cuối.",
     "bank_replace_hint": "Tài khoản hiện tại {{account}}. Chỉ nhập tài khoản mới khi muốn thay thế.",
-    "tabs": { "affiliates": "Cộng tác viên", "commissions": "Hoa hồng", "payouts": "Chi trả" },
-    "metrics": { "visits": "Lượt giới thiệu", "orders": "Đơn được ghi nhận", "pending": "Đang chờ", "available": "Có thể chi trả", "paid": "Đã chi trả" },
-    "table": { "affiliate": "Cộng tác viên", "performance": "Hiệu quả", "commission": "Hoa hồng", "payout": "Có thể chi trả", "status": "Trạng thái", "actions": "Thao tác" },
-    "status": { "pending": "Chờ duyệt", "active": "Đang hoạt động", "suspended": "Đã tạm khóa" },
-    "commission_status": { "pending": "Đang chờ", "available": "Có thể chi trả", "paid": "Đã chi trả", "reversed": "Đã hoàn tác" },
-    "payout_status": { "draft": "Chờ chuyển khoản", "paid": "Đã chi trả", "cancelled": "Đã hủy" },
-    "commissions": { "order": "Đơn hàng", "affiliate": "CTV", "customer": "Khách hàng", "base": "Doanh số tính hoa hồng", "amount": "Hoa hồng", "status": "Trạng thái", "date": "Ngày tạo", "empty": "Chưa có hoa hồng." },
-    "payouts": { "id": "Đợt chi trả", "affiliate": "CTV", "amount": "Số tiền", "items": "Số hoa hồng", "status": "Trạng thái", "reference": "Mã giao dịch", "empty": "Chưa có đợt chi trả." },
-    "fields": { "user": "Tài khoản khách hàng", "code": "Mã giới thiệu", "status": "Trạng thái", "rate": "Tỷ lệ hoa hồng (%)", "cookie_days": "Thời hạn cookie (ngày)", "bank_name": "Tên ngân hàng", "account_name": "Tên chủ tài khoản", "account_number": "Số tài khoản", "notes": "Ghi chú nội bộ" },
-    "errors": { "load": "Không thể tải dữ liệu cộng tác viên.", "save": "Không thể lưu cộng tác viên.", "payout": "Không thể tạo đợt chi trả." }
+    "tabs": {
+      "affiliates": "Cộng tác viên",
+      "commissions": "Hoa hồng",
+      "payouts": "Chi trả"
+    },
+    "metrics": {
+      "visits": "Lượt giới thiệu",
+      "orders": "Đơn được ghi nhận",
+      "pending": "Đang chờ",
+      "available": "Có thể chi trả",
+      "paid": "Đã chi trả"
+    },
+    "table": {
+      "affiliate": "Cộng tác viên",
+      "performance": "Hiệu quả",
+      "commission": "Hoa hồng",
+      "payout": "Có thể chi trả",
+      "status": "Trạng thái",
+      "actions": "Thao tác"
+    },
+    "status": {
+      "pending": "Chờ duyệt",
+      "active": "Đang hoạt động",
+      "suspended": "Đã tạm khóa"
+    },
+    "commission_status": {
+      "pending": "Đang chờ",
+      "available": "Có thể chi trả",
+      "paid": "Đã chi trả",
+      "reversed": "Đã hoàn tác"
+    },
+    "payout_status": {
+      "draft": "Chờ chuyển khoản",
+      "paid": "Đã chi trả",
+      "cancelled": "Đã hủy"
+    },
+    "commissions": {
+      "order": "Đơn hàng",
+      "affiliate": "CTV",
+      "customer": "Khách hàng",
+      "base": "Doanh số tính hoa hồng",
+      "amount": "Hoa hồng",
+      "status": "Trạng thái",
+      "date": "Ngày tạo",
+      "empty": "Chưa có hoa hồng."
+    },
+    "payouts": {
+      "id": "Đợt chi trả",
+      "affiliate": "CTV",
+      "amount": "Số tiền",
+      "items": "Số hoa hồng",
+      "status": "Trạng thái",
+      "reference": "Mã giao dịch",
+      "empty": "Chưa có đợt chi trả."
+    },
+    "fields": {
+      "user": "Tài khoản khách hàng",
+      "code": "Mã giới thiệu",
+      "status": "Trạng thái",
+      "rate": "Tỷ lệ hoa hồng (%)",
+      "cookie_days": "Thời hạn cookie (ngày)",
+      "bank_name": "Tên ngân hàng",
+      "account_name": "Tên chủ tài khoản",
+      "account_number": "Số tài khoản",
+      "notes": "Ghi chú nội bộ"
+    },
+    "errors": {
+      "load": "Không thể tải dữ liệu cộng tác viên.",
+      "save": "Không thể lưu cộng tác viên.",
+      "payout": "Không thể tạo đợt chi trả."
+    }
   },
   "content_pages": {
     "title": "Trang nội dung",
     "description": "Chỉnh sửa các trang chính sách và thông tin liên hệ hiển thị trên website mà không cần deploy lại code.",
     "page_list": "Danh sách trang",
-    "page_names": { "privacy_policy": "Chính sách bảo mật", "terms_of_service": "Điều khoản dịch vụ", "shipping_returns": "Giao hàng & trả hàng", "contact": "Liên hệ" },
+    "page_names": {
+      "privacy_policy": "Chính sách bảo mật",
+      "terms_of_service": "Điều khoản dịch vụ",
+      "shipping_returns": "Giao hàng & trả hàng",
+      "contact": "Liên hệ"
+    },
     "last_updated": "Cập nhật {{date}}",
     "load_failed": "Không thể tải các trang nội dung.",
     "saved": "Đã lưu trang thành công.",
@@ -140,15 +269,34 @@
     "preview": "Xem trước",
     "show_preview": "Hiện xem trước",
     "hide_preview": "Ẩn xem trước",
-    "fields": { "title": "Tiêu đề trang", "content_type": "Định dạng nội dung", "published": "Đã xuất bản", "content": "Nội dung", "language": "Ngôn ngữ nội dung" },
+    "fields": {
+      "title": "Tiêu đề trang",
+      "content_type": "Định dạng nội dung",
+      "published": "Đã xuất bản",
+      "content": "Nội dung",
+      "language": "Ngôn ngữ nội dung"
+    },
     "contact_title": "Thông tin liên hệ có cấu trúc",
     "contact_description": "Các thông tin này được hiển thị kèm biểu tượng trên trang Liên hệ.",
-    "contact_fields": { "phone": "Số điện thoại", "email": "Email", "address": "Địa chỉ", "working_hours": "Giờ làm việc", "facebook_url": "Liên kết Facebook", "zalo_url": "Liên kết Zalo", "instagram_url": "Liên kết Instagram", "tiktok_url": "Liên kết TikTok" },
+    "contact_fields": {
+      "phone": "Số điện thoại",
+      "email": "Email",
+      "address": "Địa chỉ",
+      "working_hours": "Giờ làm việc",
+      "facebook_url": "Liên kết Facebook",
+      "zalo_url": "Liên kết Zalo",
+      "instagram_url": "Liên kết Instagram",
+      "tiktok_url": "Liên kết TikTok"
+    },
     "messages_title": "Hộp thư liên hệ",
     "messages_count": "{{count}} tin nhắn",
     "no_messages": "Chưa có tin nhắn liên hệ.",
     "unread": "Mới",
-    "status": { "unread": "Chưa đọc", "read": "Đã đọc", "replied": "Đã trả lời" }
+    "status": {
+      "unread": "Chưa đọc",
+      "read": "Đã đọc",
+      "replied": "Đã trả lời"
+    }
   },
   "chat": {
     "title": "Live Chat",
@@ -291,7 +439,12 @@
       "status_label": "Trạng thái trên website",
       "status_help": "Chỉ sản phẩm đã xuất bản mới hiển thị và có thể mua trên website.",
       "name_label": "Tên gọi hiện vật",
-      "languages": { "default": "Nguyên bản", "en": "Tiếng Anh", "ja": "Tiếng Nhật", "vi": "Tiếng Việt" },
+      "languages": {
+        "default": "Nguyên bản",
+        "en": "Tiếng Anh",
+        "ja": "Tiếng Nhật",
+        "vi": "Tiếng Việt"
+      },
       "attributes_label": "Thuộc tính bộ sưu tập",
       "attributes": {
         "featured": "Được giám tuyển",
@@ -856,7 +1009,11 @@
       "upload_button": "Chọn ảnh",
       "uploading": "Đang tải lên...",
       "preview": "Xem trước",
-      "languages": { "en": "Tiếng Anh", "ja": "Tiếng Nhật", "vi": "Tiếng Việt" }
+      "languages": {
+        "en": "Tiếng Anh",
+        "ja": "Tiếng Nhật",
+        "vi": "Tiếng Việt"
+      }
     },
     "media": {
       "login_background": "Ảnh nền đăng nhập",
@@ -995,7 +1152,11 @@
     "reject_failed": "Không thể từ chối",
     "sent": "Đã gửi tin nhắn cho khách hàng",
     "rejected": "Đã từ chối",
-    "channels": { "messenger": "Messenger", "comment": "Bình luận → Hộp thư", "website": "Website" }
+    "channels": {
+      "messenger": "Messenger",
+      "comment": "Bình luận → Hộp thư",
+      "website": "Website"
+    }
   },
   "login": {
     "hero_text": "Tuyển chọn những truyền thống tinh xảo nhất của nghề thủ công Nhật Bản cho thế giới hiện đại.",
@@ -1015,8 +1176,14 @@
       "access_denied": "Truy cập bị từ chối. Cần có quyền quản trị.",
       "verify_failed": "Không thể xác minh quyền tài khoản.",
       "connection_error": "Đã xảy ra lỗi kết nối. Vui lòng kiểm tra mạng của bạn.",
-      "invalid_credentials": "Thông tin xác thực không hợp lệ. Vui lòng thử lại."
-    }
+      "invalid_credentials": "Thông tin xác thực không hợp lệ. Vui lòng thử lại.",
+      "invalid_code": "Mã không hợp lệ hoặc đã được sử dụng."
+    },
+    "code_label": "Mã xác thực",
+    "code_placeholder": "000000",
+    "code_hint": "Nhập mã sáu số từ ứng dụng xác thực, hoặc một trong các mã khôi phục của bạn.",
+    "code_back": "Dùng tài khoản khác",
+    "verify_button": "Xác minh"
   },
   "notifications": {
     "title": "Thông báo",
@@ -1025,9 +1192,18 @@
     "polling_mode": "Tin nhắn website và đơn hàng được cập nhật khoảng 20 giây một lần. Bật dịch vụ AI trong Cài đặt để trả lời tự động.",
     "live_sync": "Đồng bộ trực tiếp đang bật",
     "events": {
-      "order_cod_ready": { "title": "Đơn COD cần đóng gói", "message": "Đơn #{{id}} đã sẵn sàng đóng gói. Tổng: {{amount}} USD." },
-      "payment_proof_submitted": { "title": "Khách đã gửi biên lai", "message": "Đơn #{{id}} cần xác minh thanh toán ({{amount}} {{currency}})." },
-      "payment_succeeded": { "title": "Thanh toán thành công", "message": "Đơn #{{id}} đã thanh toán và sẵn sàng đóng gói." }
+      "order_cod_ready": {
+        "title": "Đơn COD cần đóng gói",
+        "message": "Đơn #{{id}} đã sẵn sàng đóng gói. Tổng: {{amount}} USD."
+      },
+      "payment_proof_submitted": {
+        "title": "Khách đã gửi biên lai",
+        "message": "Đơn #{{id}} cần xác minh thanh toán ({{amount}} {{currency}})."
+      },
+      "payment_succeeded": {
+        "title": "Thanh toán thành công",
+        "message": "Đơn #{{id}} đã thanh toán và sẵn sàng đóng gói."
+      }
     },
     "new_order": "Đơn hàng mới",
     "new_order_message": "Bạn có một đơn mua hàng mới từ khách hàng #{{id}}",
@@ -1072,5 +1248,32 @@
     "invalid_image": "Vui lòng tải lên ảnh hợp lệ",
     "invalid_file": "File không hợp lệ",
     "invalid_choice": "Lựa chọn không hợp lệ"
+  },
+  "two_factor": {
+    "title": "Xác thực hai lớp",
+    "description": "Yêu cầu thêm mã từ ứng dụng xác thực bên cạnh mật khẩu. Rất nên bật cho các tài khoản có quyền quản trị.",
+    "status_on": "Đang bật",
+    "status_off": "Đang tắt",
+    "enable": "Thiết lập xác thực hai lớp",
+    "confirm": "Xác nhận và bật",
+    "cancel": "Huỷ",
+    "scan_instructions": "Quét mã này bằng Google Authenticator, Authy, 1Password hoặc bất kỳ ứng dụng TOTP nào, rồi nhập mã sáu số hiển thị trên đó.",
+    "manual_key": "Hoặc nhập khoá này thủ công",
+    "code_label": "Mã sáu số",
+    "qr_alt": "Mã QR để thiết lập xác thực hai lớp",
+    "recovery_title": "Lưu lại mã khôi phục",
+    "recovery_body": "Mỗi mã dùng được một lần, giúp bạn đăng nhập khi mất thiết bị. Đây là lần duy nhất các mã này được hiển thị.",
+    "copy_codes": "Sao chép mã",
+    "copied": "Đã sao chép",
+    "recovery_remaining_one": "Còn {{count}} mã khôi phục.",
+    "recovery_remaining_other": "Còn {{count}} mã khôi phục.",
+    "disable": "Tắt xác thực hai lớp",
+    "disable_confirm": "Tắt",
+    "confirm_password": "Xác nhận mật khẩu của bạn",
+    "errors": {
+      "setup_failed": "Không thể bắt đầu thiết lập. Vui lòng thử lại.",
+      "invalid_code": "Mã không hợp lệ. Hãy kiểm tra lại ứng dụng xác thực.",
+      "disable_failed": "Không thể tắt xác thực hai lớp."
+    }
   }
 }

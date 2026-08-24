@@ -16,6 +16,8 @@ export interface Product {
   likes?: number;
   sales?: number;
   isCheap?: boolean;
+  rating_average?: number | null;
+  review_count?: number;
 }
 
 export interface CartItem extends Product {
@@ -30,12 +32,4 @@ export interface Order {
   total: number;
 }
 
-export interface Notification {
-  id: string;
-  type: 'quote' | 'order' | 'progress' | 'promo';
-  title: string;
-  message: string;
-  time: string;
-  actionLabel?: string;
-  accent?: boolean;
-}
+

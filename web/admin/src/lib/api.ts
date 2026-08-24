@@ -34,6 +34,8 @@ export async function apiFetch(endpoint: string, options: RequestInit = {}) {
     '/me',
     '/shop',
     '/token/refresh',
+    // Two-factor lives on the shared users app, not under /admin.
+    '/2fa',
   ];
   const usesRootApi = rootApiPrefixes.some((prefix) => path.startsWith(prefix));
 

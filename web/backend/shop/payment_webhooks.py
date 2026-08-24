@@ -14,6 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .models import PaymentMethodConfig, PaymentTransaction, PaymentWebhookEvent
+from .notifications import notify_order_status, notify_payment_received
 from .payments import expire_payment
 
 
@@ -203,6 +204,8 @@ class SepayWebhookView(APIView):
             if order.status == 'pending':
                 order.status = 'processing'
                 order.save(update_fields=['status', 'updated_at'])
+            notify_payment_received(order)
+            notify_order_status(order)
 
             event.payment = payment
             event.status = PaymentWebhookEvent.Status.PROCESSED

@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.parsers import MultiPartParser, FormParser
+from shop.notifications import notify_order_status, notify_payment_received
 from shop.models import (
     AffiliateCommission,
     AffiliatePayout,
@@ -165,6 +166,7 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
                 order = serializer.save()
                 sync_order_commission(order, old_status)
                 sync_order_loyalty_points(order)
+                notify_order_status(order)
             return
         serializer.save()
 
@@ -208,6 +210,8 @@ class AdminOrderViewSet(viewsets.ModelViewSet):
             if 'admin_notes' in request.data:
                 order.admin_notes = str(request.data.get('admin_notes') or '').strip()
             order.save(update_fields=['status', 'admin_notes', 'updated_at'])
+            notify_payment_received(order)
+            notify_order_status(order)
         return Response(self.get_serializer(order).data)
 
     @action(detail=True, methods=['post'], url_path='reject-payment')

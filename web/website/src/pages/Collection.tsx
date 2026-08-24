@@ -11,8 +11,6 @@ import { SEO } from '@/components/SEO';
 import { fade, scaleIn, tweenBase } from '@/lib/motion';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
 
-const normalizeSearchText = (value: unknown) => String(value ?? '').trim().toLocaleLowerCase();
-
 export function CollectionPage() {
   const { t } = useTranslation();
   const { getRangeLabel, priceRangeOptions } = useFormatPrice();
@@ -20,40 +18,12 @@ export function CollectionPage() {
   const [isFilterDrawerOpen, setIsFilterDrawerOpen] = useState(false);
   
   const [products, setProducts] = useState<Product[]>([]);
+  const [totalCount, setTotalCount] = useState(0);
+  const [brands, setBrands] = useState<string[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(20);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        setIsLoading(true);
-        const response = await apiFetch('/shop/products/');
-        if (!response.ok) throw new Error(t('collection.load_error'));
-        const data = await response.json();
-        
-        const mappedProducts: Product[] = data.map((p: any) => ({
-          ...p,
-          name: String(p.name ?? ''),
-          description: String(p.description ?? ''),
-          brand: String(p.brand ?? ''),
-          isNew: p.is_new,
-          isFeatured: p.is_featured,
-          isLimited: p.is_limited,
-          isCheap: p.is_cheap,
-          category: String(p.category_name || p.category || ''),
-        }));
-        setProducts(mappedProducts);
-      } catch (err) {
-        console.error(err);
-        setError(t('collection.load_error'));
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchProducts();
-  }, [t]);
 
   // Get filter values from URL
   const categoryFilters = useMemo(() => searchParams.get('category')?.split(',').filter(Boolean) || [], [searchParams]);
@@ -63,92 +33,99 @@ export function CollectionPage() {
   const searchQuery = searchParams.get('search') || '';
   const sortBy = searchParams.get('sort') || 'newest';
 
-  const brands = useMemo(() => {
-    const uniqueBrands = new Set(products.map(p => p.brand).filter(Boolean));
-    return Array.from(uniqueBrands) as string[];
-  }, [products]);
+  // Brand options come from the whole catalog, not the page being shown.
+  useEffect(() => {
+    let active = true;
+    apiFetch('/shop/products/facets/')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (active && data?.brands) setBrands(data.brands);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
 
-  // Filtering Logic
-  const filteredProducts = useMemo(() => {
-    let result = [...products];
-
-    if (searchQuery) {
-      const query = normalizeSearchText(searchQuery);
-      if (query) {
-        result = result.filter((product) => [
-          product.name,
-          product.description,
-          product.category,
-          product.brand,
-        ].some((value) => normalizeSearchText(value).includes(query)));
-      }
-    }
-
-    if (categoryFilters.length > 0) {
-      const normalizedCategories = categoryFilters.map(normalizeSearchText);
-      result = result.filter((product) => (
-        normalizedCategories.includes(normalizeSearchText(product.category))
-      ));
-    }
-
-    if (brandFilters.length > 0) {
-      result = result.filter(p => p.brand && brandFilters.includes(p.brand));
-    }
-
-    if (priceRangeFilter) {
-      const [min, max] = priceRangeFilter.split('-').map(Number);
-      result = result.filter(p => {
-        if (max) return p.price >= min && p.price <= max;
-        return p.price >= min;
-      });
-    }
-
-    if (statusFilters.length > 0) {
-      const filtered = result.filter(p => {
-        if (statusFilters.includes('new') && p.isNew) return true;
-        if (statusFilters.includes('featured') && p.isFeatured) return true;
-        if (statusFilters.includes('best_sellers') && (p.sales || 0) > 50) return true;
-        if (statusFilters.includes('top_rated') && (p.likes || 0) > 50) return true;
-        return false;
-      });
-      // If filter yields results use them, otherwise show all products
-      if (filtered.length > 0) result = filtered;
-    }
-
-    // Apply Sorting
-    switch (sortBy) {
-      case 'price-low':
-        result.sort((a, b) => a.price - b.price);
-        break;
-      case 'price-high':
-        result.sort((a, b) => b.price - a.price);
-        break;
-      case 'sales':
-        result.sort((a, b) => (b.sales || 0) - (a.sales || 0));
-        break;
-      case 'likes':
-        result.sort((a, b) => (b.likes || 0) - (a.likes || 0));
-        break;
-      case 'newest':
-      default:
-        // Assume default order in PRODUCTS or sort by isNew
-        result.sort((a, b) => (a.isNew === b.isNew ? 0 : a.isNew ? -1 : 1));
-        break;
-    }
-
-    return result;
-  }, [products, categoryFilters, brandFilters, priceRangeFilter, statusFilters, searchQuery, sortBy]);
-
-  // Reset to first page when any filter changes
+  // Reset to the first page whenever the filters change, so page 7 of the old
+  // result set never carries over into a smaller new one.
   useEffect(() => {
     setCurrentPage(1);
-  }, [categoryFilters, brandFilters, priceRangeFilter, statusFilters, searchQuery, sortBy, itemsPerPage]);
+  }, [
+    categoryFilters.join(','),
+    brandFilters.join(','),
+    priceRangeFilter,
+    statusFilters.join(','),
+    searchQuery,
+    sortBy,
+    itemsPerPage,
+  ]);
 
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const paginatedProducts = useMemo(() => {
-    const startIndex = (currentPage - 1) * itemsPerPage;
-    return filteredProducts.slice(startIndex, startIndex + itemsPerPage);
-  }, [filteredProducts, currentPage, itemsPerPage]);
+  // Search, filter, sort and paging all happen in the database. Fetching the
+  // full catalog and doing this in the browser did not scale past a few
+  // hundred products.
+  useEffect(() => {
+    const params = new URLSearchParams();
+    if (searchQuery) params.set('search', searchQuery);
+    if (categoryFilters.length) params.set('category', categoryFilters.join(','));
+    if (brandFilters.length) params.set('brand', brandFilters.join(','));
+    if (statusFilters.length) params.set('filter', statusFilters.join(','));
+    if (priceRangeFilter) {
+      const [min, max] = priceRangeFilter.split('-');
+      if (min) params.set('price_min', min);
+      if (max) params.set('price_max', max);
+    }
+    params.set('sort', sortBy);
+    params.set('page', String(currentPage));
+    params.set('page_size', String(itemsPerPage));
+
+    const controller = new AbortController();
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true);
+        setError(null);
+        const response = await apiFetch(`/shop/products/?${params.toString()}`, {
+          signal: controller.signal,
+        });
+        if (!response.ok) throw new Error(t('collection.load_error'));
+        const data = await response.json();
+        const rows = data.results ?? data;
+
+        setProducts(rows.map((p: any) => ({
+          ...p,
+          name: String(p.name ?? ''),
+          description: String(p.description ?? ''),
+          brand: String(p.brand ?? ''),
+          isNew: p.is_new,
+          isFeatured: p.is_featured,
+          isLimited: p.is_limited,
+          isCheap: p.is_cheap,
+          category: String(p.category_name || p.category || ''),
+        })));
+        setTotalCount(typeof data.count === 'number' ? data.count : rows.length);
+      } catch (err) {
+        if ((err as Error)?.name === 'AbortError') return;
+        console.error(err);
+        setError(t('collection.load_error'));
+      } finally {
+        if (!controller.signal.aborted) setIsLoading(false);
+      }
+    };
+    fetchProducts();
+    return () => controller.abort();
+  }, [
+    t,
+    searchQuery,
+    categoryFilters.join(','),
+    brandFilters.join(','),
+    statusFilters.join(','),
+    priceRangeFilter,
+    sortBy,
+    currentPage,
+    itemsPerPage,
+  ]);
+
+  // The server returns exactly the rows for this page already.
+  const paginatedProducts = products;
+  const totalPages = Math.max(1, Math.ceil(totalCount / itemsPerPage));
 
   const updateFilter = (key: string, value: string, multi = false) => {
     const newParams = new URLSearchParams(searchParams);
@@ -227,7 +204,7 @@ export function CollectionPage() {
                 : t('nav.products')}
             </h1>
             <p className="mt-0.5 text-xs leading-5 text-secondary sm:mt-1 sm:text-sm lg:mt-2 lg:text-base">
-              {t('filter.results', { count: filteredProducts.length })}
+              {t('filter.results', { count: totalCount })}
             </p>
           </div>
 
@@ -293,14 +270,14 @@ export function CollectionPage() {
                 {t('product.back_to_shop')}
               </button>
             </div>
-          ) : filteredProducts.length > 0 ? (
+          ) : products.length > 0 ? (
             <>
               <ProductGrid products={paginatedProducts} layout="grid-6" />
               
               {/* Pagination Controls */}
               <div className="mt-8 flex flex-wrap items-center justify-center gap-3 border-t border-surface-variant py-4 sm:mt-10 sm:justify-between sm:gap-4 sm:py-5 lg:mt-20 lg:py-8">
                 {/* Items Per Page */}
-                {filteredProducts.length > 10 && <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
+                {totalCount > 10 && <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
                   <span className="text-[10px] font-bold uppercase tracking-wide text-secondary sm:text-xs sm:tracking-widest">
                     {t('filter.show_per_page', { defaultValue: 'Show' })}:
                   </span>
@@ -373,9 +350,9 @@ export function CollectionPage() {
                 <p className="w-full text-center text-[9px] font-semibold uppercase tracking-wide text-secondary italic sm:ml-auto sm:w-auto sm:text-[10px] sm:tracking-widest">
                   {t('filter.showing_range', { 
                     defaultValue: 'Showing {{start}}-{{end}} of {{total}}',
-                    start: Math.min(filteredProducts.length, (currentPage - 1) * itemsPerPage + 1),
-                    end: Math.min(filteredProducts.length, currentPage * itemsPerPage),
-                    total: filteredProducts.length
+                    start: Math.min(totalCount, (currentPage - 1) * itemsPerPage + 1),
+                    end: Math.min(totalCount, currentPage * itemsPerPage),
+                    total: totalCount
                   })}
                 </p>
               </div>

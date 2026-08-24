@@ -1,13 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Heart, ShoppingBag, ArrowLeft, Loader2, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Heart, ShoppingBag, ArrowLeft, Loader2, Minus, Plus, ChevronLeft, ChevronRight, Star } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Product } from '@/types';
 import { SEO } from '@/components/SEO';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { ProductGrid } from '@/components/products/ProductGrid';
+import { ProductReviews } from '@/components/products/ProductReviews';
 import { cn } from '@/lib/utils';
 import { apiFetch } from '@/lib/api';
 import { ProductImage } from '@/components/products/ProductImage';
@@ -87,6 +88,20 @@ export function ProductDetail() {
       window.scrollTo(0, 0);
     }
   }, [id, i18n.language, t]);
+
+  // Re-read the product after a review is saved so the rating summary and the
+  // JSON-LD aggregateRating reflect the new average.
+  const refreshProduct = useCallback(async () => {
+    if (!id) return;
+    try {
+      const response = await apiFetch(`/shop/products/${id}/`);
+      if (!response.ok) return;
+      const p = await response.json();
+      setProduct((current) => (current ? { ...current, ...p, category: p.category_name || p.category } : current));
+    } catch {
+      /* leave the currently displayed rating in place */
+    }
+  }, [id]);
 
   if (isLoading) {
     return (
@@ -194,6 +209,15 @@ export function ProductDetail() {
             priceCurrency: product.currency || 'JPY',
             availability: 'https://schema.org/InStock',
           },
+          // Only emitted once real reviews exist — search engines reject
+          // aggregateRating with a zero review count.
+          aggregateRating: (product.review_count ?? 0) > 0 ? {
+            '@type': 'AggregateRating',
+            ratingValue: product.rating_average,
+            reviewCount: product.review_count,
+            bestRating: 5,
+            worstRating: 1,
+          } : undefined,
         }}
       />
       <div className="max-w-[85%] mx-auto px-4 md:px-6 pt-8">
@@ -311,7 +335,32 @@ export function ProductDetail() {
                 </div>
               )}
             </div>
-            <h1 className="headline-lg mb-4">{product.name}</h1>
+            <h1 className="headline-lg mb-3">{product.name}</h1>
+
+            {/* Rating summary — jumps to the full review list below. */}
+            {(product.review_count ?? 0) > 0 && (
+              <a href="#reviews" className="mb-4 inline-flex items-center gap-2 group w-fit">
+                <span className="inline-flex items-center gap-0.5" aria-hidden="true">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      size={16}
+                      className={cn(
+                        star <= Math.round(product.rating_average ?? 0)
+                          ? 'fill-primary text-primary'
+                          : 'text-outline-variant'
+                      )}
+                    />
+                  ))}
+                </span>
+                <span className="text-sm font-bold">
+                  {(product.rating_average ?? 0).toFixed(1)}
+                </span>
+                <span className="text-sm text-secondary group-hover:text-primary transition-colors">
+                  {t('reviews.count', { count: product.review_count ?? 0 })}
+                </span>
+              </a>
+            )}
             
             <div className="flex items-center gap-4 mb-8">
               <span className="text-3xl font-medium">{formatPrice(product.price)}</span>
@@ -392,6 +441,15 @@ export function ProductDetail() {
               </div>
             </div>
           </div>
+        </div>
+
+        <div id="reviews">
+          <ProductReviews
+            productId={product.id}
+            ratingAverage={product.rating_average ?? null}
+            reviewCount={product.review_count ?? 0}
+            onReviewSaved={refreshProduct}
+          />
         </div>
 
         {/* Related Products Section */}

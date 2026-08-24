@@ -48,6 +48,14 @@ BIRTHDAY_EMAIL_SCHEDULER_SA_NAME="${BIRTHDAY_EMAIL_SCHEDULER_SA_NAME:-kizuna-bir
 BIRTHDAY_COUPON_DISCOUNT_PERCENT="${BIRTHDAY_COUPON_DISCOUNT_PERCENT:-10}"
 BIRTHDAY_COUPON_MINIMUM_ORDER_VND="${BIRTHDAY_COUPON_MINIMUM_ORDER_VND:-300000}"
 BIRTHDAY_COUPON_MAX_DISCOUNT_VND="${BIRTHDAY_COUPON_MAX_DISCOUNT_VND:-100000}"
+CART_REMINDER_SCHEDULER_ENABLED="${CART_REMINDER_SCHEDULER_ENABLED:-true}"
+CART_REMINDER_JOB_NAME="${CART_REMINDER_JOB_NAME:-kizuna-cart-reminder}"
+CART_REMINDER_SCHEDULER_NAME="${CART_REMINDER_SCHEDULER_NAME:-kizuna-cart-reminder-hourly}"
+CART_REMINDER_SCHEDULE="${CART_REMINDER_SCHEDULE:-30 * * * *}"
+CART_REMINDER_TIME_ZONE="${CART_REMINDER_TIME_ZONE:-Asia/Ho_Chi_Minh}"
+CART_REMINDER_SCHEDULER_SA_NAME="${CART_REMINDER_SCHEDULER_SA_NAME:-kizuna-cart-scheduler}"
+# How long a cart must sit untouched before the customer is nudged.
+CART_REMINDER_IDLE_HOURS="${CART_REMINDER_IDLE_HOURS:-24}"
 
 if [[ -z "$PROJECT_ID" ]]; then
   echo "Usage: ./deploy-cloud-run.sh <GCP_PROJECT_ID>"
@@ -327,7 +335,17 @@ gcloud run deploy "$SERVICE" \
   --set-env-vars="$runtime_env_vars" \
   --set-secrets="$secret_bindings_csv"
 
-if [[ "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED" == "True" ]]; then
+# Compare case-insensitively: these default to lowercase "true", so an exact
+# match against "True" silently skipped the whole block and no schedule was
+# ever created, despite the deploy docs saying otherwise.
+scheduler_enabled() {
+  case "$(printf '%s' "$1" | tr '[:upper:]' '[:lower:]')" in
+    true|1|yes) return 0 ;;
+    *) return 1 ;;
+  esac
+}
+
+if scheduler_enabled "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED" || scheduler_enabled "$CART_REMINDER_SCHEDULER_ENABLED"; then
   DEPLOYED_IMAGE="$(
     gcloud run services describe "$SERVICE" \
       --project "$PROJECT_ID" \
@@ -335,6 +353,7 @@ if [[ "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED" == "True" ]]; then
       --format='value(spec.template.spec.containers[0].image)'
   )"
 
+  if scheduler_enabled "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED"; then
   echo "Creating or updating birthday email job: $BIRTHDAY_EMAIL_JOB_NAME"
   gcloud run jobs deploy "$BIRTHDAY_EMAIL_JOB_NAME" \
     --project "$PROJECT_ID" \
@@ -386,6 +405,61 @@ if [[ "$BIRTHDAY_EMAIL_SCHEDULER_ENABLED" == "True" ]]; then
       "${scheduler_args[@]}"
   fi
   echo "Birthday email schedule: $BIRTHDAY_EMAIL_SCHEDULE ($BIRTHDAY_EMAIL_TIME_ZONE)"
+  fi
+
+  if scheduler_enabled "$CART_REMINDER_SCHEDULER_ENABLED"; then
+    echo "Creating or updating abandoned cart job: $CART_REMINDER_JOB_NAME"
+    gcloud run jobs deploy "$CART_REMINDER_JOB_NAME" \
+      --project "$PROJECT_ID" \
+      --region "$REGION" \
+      --image "$DEPLOYED_IMAGE" \
+      --service-account "$RUNTIME_SA" \
+      --cpu="$CLOUD_RUN_CPU" \
+      --memory="$CLOUD_RUN_MEMORY" \
+      --task-timeout=600s \
+      --max-retries=1 \
+      --command=python \
+      --args=manage.py,send_abandoned_cart_reminders,--hours,"$CART_REMINDER_IDLE_HOURS",--email,--execute \
+      --set-env-vars="$runtime_env_vars" \
+      --set-secrets="$secret_bindings_csv"
+
+    CART_SCHEDULER_SA="${CART_REMINDER_SCHEDULER_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+    if ! gcloud iam service-accounts describe "$CART_SCHEDULER_SA" \
+      --project "$PROJECT_ID" >/dev/null 2>&1; then
+      gcloud iam service-accounts create "$CART_REMINDER_SCHEDULER_SA_NAME" \
+        --project "$PROJECT_ID" \
+        --display-name="KIZUNA abandoned cart scheduler"
+    fi
+
+    gcloud run jobs add-iam-policy-binding "$CART_REMINDER_JOB_NAME" \
+      --project "$PROJECT_ID" \
+      --region "$REGION" \
+      --member="serviceAccount:${CART_SCHEDULER_SA}" \
+      --role="roles/run.invoker" >/dev/null
+
+    cart_job_uri="https://run.googleapis.com/v2/projects/${PROJECT_ID}/locations/${REGION}/jobs/${CART_REMINDER_JOB_NAME}:run"
+    cart_scheduler_args=(
+      --project "$PROJECT_ID"
+      --location "$REGION"
+      --schedule "$CART_REMINDER_SCHEDULE"
+      --time-zone "$CART_REMINDER_TIME_ZONE"
+      --uri "$cart_job_uri"
+      --http-method POST
+      --oauth-service-account-email "$CART_SCHEDULER_SA"
+      --oauth-token-scope "https://www.googleapis.com/auth/cloud-platform"
+      --attempt-deadline 320s
+    )
+    if gcloud scheduler jobs describe "$CART_REMINDER_SCHEDULER_NAME" \
+      --project "$PROJECT_ID" \
+      --location "$REGION" >/dev/null 2>&1; then
+      gcloud scheduler jobs update http "$CART_REMINDER_SCHEDULER_NAME" \
+        "${cart_scheduler_args[@]}"
+    else
+      gcloud scheduler jobs create http "$CART_REMINDER_SCHEDULER_NAME" \
+        "${cart_scheduler_args[@]}"
+    fi
+    echo "Cart reminder schedule: $CART_REMINDER_SCHEDULE ($CART_REMINDER_TIME_ZONE)"
+  fi
 fi
 
 NON_DETERMINISTIC_SERVICE_URL="$(

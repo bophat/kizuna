@@ -1,10 +1,12 @@
 import mimetypes
+from decimal import Decimal, InvalidOperation
 
 from django.conf import settings
 from django.core.cache import cache
 from django.core.files.storage import default_storage
 from django.http import FileResponse, Http404
 from rest_framework import viewsets, status
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.decorators import action
 from rest_framework.views import APIView
 from rest_framework.response import Response
@@ -12,16 +14,17 @@ from rest_framework.permissions import IsAuthenticated, AllowAny
 from .exchange_rates import get_exchange_rates
 from django.core.mail import send_mail
 from django.db import transaction
-from django.db.models import Case, IntegerField, Max, Value, When
+from django.db.models import Avg, Case, Count, IntegerField, Max, Min, Q, Value, When
 from .models import (
     AffiliateProfile, Cart, CartItem, Coupon, CouponRedemption, Order,
     OrderItem, PaymentMethodConfig, UserProfile, Product, ProductStatus,
-    Category, Favorite,
+    Category, Favorite, ProductReview, CustomerNotification,
 )
 from .serializers import (
     CartSerializer, OrderSerializer, UserSerializer, PublicProductSerializer,
     CategorySerializer, FavoriteSerializer, PaymentTransactionPublicSerializer,
-    UserProfileSerializer,
+    UserProfileSerializer, ProductReviewSerializer, ProductReviewWriteSerializer,
+    CustomerNotificationSerializer,
 )
 from .coupons import CouponValidationError, normalize_coupon_code, validate_coupon
 from .shipping import calculate_shipping_amount
@@ -37,6 +40,8 @@ from .payments import (
     normalize_payment_method,
 )
 from .invoice import generate_invoice_pdf, generate_invoice_filename
+from .guest_carts import get_cart as resolve_request_cart
+from .guest_accounts import ExistingAccountError, resolve_guest_user
 
 
 PUBLIC_API_CACHE_SECONDS = getattr(settings, 'PUBLIC_API_CACHE_SECONDS', 60)
@@ -57,6 +62,15 @@ def _cache_set(key, value):
         cache.set(key, value, PUBLIC_API_CACHE_SECONDS)
 
 
+def _bump_product_cache_version(product):
+    """Invalidate cached product payloads after a review changes its rating.
+
+    The cache version is derived from the newest Product.updated_at, and writing
+    a review does not otherwise touch the product row.
+    """
+    product.save(update_fields=['updated_at'])
+
+
 def _product_cache_version():
     """Return a database-backed version shared by every Cloud Run worker."""
     latest_update = Product.objects.aggregate(latest=Max('updated_at'))['latest']
@@ -71,14 +85,127 @@ class ExchangeRatesView(APIView):
         return Response(get_exchange_rates(force_refresh=force))
 
 
+# Storefront highlight-chip thresholds. Kept here (not in the React app) so the
+# same rule drives the query and the UI copy.
+BEST_SELLER_MIN_SALES = 50
+# 'Top rated' means real stars now that reviews exist, not wishlist hearts.
+TOP_RATED_MIN_STARS = 4
+
+# Sort keys accepted by ?sort=. Every option gets -created_at as a tiebreaker so
+# paging stays stable when many rows share a price/sales/likes value.
+PRODUCT_SORT_OPTIONS = {
+    'newest': ('-created_at',),
+    'price-low': ('price', '-created_at'),
+    'price-high': ('-price', '-created_at'),
+    'sales': ('-sales', '-created_at'),
+    'likes': ('-likes', '-created_at'),
+    'rating': ('-rating_average', '-review_count', '-created_at'),
+}
+
+# Product/Category carry a base field plus per-language variants; the public
+# serializer emits whichever matches the request language, so filters have to
+# match against all of them to accept whatever string the client saw.
+LOCALIZED_SUFFIXES = ('', '_en', '_ja', '_vi')
+
+
+def _csv_param(params, key):
+    """Read a query param that may repeat and/or hold a comma-separated list."""
+    values = []
+    for raw in params.getlist(key):
+        values.extend(part.strip() for part in raw.split(','))
+    return [value for value in values if value]
+
+
+def _decimal_param(params, key):
+    raw = (params.get(key) or '').strip()
+    if not raw:
+        return None
+    try:
+        return Decimal(raw)
+    except (InvalidOperation, ValueError):
+        return None
+
+
+def _localized_q(field, lookup, value):
+    """Q matching `value` against `field` and its _en/_ja/_vi variants."""
+    query = Q()
+    for suffix in LOCALIZED_SUFFIXES:
+        query |= Q(**{f'{field}{suffix}__{lookup}': value})
+    return query
+
+
+class ProductPagination(PageNumberPagination):
+    page_size = 20
+    page_size_query_param = 'page_size'
+    max_page_size = 100
+
+
 class ProductViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = (
         Product.objects.filter(status=ProductStatus.PUBLISHED)
         .select_related('category', 'source_info')
         .prefetch_related('gallery')
+        # Aggregated here so listing pages don't run a count per product.
+        .annotate(
+            rating_average=Avg('reviews__rating', filter=Q(reviews__is_published=True)),
+            review_count=Count('reviews', filter=Q(reviews__is_published=True)),
+        )
         .order_by('-created_at')
     )
     serializer_class = PublicProductSerializer
+    pagination_class = ProductPagination
+
+    def _apply_filters(self, queryset, params):
+        """Search/filter/sort the catalog in the database.
+
+        These used to run in the browser, which meant every visit to the
+        collection page downloaded the entire catalog before showing anything.
+        """
+        search = (params.get('search') or '').strip()
+        if search:
+            queryset = queryset.filter(
+                _localized_q('name', 'icontains', search)
+                | _localized_q('description', 'icontains', search)
+                | _localized_q('category__name', 'icontains', search)
+                | Q(brand__icontains=search)
+            )
+
+        categories = _csv_param(params, 'category')
+        if categories:
+            queryset = queryset.filter(_localized_q('category__name', 'in', categories))
+
+        brands = _csv_param(params, 'brand')
+        if brands:
+            queryset = queryset.filter(brand__in=brands)
+
+        price_min = _decimal_param(params, 'price_min')
+        if price_min is not None:
+            queryset = queryset.filter(price__gte=price_min)
+
+        price_max = _decimal_param(params, 'price_max')
+        if price_max is not None:
+            queryset = queryset.filter(price__lte=price_max)
+
+        # Highlight chips are OR'd with each other: picking "New" and "Featured"
+        # widens the result set rather than requiring both.
+        highlights = _csv_param(params, 'filter')
+        if highlights:
+            highlight_query = Q()
+            if 'new' in highlights:
+                highlight_query |= Q(is_new=True)
+            if 'featured' in highlights:
+                highlight_query |= Q(is_featured=True)
+            if 'best_sellers' in highlights:
+                highlight_query |= Q(sales__gt=BEST_SELLER_MIN_SALES)
+            if 'top_rated' in highlights:
+                highlight_query |= Q(rating_average__gte=TOP_RATED_MIN_STARS)
+            if highlight_query:
+                queryset = queryset.filter(highlight_query)
+
+        ordering = PRODUCT_SORT_OPTIONS.get((params.get('sort') or '').strip())
+        if ordering:
+            queryset = queryset.order_by(*ordering)
+        return queryset
 
     def list(self, request, *args, **kwargs):
         cache_key = (
@@ -87,8 +214,13 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
         )
         payload = _cache_get(cache_key)
         if payload is None:
-            queryset = self.filter_queryset(self.get_queryset())
-            payload = self.get_serializer(queryset, many=True).data
+            queryset = self._apply_filters(self.get_queryset(), request.query_params)
+            page = self.paginate_queryset(queryset)
+            if page is None:
+                payload = self.get_serializer(queryset, many=True).data
+            else:
+                serializer = self.get_serializer(page, many=True)
+                payload = self.get_paginated_response(serializer.data).data
             _cache_set(cache_key, payload)
         return Response(payload)
 
@@ -161,10 +293,165 @@ class ProductViewSet(viewsets.ReadOnlyModelViewSet):
             _cache_set(cache_key, payload)
         return Response(payload)
 
+    @action(
+        detail=True,
+        methods=['get', 'post'],
+        permission_classes=[AllowAny],
+        url_path='reviews',
+    )
+    def reviews(self, request, pk=None):
+        product = self.get_object()
+
+        if request.method == 'GET':
+            queryset = (
+                ProductReview.objects.filter(product=product, is_published=True)
+                .select_related('user')
+            )
+            page = self.paginate_queryset(queryset)
+            serializer = ProductReviewSerializer(
+                page if page is not None else queryset,
+                many=True,
+                context=self.get_serializer_context(),
+            )
+            if page is not None:
+                return self.get_paginated_response(serializer.data)
+            return Response(serializer.data)
+
+        if not request.user.is_authenticated:
+            return Response(
+                {'detail': 'Sign in to review this product.'},
+                status=status.HTTP_401_UNAUTHORIZED,
+            )
+
+        # Only customers who actually received the product may review it.
+        delivered_order = (
+            Order.objects.filter(
+                user=request.user,
+                status='delivered',
+                items__product=product,
+            )
+            .order_by('-created_at')
+            .first()
+        )
+        if delivered_order is None:
+            return Response(
+                {
+                    'detail': 'Only customers with a delivered order for this '
+                              'product can review it.',
+                    'code': 'purchase_required',
+                },
+                status=status.HTTP_403_FORBIDDEN,
+            )
+
+        serializer = ProductReviewWriteSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        # Re-submitting replaces the existing review rather than erroring on the
+        # one-review-per-product constraint.
+        review, _created = ProductReview.objects.update_or_create(
+            product=product,
+            user=request.user,
+            defaults={
+                **serializer.validated_data,
+                'order': delivered_order,
+                'is_verified_purchase': True,
+            },
+        )
+        _bump_product_cache_version(product)
+        return Response(
+            ProductReviewSerializer(
+                review, context=self.get_serializer_context()
+            ).data,
+            status=status.HTTP_201_CREATED,
+        )
+
+    @action(
+        detail=True,
+        methods=['get'],
+        permission_classes=[IsAuthenticated],
+        url_path='review-eligibility',
+    )
+    def review_eligibility(self, request, pk=None):
+        """Tell the storefront whether to offer the review form, and prefill it."""
+        product = self.get_object()
+        has_delivered_order = Order.objects.filter(
+            user=request.user, status='delivered', items__product=product
+        ).exists()
+        existing = ProductReview.objects.filter(
+            product=product, user=request.user
+        ).first()
+        return Response({
+            'can_review': has_delivered_order,
+            'existing_review': (
+                ProductReviewSerializer(
+                    existing, context=self.get_serializer_context()
+                ).data
+                if existing else None
+            ),
+        })
+
+    @action(detail=False, methods=['get'])
+    def facets(self, request):
+        """Filter options for the collection page.
+
+        The storefront used to derive the brand list by scanning every product
+        it had downloaded. Now that listing is paginated, the options have to
+        come from the whole catalog rather than the current page.
+        """
+        cache_key = f'shop:products:facets:{_product_cache_version()}'
+        payload = _cache_get(cache_key)
+        if payload is None:
+            published = Product.objects.filter(status=ProductStatus.PUBLISHED)
+            brands = sorted(
+                {
+                    brand.strip()
+                    for brand in published.values_list('brand', flat=True)
+                    if brand and brand.strip()
+                }
+            )
+            bounds = published.aggregate(min_price=Min('price'), max_price=Max('price'))
+            payload = {
+                'brands': brands,
+                'price_min': str(bounds['min_price']) if bounds['min_price'] is not None else None,
+                'price_max': str(bounds['max_price']) if bounds['max_price'] is not None else None,
+            }
+            _cache_set(cache_key, payload)
+        return Response(payload)
+
     @action(detail=False, methods=['get'])
     def likes_counts(self, request):
         products = Product.objects.filter(status=ProductStatus.PUBLISHED).values('id', 'likes')
         return Response(list(products))
+
+class NotificationViewSet(viewsets.ReadOnlyModelViewSet):
+    """The customer's own notification feed."""
+
+    permission_classes = [IsAuthenticated]
+    serializer_class = CustomerNotificationSerializer
+    pagination_class = ProductPagination
+
+    def get_queryset(self):
+        return CustomerNotification.objects.filter(user=self.request.user)
+
+    @action(detail=False, methods=['get'], url_path='unread-count')
+    def unread_count(self, request):
+        return Response({
+            'unread': self.get_queryset().filter(is_read=False).count(),
+        })
+
+    @action(detail=True, methods=['post'], url_path='read')
+    def mark_read(self, request, pk=None):
+        notification = self.get_object()
+        if not notification.is_read:
+            notification.is_read = True
+            notification.save(update_fields=['is_read'])
+        return Response(self.get_serializer(notification).data)
+
+    @action(detail=False, methods=['post'], url_path='read-all')
+    def mark_all_read(self, request):
+        updated = self.get_queryset().filter(is_read=False).update(is_read=True)
+        return Response({'updated': updated})
+
 
 class CategoryViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Category.objects.all()
@@ -209,11 +496,12 @@ class OrderHistoryViewSet(viewsets.ReadOnlyModelViewSet):
         return response
 
 class CartViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    # Guests can fill a cart before deciding whether to create an account;
+    # their cart is keyed on the session and merged in when they sign in.
+    permission_classes = [AllowAny]
 
     def _get_cart(self, request):
-        cart, _ = Cart.objects.get_or_create(user=request.user)
-        return cart
+        return resolve_request_cart(request, create=True)
 
     @action(detail=False, methods=['get'])
     def get_cart(self, request):
@@ -331,10 +619,10 @@ class CartViewSet(viewsets.ViewSet):
         return Response(serializer.data)
 
 class CheckoutViewSet(viewsets.ViewSet):
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     def _get_cart(self, request):
-        return Cart.objects.filter(user=request.user).first()
+        return resolve_request_cart(request)
 
     @action(detail=False, methods=['post'])
     def process_checkout(self, request):
@@ -376,6 +664,22 @@ class CheckoutViewSet(viewsets.ViewSet):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
+        is_guest_checkout = not user.is_authenticated
+        if is_guest_checkout:
+            try:
+                user = resolve_guest_user(email, first_name or '', last_name or '')
+            except ExistingAccountError:
+                # Attaching to a registered account would drop a stranger's
+                # order into that person's history, so ask them to sign in.
+                return Response(
+                    {
+                        "error": "An account already exists for this email. "
+                                 "Please sign in to complete your order.",
+                        "checkout_error_code": "account_exists",
+                    },
+                    status=status.HTTP_409_CONFLICT,
+                )
+
         if payment_method not in PaymentMethodConfig.Code.values:
             return Response(
                 {
@@ -396,7 +700,9 @@ class CheckoutViewSet(viewsets.ViewSet):
                     status=status.HTTP_400_BAD_REQUEST,
                 )
             try:
-                cart = Cart.objects.select_for_update().get(pk=cart.pk, user=user)
+                # Re-read under lock by primary key: a guest cart has no user
+                # yet, so it cannot be matched on the user column.
+                cart = Cart.objects.select_for_update().get(pk=cart.pk)
             except Cart.DoesNotExist:
                 return Response(
                     {"error": "Cart is empty", "checkout_error_code": "empty_cart"},
@@ -568,6 +874,9 @@ class CheckoutViewSet(viewsets.ViewSet):
         response_data = {
             "message": "Order placed successfully",
             "order": OrderSerializer(order, context={'request': request}).data,
+            # Lets the confirmation screen invite guests to set a password and
+            # keep their order history.
+            "guest_checkout": is_guest_checkout,
         }
         payment_data = PaymentTransactionPublicSerializer(
             payment, context={'request': request}

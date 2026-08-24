@@ -243,8 +243,14 @@
       "product_unavailable": "Một sản phẩm trong giỏ hàng hiện không còn được bán. Vui lòng kiểm tra lại giỏ hàng.",
       "insufficient_stock": "Sản phẩm “{{product}}” không đủ tồn kho. Hiện chỉ còn {{count}} sản phẩm.",
       "invalid_payment_method": "Vui lòng chọn phương thức thanh toán hợp lệ.",
-      "payment_method_unavailable": "Phương thức thanh toán này không còn khả dụng. Vui lòng chọn phương thức khác."
-    }
+      "payment_method_unavailable": "Phương thức thanh toán này không còn khả dụng. Vui lòng chọn phương thức khác.",
+      "account_exists": "Email này đã có tài khoản. Vui lòng đăng nhập để hoàn tất đơn hàng."
+    },
+    "guest_notice": "Bạn đang đặt hàng với tư cách khách.",
+    "guest_sign_in": "Đăng nhập thay vì vậy",
+    "guest_saved_title": "Theo dõi đơn hàng này",
+    "guest_saved_body": "Chúng tôi đã tạo tài khoản cho {{email}}. Hãy đặt mật khẩu để xem lịch sử đơn hàng và theo dõi giao hàng.",
+    "guest_set_password": "Đặt mật khẩu"
   },
   "wishlist": {
     "title": "Danh sách yêu thích",
@@ -385,8 +391,19 @@
     "date": "Ngày",
     "status": "Trạng thái",
     "commission": "Hoa hồng",
-    "metrics": { "visits": "Lượt truy cập", "orders": "Đơn giới thiệu", "pending": "Đang chờ", "available": "Có thể thanh toán", "paid": "Đã thanh toán" },
-    "statuses": { "pending": "Đang chờ", "available": "Khả dụng", "paid": "Đã thanh toán", "reversed": "Đã thu hồi" }
+    "metrics": {
+      "visits": "Lượt truy cập",
+      "orders": "Đơn giới thiệu",
+      "pending": "Đang chờ",
+      "available": "Có thể thanh toán",
+      "paid": "Đã thanh toán"
+    },
+    "statuses": {
+      "pending": "Đang chờ",
+      "available": "Khả dụng",
+      "paid": "Đã thanh toán",
+      "reversed": "Đã thu hồi"
+    }
   },
   "users": {
     "phone": "Số điện thoại"
@@ -413,7 +430,13 @@
         "time": "Hôm qua",
         "action": "Xem đơn hàng"
       }
-    }
+    },
+    "empty": "Bạn chưa có thông báo nào.",
+    "load_error": "Không thể tải thông báo.",
+    "sign_in_prompt": "Đăng nhập để xem cập nhật về đơn hàng của bạn.",
+    "mark_read": "Đánh dấu đã đọc",
+    "mark_all_read": "Đánh dấu tất cả đã đọc",
+    "view": "Xem"
   },
   "concierge": {
     "welcome": "Chào bạn! Mình là Kizuna AI, chuyên viên tư vấn trực tuyến của shop. Hôm nay bạn đang quan tâm hoặc muốn tìm mặt hàng nào? Hãy để lại tin nhắn để mình hỗ trợ nhanh nhất nhé.",
@@ -470,5 +493,34 @@
     "product_fallback_title": "Chi tiết sản phẩm",
     "product_fallback_description": "Xem chi tiết sản phẩm thủ công Nhật Bản chính hãng tại KIZUNA.",
     "not_found_title": "Không tìm thấy trang"
+  },
+  "reviews": {
+    "title": "Đánh giá từ khách hàng",
+    "count_one": "{{count}} đánh giá",
+    "count_other": "{{count}} đánh giá",
+    "empty": "Chưa có đánh giá nào cho sản phẩm này.",
+    "empty_cta": "Hãy là người đầu tiên chia sẻ cảm nhận sau khi mua.",
+    "verified": "Đã mua hàng",
+    "write": "Viết đánh giá",
+    "edit": "Sửa đánh giá của bạn",
+    "your_rating": "Đánh giá của bạn",
+    "title_label": "Tiêu đề (không bắt buộc)",
+    "title_placeholder": "Tóm tắt trong một câu",
+    "comment_label": "Cảm nhận của bạn",
+    "comment_placeholder": "Chất lượng, đóng gói, giao hàng...",
+    "submit": "Gửi đánh giá",
+    "submitting": "Đang gửi...",
+    "submitted": "Cảm ơn bạn đã đánh giá!",
+    "error": "Không thể gửi đánh giá. Vui lòng thử lại.",
+    "rating_required": "Vui lòng chọn số sao.",
+    "purchase_required": "Chỉ khách đã nhận hàng mới đánh giá được sản phẩm này.",
+    "load_error": "Không thể tải đánh giá.",
+    "stars": "{{count}} sao"
+  },
+  "cookies": {
+    "title": "Cookie trên KIZUNA",
+    "body": "Chúng tôi dùng cookie phân tích để hiểu cách khách sử dụng cửa hàng. Chỉ những cookie cần thiết để đăng nhập và giữ giỏ hàng mới được đặt khi chưa có sự đồng ý của bạn.",
+    "accept": "Đồng ý phân tích",
+    "decline": "Chỉ cookie cần thiết"
   }
 }

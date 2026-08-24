@@ -55,9 +55,10 @@ export function HomePage() {
           setFeatured((data.featured || []).map(mapProduct));
         } else {
           // Backward-compatible while the new Cloud Run revision is deploying.
-          const fallbackResponse = await apiFetch('/shop/products/');
+          const fallbackResponse = await apiFetch('/shop/products/?page_size=24');
           if (!fallbackResponse.ok) throw new Error('Failed to fetch');
-          const products: Product[] = (await fallbackResponse.json()).map(mapProduct);
+          const fallbackJson = await fallbackResponse.json();
+          const products: Product[] = (fallbackJson.results ?? fallbackJson).map(mapProduct);
           const arrivals = products.filter((product) => product.isNew);
           const highlighted = products.filter((product) => product.isFeatured);
           setNewArrivals((arrivals.length ? arrivals : products).slice(0, 3));

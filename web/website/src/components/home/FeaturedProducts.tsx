@@ -16,10 +16,12 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await apiFetch('/shop/products/');
+        // Ask the server for featured rows instead of downloading the whole
+        // catalog and filtering here.
+        const res = await apiFetch('/shop/products/?filter=featured&page_size=8');
         if (!res.ok) throw new Error('Failed to fetch products');
         const data = await res.json();
-        const mapped: Product[] = data.map((p: any) => ({
+        const mapped: Product[] = (data.results ?? data).map((p: any) => ({
           ...p,
           isNew: p.is_new,
           isFeatured: p.is_featured,
@@ -27,9 +29,7 @@ export function FeaturedProducts() {
           isCheap: p.is_cheap,
           category: p.category_name || p.category,
         }));
-        // Show featured products, fallback to first products
-        const featured = mapped.filter(p => p.isFeatured);
-        setProducts(featured.length > 0 ? featured : mapped);
+        setProducts(mapped);
       } catch (err) {
         console.error('Failed to load featured products:', err);
       } finally {
