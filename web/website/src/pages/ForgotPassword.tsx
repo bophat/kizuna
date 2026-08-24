@@ -4,6 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { ArrowRight, Loader2, MailCheck } from 'lucide-react';
 import { Logo } from '@izuna/shared/components/Logo';
 import { apiFetch } from '@/lib/api';
+import { SEO } from '@/components/SEO';
 
 
 export function ForgotPasswordPage() {
@@ -39,9 +40,10 @@ export function ForgotPasswordPage() {
 
   return (
     <div className="min-h-screen bg-surface flex items-center justify-center p-6">
-      <div className="w-full max-w-[520px] bg-white border border-surface-variant rounded-sm p-8 md:p-12 text-center">
+      <SEO title={t('auth.forgot_title')} noindex />
+      <div className="w-full max-w-[520px] bg-surface-container-lowest border border-surface-variant rounded-sm p-8 md:p-12 text-center">
         <div className="flex justify-center mb-10">
-          <Logo size="lg" forceBlack />
+          <Logo size="lg" />
         </div>
 
         <div className="flex justify-center mb-6">
@@ -56,7 +58,7 @@ export function ForgotPasswordPage() {
         </p>
 
         {error && (
-          <div className="mb-5 p-3 bg-red-50 border border-red-200 text-red-600 body-sm rounded-sm" role="alert">
+          <div className="mb-5 p-3 bg-error-container border border-error text-on-error-container body-sm rounded-sm" role="alert">
             {error}
           </div>
         )}
@@ -71,7 +73,7 @@ export function ForgotPasswordPage() {
               type="email"
               value={email}
               onChange={(event) => setEmail(event.target.value)}
-              className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+              className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
               placeholder={t('auth.enter_email')}
               required
             />

@@ -3,7 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!-- Title chỉ để có giá trị hợp lệ trước khi JS chạy — mọi thứ khác (description,
+         robots, og:*, twitter:*, canonical) do react-helmet-async quản lý qua <SEO>
+         (src/components/SEO.tsx), khai báo riêng ở từng trang. KHÔNG thêm meta
+         description/og/twitter tĩnh ở đây nữa: react-helmet-async không biết các tag
+         được render sẵn trong HTML này, nên nó sẽ CHÈN THÊM một bản thứ hai thay vì
+         ghi đè → 2 thẻ og:title trùng tên khiến crawler có thể đọc nhầm giá trị tĩnh
+         (cũ) thay vì giá trị đúng theo từng trang. -->
     <title>KIZUNA - Japanese Artisan Excellence</title>
+    <!-- Dark-mode FOUC avoidance: set `.dark` on <html> synchronously, before first
+         paint / before React mounts. Must read the SAME storage key + fallback logic
+         as ThemeContext.tsx (THEME_STORAGE_KEY = 'kizuna-theme') or the two can
+         disagree on first load. Kept as a static inline script (not Helmet-managed)
+         because it must run before any stylesheet paints — same category as the PWA
+         manifest link. -->
+    <script>
+      (function () {
+        try {
+          var stored = localStorage.getItem('kizuna-theme');
+          var dark = stored === 'dark' || (stored !== 'light' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          if (dark) document.documentElement.classList.add('dark');
+        } catch (e) {}
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

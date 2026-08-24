@@ -11,6 +11,7 @@ import { useFormatPrice } from '@/hooks/useFormatPrice';
 import { fadeUp, slideX, tweenBase, tweenFast } from '@/lib/motion';
 import { ProductImage } from '@/components/products/ProductImage';
 import { getAffiliateCode } from '@/lib/affiliate';
+import { SEO } from '@/components/SEO';
 
 const STEPS = ['information', 'shipping', 'payment', 'success'] as const;
 
@@ -402,6 +403,7 @@ export function CheckoutPage() {
   if (step === 0 && isLoadingUser) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
+        <SEO title={t('checkout.title', 'Checkout')} noindex />
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
       </div>
     );
@@ -420,6 +422,7 @@ export function CheckoutPage() {
     }).format(Number(payment?.settlement_amount || 0));
     return (
       <div className=" md:py-10 px-4 flex items-center justify-center">
+        <SEO title={t('checkout.title', 'Checkout')} noindex />
         <motion.div
           {...fadeUp}
           transition={tweenBase}
@@ -581,6 +584,7 @@ export function CheckoutPage() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-8 py-12">
+      <SEO title={t('checkout.title', 'Checkout')} noindex />
       <nav className="flex items-center gap-2 label-sm text-secondary mb-12 overflow-x-auto whitespace-nowrap pb-2">
         <Link to="/cart" className="hover:text-primary transition-colors">{t('nav.cart')}</Link>
         <Icons.ChevronRight size={14} />
@@ -843,7 +847,7 @@ function InformationForm({
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
+              className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
               placeholder="email@example.com"
             />
           </div>
@@ -854,7 +858,7 @@ function InformationForm({
               type="tel"
               value={phone}
               onChange={(e) => setPhone(e.target.value)}
-              className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
+              className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
               placeholder="090..."
             />
           </div>
@@ -870,7 +874,7 @@ function InformationForm({
               required
               value={firstName}
               onChange={(e) => setFirstName(e.target.value)}
-              className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
+              className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
               placeholder={t('checkout.first_name')}
             />
           </div>
@@ -880,7 +884,7 @@ function InformationForm({
               required
               value={lastName}
               onChange={(e) => setLastName(e.target.value)}
-              className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
+              className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
               placeholder={t('checkout.last_name')}
 
             />
@@ -892,7 +896,7 @@ function InformationForm({
             required
             value={address}
             onChange={(e) => setAddress(e.target.value)}
-            className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
+            className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md outline-none focus:border-primary transition-colors"
             placeholder={t('checkout.address_placeholder')}
           />
         </div>
@@ -921,7 +925,7 @@ function ShippingMethodForm({ email, onNext, onPrev, shipping }: { email: string
     <div className="flex flex-col gap-10">
       <h2 className="headline-lg">{t('checkout.steps.shipping')}</h2>
 
-      <div className="border border-surface-variant rounded-sm overflow-hidden bg-white">
+      <div className="border border-surface-variant rounded-sm overflow-hidden bg-surface-container-lowest">
         <div className="flex flex-col md:flex-row p-6 border-b border-surface-variant gap-4">
           <span className="label-md text-tertiary w-32 border-none">{t('checkout.contact')}</span>
           <span className="body-md flex-grow">{email || 'guest@example.com'}</span>
@@ -931,7 +935,7 @@ function ShippingMethodForm({ email, onNext, onPrev, shipping }: { email: string
 
       <section className="flex flex-col gap-6">
         <h3 className="headline-md">{t('checkout.select_method')}</h3>
-        <div className="flex flex-col border border-surface-variant rounded-sm bg-white overflow-hidden">
+        <div className="flex flex-col border border-surface-variant rounded-sm bg-surface-container-lowest overflow-hidden">
           <label className="flex items-center justify-between p-6 cursor-pointer transition-colors border-surface-variant bg-surface-container-low">
             <div className="flex items-center gap-4">
               <div className="w-5 h-5 rounded-full border border-primary flex items-center justify-center transition-all">
@@ -972,10 +976,10 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, paymentMethods, loadin
         <p className="body-md text-secondary mt-2">{t('checkout.secure_payment_desc')}</p>
       </div>
 
-      <div className="flex flex-col border border-surface-variant rounded-sm bg-white overflow-hidden">
+      <div className="flex flex-col border border-surface-variant rounded-sm bg-surface-container-lowest overflow-hidden">
         {loading && <p className="p-6 text-secondary">{t('checkout.loading_payment_methods')}</p>}
-        {!loading && error && <p className="p-6 text-red-600">{error}</p>}
-        {!loading && !error && paymentMethods.length === 0 && <p className="p-6 text-red-600">{t('checkout.no_payment_methods')}</p>}
+        {!loading && error && <p className="p-6 text-error">{error}</p>}
+        {!loading && !error && paymentMethods.length === 0 && <p className="p-6 text-error">{t('checkout.no_payment_methods')}</p>}
         {paymentMethods.map((method, index) => (
           <label
             key={method.code}
@@ -1001,7 +1005,7 @@ function PaymentMethodForm({ isSubmitting, paymentMethod, paymentMethods, loadin
       </div>
 
       {checkoutError && (
-        <div role="alert" className="rounded-sm border border-red-200 bg-red-50 p-4 text-sm leading-relaxed text-red-700">
+        <div role="alert" className="rounded-sm border border-error bg-error-container p-4 text-sm leading-relaxed text-on-error-container">
           <div className="flex items-start gap-3">
             <Icons.AlertCircle size={18} className="mt-0.5 shrink-0" />
             <div>

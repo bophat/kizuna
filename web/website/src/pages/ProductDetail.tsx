@@ -4,6 +4,7 @@ import { motion } from 'motion/react';
 import { Heart, ShoppingBag, ArrowLeft, Loader2, Minus, Plus, ChevronLeft, ChevronRight } from 'lucide-react';
 import { useTranslation } from 'react-i18next';
 import { Product } from '@/types';
+import { SEO } from '@/components/SEO';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { ProductGrid } from '@/components/products/ProductGrid';
@@ -98,6 +99,7 @@ export function ProductDetail() {
   if (error || !product) {
     return (
       <div className="min-h-screen bg-surface flex flex-col items-center justify-center p-4">
+        <SEO title={t('seo.not_found_title')} noindex />
         <p className="text-error mb-4">{error || t('product.not_found')}</p>
         <button 
           onClick={() => navigate('/collections')}
@@ -166,8 +168,34 @@ export function ProductDetail() {
     setSelectedImage(galleryImages[newIndex]);
   };
 
+  const seoDescription = product.description
+    ? product.description.replace(/\s+/g, ' ').trim().slice(0, 160)
+    : t('seo.product_fallback_description');
+
   return (
     <div className="min-h-screen bg-surface pb-20">
+      <SEO
+        title={product.brand ? `${product.name} - ${product.brand}` : product.name}
+        description={seoDescription}
+        path={`/product/${product.id}`}
+        image={product.image}
+        type="product"
+        jsonLd={{
+          '@context': 'https://schema.org',
+          '@type': 'Product',
+          name: product.name,
+          image: galleryImages,
+          description: seoDescription,
+          sku: product.id,
+          brand: product.brand ? { '@type': 'Brand', name: product.brand } : undefined,
+          offers: {
+            '@type': 'Offer',
+            price: product.price,
+            priceCurrency: product.currency || 'JPY',
+            availability: 'https://schema.org/InStock',
+          },
+        }}
+      />
       <div className="max-w-[85%] mx-auto px-4 md:px-6 pt-8">
         
         {/* Breadcrumb / Back */}
@@ -183,7 +211,7 @@ export function ProductDetail() {
           
           {/* Column 1: Image Gallery */}
           <div className="flex flex-col gap-4">
-            <div className="aspect-square bg-white rounded-2xl overflow-hidden border border-surface-variant relative group">
+            <div className="aspect-square bg-surface-container-lowest rounded-2xl overflow-hidden border border-surface-variant relative group">
               <motion.div
                 key={selectedImage}
                 initial={{ opacity: 0 }}
@@ -227,7 +255,7 @@ export function ProductDetail() {
                   </span>
                 )}
                 {!!product.isCheap && (
-                  <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+                  <span className="bg-success text-on-success text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
                     {t('product.best_price')}
                   </span>
                 )}
@@ -242,7 +270,7 @@ export function ProductDetail() {
                     key={idx}
                     onClick={() => setSelectedImage(img)}
                     className={cn(
-                      "aspect-square rounded-lg overflow-hidden border-2 bg-white transition-all",
+                      "aspect-square rounded-lg overflow-hidden border-2 bg-surface-container-lowest transition-all",
                       selectedImage === img ? "border-primary" : "border-transparent hover:border-surface-variant"
                     )}
                   >
@@ -271,7 +299,7 @@ export function ProductDetail() {
                     size={16} 
                     className={cn(
                       "transition-all duration-300",
-                      inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
+                      inWishlist ? "text-primary fill-primary scale-110" : "text-secondary"
                     )} 
                   />
                   <span className={cn(
@@ -307,14 +335,14 @@ export function ProductDetail() {
                 <div className="flex items-center w-32 bg-surface-variant rounded-full p-1 border border-transparent focus-within:border-primary">
                   <button 
                     onClick={decreaseQuantity}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-lowest transition-colors"
                   >
                     <Minus size={16} />
                   </button>
                   <span className="flex-1 text-center font-medium">{quantity}</span>
                   <button 
                     onClick={increaseQuantity}
-                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-white transition-colors"
+                    className="w-8 h-8 flex items-center justify-center rounded-full hover:bg-surface-container-lowest transition-colors"
                   >
                     <Plus size={16} />
                   </button>
@@ -342,7 +370,7 @@ export function ProductDetail() {
                     "w-14 h-14 shrink-0 rounded-full flex items-center justify-center transition-all border",
                     inWishlist 
                       ? "bg-primary text-white border-primary shadow-lg shadow-primary/20" 
-                      : "bg-white text-on-surface border-surface-variant hover:border-primary hover:text-primary"
+                      : "bg-surface-container-lowest text-on-surface border-surface-variant hover:border-primary hover:text-primary"
                   )}
                 >
                   <Heart size={24} className={inWishlist ? "fill-white" : ""} />
@@ -352,7 +380,7 @@ export function ProductDetail() {
               {/* Extras (Delivery, etc.) */}
               <div className="mt-6 pt-6 border-t border-surface-variant/50 flex flex-col gap-3 text-sm text-secondary">
                 <p className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-green-500"></span>
+                  <span className="w-1.5 h-1.5 rounded-full bg-success"></span>
                   {t('product.ships_from', { location: product.location || 'Warehouse' })}
                 </p>
                 <p className="flex items-center gap-2">

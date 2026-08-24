@@ -457,5 +457,18 @@
     "shipping": "Giao hàng & Trả hàng",
     "contact": "Liên hệ",
     "rights": "© {{year}} KIZUNA. BẢO LƯU MỌI QUYỀN."
+  },
+  "seo": {
+    "home_title": "KIZUNA - Đồ thủ công nghệ nhân Nhật Bản chính hãng",
+    "home_description": "Khám phá bộ sưu tập đồ thủ công nghệ nhân Nhật Bản chính hãng tại KIZUNA — sản phẩm mới, tác phẩm tiêu biểu, giao hàng tận nơi.",
+    "collections_title": "Bộ sưu tập sản phẩm",
+    "collections_description": "Duyệt toàn bộ sản phẩm thủ công Nhật Bản tại KIZUNA — lọc theo danh mục, mức giá và tìm kiếm nhanh.",
+    "contact_title": "Liên hệ",
+    "contact_description": "Liên hệ với đội ngũ KIZUNA qua điện thoại, email hoặc form — chúng tôi phản hồi trong thời gian sớm nhất.",
+    "concierge_title": "Quản gia KIZUNA — Tư vấn trực tuyến",
+    "concierge_description": "Trò chuyện cùng Kizuna AI để được tư vấn về đồ thủ công, nghệ nhân và sản phẩm phù hợp với bạn.",
+    "product_fallback_title": "Chi tiết sản phẩm",
+    "product_fallback_description": "Xem chi tiết sản phẩm thủ công Nhật Bản chính hãng tại KIZUNA.",
+    "not_found_title": "Không tìm thấy trang"
   }
 }

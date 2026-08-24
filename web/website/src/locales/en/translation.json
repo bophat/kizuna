@@ -457,5 +457,18 @@
     "shipping": "Shipping & Returns",
     "contact": "Contact",
     "rights": "© {{year}} KIZUNA. ALL RIGHTS RESERVED."
+  },
+  "seo": {
+    "home_title": "KIZUNA - Authentic Japanese Artisan Crafts",
+    "home_description": "Discover an authentic collection of Japanese artisan crafts at KIZUNA — new arrivals, featured pieces, delivered to your door.",
+    "collections_title": "Product Collection",
+    "collections_description": "Browse the full range of Japanese artisan crafts at KIZUNA — filter by category, price and search instantly.",
+    "contact_title": "Contact Us",
+    "contact_description": "Reach the KIZUNA team by phone, email or contact form — we reply as soon as possible.",
+    "concierge_title": "KIZUNA Concierge — Live Consultation",
+    "concierge_description": "Chat with Kizuna AI to get guidance on artisan crafts and find the right product for you.",
+    "product_fallback_title": "Product Details",
+    "product_fallback_description": "View details of authentic Japanese artisan crafts at KIZUNA.",
+    "not_found_title": "Page Not Found"
   }
 }

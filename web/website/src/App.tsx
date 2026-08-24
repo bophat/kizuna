@@ -7,6 +7,7 @@ import { ConciergeFAB } from '@/components/home/ConciergeFAB';
 import { GlobalToaster } from '@izuna/shared/components/GlobalToaster';
 import { useEffect } from 'react';
 import { captureAffiliateFromUrl } from '@/lib/affiliate';
+import { trackPageView } from '@/lib/analytics';
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -16,11 +17,25 @@ function ScrollToTop() {
   return null;
 }
 
+function AnalyticsTracker() {
+  const location = useLocation();
+  useEffect(() => {
+    // setTimeout(0): đợi react-helmet-async commit xong document.title của trang mới
+    // trước khi đọc, vì effect này chạy trước effect cập nhật <title> (thứ tự JSX).
+    const id = window.setTimeout(() => {
+      trackPageView(`${location.pathname}${location.search}`, document.title);
+    }, 0);
+    return () => window.clearTimeout(id);
+  }, [location.pathname, location.search]);
+  return null;
+}
+
 export default function App() {
   return (
     <Router>
       <ScrollToTop />
       <AffiliateTracker />
+      <AnalyticsTracker />
       <GlobalToaster />
       <div className="min-h-screen flex flex-col font-sans selection:bg-secondary/10 selection:text-secondary">
         <ConditionalHeader />

@@ -7,7 +7,7 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="bg-stone-50 dark:bg-zinc-950 border-t border-zinc-200 dark:border-zinc-800 mt-auto">
+    <footer className="bg-surface-container-low border-t border-outline-variant mt-auto">
       <div className="max-w-[1280px] mx-auto py-16 px-8 flex flex-col md:flex-row justify-between items-center gap-12">
         <Link to="/" className="flex items-center group">
           <Logo className="transition-transform group-hover:scale-105" />
@@ -22,13 +22,13 @@ export function Footer() {
             <Link
               key={item.key}
               to={item.to}
-              className="label-sm text-zinc-500 hover:text-primary transition-colors lowercase tracking-wider border-b border-transparent hover:border-primary pb-1"
+              className="label-sm text-secondary hover:text-primary transition-colors lowercase tracking-wider border-b border-transparent hover:border-primary pb-1"
             >
               {item.label}
             </Link>
           ))}
         </div>
-        <div className="label-sm text-zinc-400 normal-case tracking-normal">
+        <div className="label-sm text-secondary normal-case tracking-normal">
           {t('footer.rights', { year: currentYear })}
         </div>
       </div>

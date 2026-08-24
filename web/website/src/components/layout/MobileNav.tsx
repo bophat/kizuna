@@ -34,7 +34,7 @@ export function MobileNav() {
   ];
 
   return (
-    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-white/90 dark:bg-zinc-950/90 backdrop-blur-md border-t border-zinc-200 dark:border-zinc-800 z-50 transition-all pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
+    <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-surface-container-lowest/90 backdrop-blur-md border-t border-outline-variant z-50 transition-all pb-safe shadow-[0_-4px_20px_rgba(0,0,0,0.05)]">
       <div className="flex items-center justify-around h-16 px-4">
         {navItems.map((item) => {
           const isActive = location.pathname === item.to;
@@ -44,7 +44,7 @@ export function MobileNav() {
               to={item.to}
               className={cn(
                 "relative flex flex-col items-center gap-1 min-w-[64px] transition-colors duration-200",
-                isActive ? "text-primary" : "text-zinc-500"
+                isActive ? "text-primary" : "text-secondary"
               )}
             >
               {isActive && (

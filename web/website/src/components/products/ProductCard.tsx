@@ -52,7 +52,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
   return (
     <Link 
       to={`/product/${product.id}`}
-      className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-surface-variant bg-white gpu-transform transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
+      className="group relative flex h-full flex-col overflow-hidden rounded-sm border border-surface-variant bg-surface-container-lowest gpu-transform transition-[transform,box-shadow] duration-300 ease-out hover:-translate-y-0.5 hover:shadow-lg"
     >
       {/* Image Container */}
       <div className={`relative overflow-hidden ${isLarge ? 'flex-grow' : 'aspect-square'}`}>
@@ -67,7 +67,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
         {/* Badges */}
         <div className="absolute top-4 left-4 flex flex-col gap-2">
           {!!product.isCheap && (
-            <span className="bg-green-500 text-white text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
+            <span className="bg-success text-on-success text-[10px] font-bold px-2 py-1 uppercase tracking-wider rounded-sm">
               {t('product.best_price')}
             </span>
           )}
@@ -123,7 +123,7 @@ export function ProductCard({ product, variant = 'standard' }: ProductCardProps)
                 size={14} 
                 className={cn(
                   "transition-all duration-300",
-                  inWishlist ? "text-red-500 fill-red-500 scale-110" : "text-secondary"
+                  inWishlist ? "text-primary fill-primary scale-110" : "text-secondary"
                 )} 
               />
               <span className={cn(

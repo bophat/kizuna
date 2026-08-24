@@ -6,7 +6,7 @@ import { fade, tweenFast } from '@/lib/motion';
 import { Icons } from '@/components/Icons';
 import { useCart } from '@/context/CartContext';
 import { useAuth } from '@/context/AuthContext';
-import { Plus, Minus, ShoppingBag } from 'lucide-react';
+import { SEO } from '@/components/SEO';
 import { EmptyState } from '@/components/EmptyState';
 import { apiFetch } from '@/lib/api';
 import { useFormatPrice } from '@/hooks/useFormatPrice';
@@ -105,6 +105,7 @@ export function CartPage() {
 
   return (
     <div className="max-w-[1280px] mx-auto px-4 md:px-8 py-12 md:py-16">
+      <SEO title={t('cart.title')} noindex />
       <div className="mb-12">
         <h1 className="headline-xl">{t('cart.title')}</h1>
         <p className="body-md text-secondary mt-2">
@@ -114,7 +115,7 @@ export function CartPage() {
 
       {items.length === 0 ? (
         <EmptyState 
-          icon={<ShoppingBag size={48} />}
+          icon={<Icons.ShoppingBag size={48} />}
           title={t('cart.empty_title')}
           description={t('cart.empty_description')}
         />
@@ -154,14 +155,14 @@ export function CartPage() {
                         onClick={() => handleUpdateQuantity(item.product_id, item.quantity, -1)}
                         className="p-2 text-secondary hover:text-on-surface transition-colors"
                       >
-                        <Minus size={16} />
+                        <Icons.Minus size={16} />
                       </button>
                       <span className="body-md px-4 min-w-[40px] text-center">{item.quantity}</span>
                       <button 
                         onClick={() => handleUpdateQuantity(item.product_id, item.quantity, 1)}
                         className="p-2 text-secondary hover:text-on-surface transition-colors"
                       >
-                        <Plus size={16} />
+                        <Icons.Plus size={16} />
                       </button>
                     </div>
                     <button

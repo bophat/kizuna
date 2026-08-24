@@ -457,5 +457,18 @@
     "shipping": "配送・返品",
     "contact": "お問い合わせ",
     "rights": "© {{year}} KIZUNA. ALL RIGHTS RESERVED."
+  },
+  "seo": {
+    "home_title": "KIZUNA - 日本の職人手工芸品",
+    "home_description": "KIZUNAで日本の職人による本格的な手工芸品コレクションをご覧ください。新着商品、おすすめ商品をお届けします。",
+    "collections_title": "商品コレクション",
+    "collections_description": "KIZUNAの全商品をカテゴリー、価格、キーワードで検索・絞り込みできます。",
+    "contact_title": "お問い合わせ",
+    "contact_description": "電話、メール、またはお問い合わせフォームからKIZUNAチームへご連絡ください。できるだけ早くご返信いたします。",
+    "concierge_title": "KIZUNAコンシェルジュ — オンライン相談",
+    "concierge_description": "Kizuna AIとチャットして、手工芸品や職人、あなたに合った商品についてご相談ください。",
+    "product_fallback_title": "商品詳細",
+    "product_fallback_description": "KIZUNAで日本の職人による本格的な手工芸品の詳細をご覧ください。",
+    "not_found_title": "ページが見つかりません"
   }
 }

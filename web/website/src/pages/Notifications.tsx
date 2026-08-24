@@ -4,12 +4,14 @@ import { motion } from 'motion/react';
 import { fadeUp, tweenFast } from '@/lib/motion';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
+import { SEO } from '@/components/SEO';
 
 export function NotificationsPage() {
   const { t } = useTranslation();
 
   return (
     <div className="max-w-[768px] mx-auto px-4 md:px-8 py-12 md:py-16">
+      <SEO title={t('notifications.title')} noindex />
       <div className="mb-12">
         <h1 className="headline-xl">{t('notifications.title')}</h1>
       </div>

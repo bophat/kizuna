@@ -6,6 +6,7 @@ import { Logo } from '@izuna/shared/components/Logo';
 import { ArrowRight, Check } from 'lucide-react';
 import { apiFetch } from '@/lib/api';
 import { useAuth } from '@/context/AuthContext';
+import { SEO } from '@/components/SEO';
 
 export function LoginPage() {
   const { t } = useTranslation();
@@ -79,8 +80,9 @@ export function LoginPage() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-surface">
+      <SEO title={t('auth.login', 'Login')} noindex />
       <div className="hidden md:block w-full md:w-1/2 relative min-h-screen">
-        <div 
+        <div
           className="absolute inset-0 bg-cover bg-center"
           style={{ backgroundImage: bgImage }}
         />
@@ -89,7 +91,7 @@ export function LoginPage() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 min-h-screen">
         <div className="w-full max-w-[400px]">
           <div className="mb-12 text-center md:text-left flex flex-col items-center md:items-start gap-8">
-            <Logo size="lg" forceBlack />
+            <Logo size="lg" />
             <div>
               <h2 className="headline-lg mb-2">{t('auth.access_collection')}</h2>
               <p className="body-md text-secondary">{t('auth.welcome_back')}</p>
@@ -97,7 +99,7 @@ export function LoginPage() {
           </div>
           <form className="space-y-6" onSubmit={handleLogin}>
             {error && (
-              <div className="p-3 bg-red-50 border border-red-200 text-red-600 body-sm rounded-sm">
+              <div className="p-3 bg-error-container border border-error text-on-error-container body-sm rounded-sm">
                 {error}
                 {needsVerification && (
                   <Link
@@ -116,7 +118,7 @@ export function LoginPage() {
                 type="email" 
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
                 placeholder={t('auth.enter_email')}
                 required
               />
@@ -128,7 +130,7 @@ export function LoginPage() {
                 type="password" 
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="w-full bg-white border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
                 placeholder={t('auth.enter_password')}
                 required
               />

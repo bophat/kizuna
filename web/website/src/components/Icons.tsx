@@ -25,7 +25,26 @@ import {
   Banknote,
   Landmark,
   AlertCircle,
-  FileText
+  FileText,
+  Sun,
+  Moon,
+  ChevronDown,
+  ChevronLeft,
+  Globe,
+  Headset,
+  Filter,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  Plus,
+  Minus,
+  CircleAlert,
+  CheckCircle2,
+  KeyRound,
+  Link2,
+  MousePointerClick,
+  TicketPercent,
+  WalletCards
 } from 'lucide-react';
 
 export const Icons = {
@@ -56,5 +75,24 @@ export const Icons = {
   Loader2,
   AlertCircle,
   Cart: ShoppingBag,
-  FileText
+  FileText,
+  Sun,
+  Moon,
+  ChevronDown,
+  ChevronLeft,
+  Globe,
+  Headset,
+  Filter,
+  LayoutGrid,
+  List,
+  SlidersHorizontal,
+  Plus,
+  Minus,
+  CircleAlert,
+  CheckCircle2,
+  KeyRound,
+  Link2,
+  MousePointerClick,
+  TicketPercent,
+  WalletCards
 };
