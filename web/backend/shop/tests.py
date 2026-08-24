@@ -238,7 +238,7 @@ class ConciergeCustomerIdentityTests(TestCase):
         self.assertEqual(session.user, self.user)
 
         admin_session = sessions_for_admin()['web_authenticated']
-        self.assertEqual(admin_session['customer_name'], 'hanako@example.com')
+        self.assertEqual(admin_session['customer_name'], 'Hanako Yamada')
         self.assertEqual(admin_session['customer_display_name'], 'Hanako Yamada')
         self.assertEqual(admin_session['customer_email'], 'hanako@example.com')
         self.assertEqual(admin_session['customer_username'], 'hanako')
@@ -280,7 +280,7 @@ class ConciergeCustomerIdentityTests(TestCase):
         self.assertEqual(session.user, self.user)
         self.assertEqual(
             sessions_for_admin()['web_guest_then_login']['customer_name'],
-            'hanako@example.com',
+            'Hanako Yamada',
         )
 
     @patch('shop.concierge_store.is_ai_enabled', return_value=False)

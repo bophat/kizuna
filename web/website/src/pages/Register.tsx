@@ -9,6 +9,8 @@ import { SEO } from '@/components/SEO';
 
 export function RegisterPage() {
   const { t } = useTranslation();
+  const [firstName, setFirstName] = useState('');
+  const [lastName, setLastName] = useState('');
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -33,7 +35,13 @@ export function RegisterPage() {
     try {
       const response = await apiFetch('/register/', {
         method: 'POST',
-        body: JSON.stringify({ username, email, password }),
+        body: JSON.stringify({
+          username,
+          email,
+          password,
+          first_name: firstName.trim(),
+          last_name: lastName.trim(),
+        }),
       });
 
       const data = await response.json();
@@ -49,7 +57,8 @@ export function RegisterPage() {
         if (data && typeof data === 'object') {
           setFieldErrors(data);
           // Also set a general error if no specific fields are caught
-          if (!data.username && !data.email && !data.password) {
+          if (!data.username && !data.email && !data.password
+              && !data.first_name && !data.last_name) {
             setError(data.detail || t('auth.registration_failed'));
           }
         } else {
@@ -88,6 +97,38 @@ export function RegisterPage() {
                 {error}
               </div>
             )}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="flex flex-col gap-1">
+                <label className="label-sm text-secondary" htmlFor="lastName">{t('auth.last_name')}</label>
+                <input
+                  id="lastName"
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                  placeholder={t('auth.last_name_placeholder')}
+                  required
+                />
+                {fieldErrors.last_name && (
+                  <span className="text-error text-xs mt-1">{fieldErrors.last_name[0]}</span>
+                )}
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="label-sm text-secondary" htmlFor="firstName">{t('auth.first_name')}</label>
+                <input
+                  id="firstName"
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  className="w-full bg-surface-container-lowest border border-surface-variant rounded-sm px-4 py-3 body-md text-on-surface outline-none focus:border-primary transition-all"
+                  placeholder={t('auth.first_name_placeholder')}
+                  required
+                />
+                {fieldErrors.first_name && (
+                  <span className="text-error text-xs mt-1">{fieldErrors.first_name[0]}</span>
+                )}
+              </div>
+            </div>
             <div className="flex flex-col gap-1">
               <label className="label-sm text-secondary" htmlFor="username">{t('auth.username')}</label>
               <input 

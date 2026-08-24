@@ -87,10 +87,21 @@ export default function Chat() {
   };
 
   const formatCustomerId = (id: string) => id.split('_')[1] || id;
+  // Name first: staff are talking to a person, not to an address. Email drops
+  // to the second line, and only stands in as the heading for a customer who
+  // has not signed in (guests have no name on file).
   const getCustomerName = (id: string, session: ChatSession) =>
-    session.customer_email?.trim() || session.customer_name?.trim() || t('chat.customer_label', { id: formatCustomerId(id) });
-  const getCustomerSecondaryLabel = (session: ChatSession) =>
-    session.customer_display_name?.trim() || session.customer_username?.trim() || '';
+    session.customer_name?.trim()
+    || session.customer_email?.trim()
+    || t('chat.customer_label', { id: formatCustomerId(id) });
+  const getCustomerSecondaryLabel = (session: ChatSession) => {
+    const name = session.customer_name?.trim();
+    const email = session.customer_email?.trim();
+    // Avoid repeating the heading on the line underneath it.
+    if (name && email) return email;
+    if (name) return session.customer_username?.trim() || '';
+    return '';
+  };
 
   return (
     <div className="ma-spacing space-y-8">

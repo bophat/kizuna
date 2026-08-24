@@ -1,3 +1,4 @@
+from django.core.cache import cache
 from django.contrib.auth.models import User
 from django.core import mail
 from django.core.mail.backends.base import BaseEmailBackend
@@ -40,7 +41,15 @@ class EmailVerificationTests(APITestCase):
         'username': 'new_customer',
         'email': 'Customer@Example.com',
         'password': 'safe-password-123',
+        'first_name': 'New',
+        'last_name': 'Customer',
     }
+
+    def setUp(self):
+        # Throttle counters live in the cache, not the test transaction, so
+        # without this the registration limit is shared across the whole run
+        # and these tests start returning 429 as the suite grows.
+        cache.clear()
 
     def register(self, **overrides):
         payload = {**self.register_payload, **overrides}
@@ -194,6 +203,8 @@ class EmailVerificationTests(APITestCase):
                 'username': 'staff_created_customer',
                 'email': 'staff-created@example.com',
                 'password': 'safe-password-123',
+                'first_name': 'Staff',
+                'last_name': 'Created',
             },
             format='json',
         )

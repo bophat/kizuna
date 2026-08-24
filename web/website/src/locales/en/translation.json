@@ -77,7 +77,11 @@
     "verification_resending": "Sending...",
     "verification_resend_failed": "Unable to send the verification email. Please try again.",
     "continue_to_login": "Continue to sign in",
-    "back_to_login": "Back to sign in"
+    "back_to_login": "Back to sign in",
+    "first_name": "First name",
+    "last_name": "Last name",
+    "first_name_placeholder": "e.g. Hanako",
+    "last_name_placeholder": "e.g. Yamada"
   },
   "common": {
     "loading": "Loading...",

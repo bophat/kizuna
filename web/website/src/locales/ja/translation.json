@@ -77,7 +77,11 @@
     "verification_resending": "送信中...",
     "verification_resend_failed": "認証メールを送信できませんでした。もう一度お試しください。",
     "continue_to_login": "ログインへ進む",
-    "back_to_login": "ログインに戻る"
+    "back_to_login": "ログインに戻る",
+    "first_name": "名",
+    "last_name": "姓",
+    "first_name_placeholder": "例: 花子",
+    "last_name_placeholder": "例: 山田"
   },
   "common": {
     "loading": "読み込み中...",

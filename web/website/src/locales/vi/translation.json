@@ -77,7 +77,11 @@
     "verification_resending": "Đang gửi...",
     "verification_resend_failed": "Không thể gửi email xác minh. Vui lòng thử lại.",
     "continue_to_login": "Tiếp tục đăng nhập",
-    "back_to_login": "Quay lại đăng nhập"
+    "back_to_login": "Quay lại đăng nhập",
+    "first_name": "Tên",
+    "last_name": "Họ và tên đệm",
+    "first_name_placeholder": "VD: Phát",
+    "last_name_placeholder": "VD: Trương Đỗ Tấn"
   },
   "common": {
     "loading": "Đang tải...",
